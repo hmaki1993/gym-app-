@@ -4,8 +4,8 @@ import type { MuscleGroup, SetLog, ExerciseLog, WorkoutLog } from '../types';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../data/exercises';
 import { translations } from '../translations';
 import { ExerciseCard } from './ExerciseCard';
-import { 
-  X, Search, Plus, CheckCircle, Dumbbell, 
+import {
+  X, Search, Plus, CheckCircle, Dumbbell,
   Activity, Heart, Move, Zap, Waves, User,
   GripVertical, Trophy, LogOut
 } from 'lucide-react';
@@ -43,8 +43,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   useEffect(() => {
     if (openExercise && swipeContainerRef.current) {
-      gsap.fromTo(swipeContainerRef.current, 
-        { opacity: 0, scale: 0.95, x: 0 }, 
+      gsap.fromTo(swipeContainerRef.current,
+        { opacity: 0, scale: 0.95, x: 0 },
         { opacity: 1, scale: 1, x: 0, duration: 0.4, ease: 'power2.out', clearProps: 'all' }
       );
     }
@@ -131,7 +131,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       const dy = Math.abs(y - touchState.current.startY);
 
       // Block horizontal swipe immediately to prevent browser back arrow
-      if (dx > 2) { 
+      if (dx > 2) {
         if (e.cancelable) e.preventDefault();
       }
     };
@@ -155,20 +155,20 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const handleOverlayPointerMove = (e: React.PointerEvent) => {
     if (touchState.current.isAnimating || !swipeContainerRef.current) return;
     if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    
+
     const diff = e.clientX - touchState.current.startX;
     const xPercent = (diff / e.currentTarget.clientWidth) * 100;
-    gsap.set(swipeContainerRef.current, { xPercent, opacity: 1 - Math.abs(xPercent/150) });
+    gsap.set(swipeContainerRef.current, { xPercent, opacity: 1 - Math.abs(xPercent / 150) });
   };
 
   const handleOverlayPointerEnd = (e: React.PointerEvent) => {
     if (touchState.current.isAnimating || !swipeContainerRef.current) return;
     e.currentTarget.releasePointerCapture(e.pointerId);
-    
+
     const diff = e.clientX - touchState.current.startX;
     const xPercent = (diff / e.currentTarget.clientWidth) * 100;
     const currentIdx = activeExercises.indexOf(openExercise!);
-    
+
     if (Math.abs(xPercent) > 20) {
       touchState.current.isAnimating = true; // Lock
       if (xPercent > 20) {
@@ -198,10 +198,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       touchState.current.isAnimating = false;
       return;
     }
-    
+
     const xDist = direction === 'left' ? -100 : 100;
     gsap.killTweensOf(swipeContainerRef.current);
-    
+
     gsap.to(swipeContainerRef.current, {
       xPercent: xDist,
       opacity: 0,
@@ -210,7 +210,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       onComplete: () => {
         setOpenExercise(nextEx);
         // Animate back in from the opposite side
-        gsap.fromTo(swipeContainerRef.current, 
+        gsap.fromTo(swipeContainerRef.current,
           { xPercent: direction === 'left' ? 100 : -100, opacity: 0 },
           { xPercent: 0, opacity: 1, duration: 0.3, ease: 'power2.out', onComplete: () => { touchState.current.isAnimating = false; } }
         );
@@ -224,19 +224,19 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden' }}>
       {openExercise && (
-        <div style={{ 
+        <div style={{
           position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
-          background: 'rgba(0,0,0,0.4)', zIndex: 2000, 
+          background: 'rgba(0,0,0,0.4)', zIndex: 2000,
           display: 'flex', justifyContent: 'center',
-          touchAction: 'none', 
+          touchAction: 'none',
           overscrollBehavior: 'none',
           boxSizing: 'border-box'
         }}>
-          <div style={{ 
+          <div style={{
             position: 'absolute', top: 0, bottom: 0,
-            width: '100%', maxWidth: '480px', background: '#000', 
+            width: '100%', maxWidth: '480px', background: '#000',
             overflow: 'hidden',
-            display: 'flex', flexDirection: 'column', 
+            display: 'flex', flexDirection: 'column',
             touchAction: 'none',
             overscrollBehavior: 'none',
             boxSizing: 'border-box'
@@ -244,7 +244,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             {/* Dots */}
             <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
               {activeExercises.map((name, i) => (
-                <div key={i} style={{ 
+                <div key={i} style={{
                   width: name === openExercise ? '20px' : '6px', height: '6px', borderRadius: '3px',
                   background: name === openExercise ? 'var(--accent-color)' : 'rgba(255,255,255,0.2)',
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
@@ -252,13 +252,13 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               ))}
             </div>
 
-            <div 
+            <div
               ref={swipeContainerRef}
               className="swipe-container"
-              style={{ 
-                touchAction: 'pan-y', userSelect: 'none', 
+              style={{
+                touchAction: 'pan-y', userSelect: 'none',
                 flex: 1, minHeight: 0, width: '100%',
-                display: 'flex', flexDirection: 'column', 
+                display: 'flex', flexDirection: 'column',
                 overflow: 'hidden', position: 'relative'
               }}
               onPointerDown={handleOverlayPointerStart}
@@ -266,7 +266,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               onPointerUp={handleOverlayPointerEnd}
               onPointerCancel={handleOverlayPointerCancel}
             >
-              <div className="swipe-slide" style={{ 
+              <div className="swipe-slide" style={{
                 flex: 1,
                 minHeight: 0,
                 display: 'flex',
@@ -305,12 +305,12 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               {MUSCLE_GROUPS.map(mg => {
                 const isSelected = selectedMuscle === mg.key;
                 return (
-                  <button 
-                    key={mg.key} 
-                    onClick={() => setSelectedMuscle(mg.key)} 
-                    style={{ 
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', 
-                      background: 'none', border: 'none', padding: '0', 
+                  <button
+                    key={mg.key}
+                    onClick={() => setSelectedMuscle(mg.key)}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                      background: 'none', border: 'none', padding: '0',
                       flexShrink: 0, minWidth: '50px', cursor: 'pointer',
                       transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                       opacity: isSelected ? 1 : 0.4
@@ -323,18 +323,18 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                       border: `1.2px solid ${isSelected ? 'var(--accent-color)' : 'transparent'}`,
                       transition: 'all 0.4s ease'
                     }}>
-                      <img 
-                        src={mg.icon} 
-                        alt={mg.en} 
-                        style={{ 
-                          width: '30px', height: '30px', objectFit: 'contain', 
+                      <img
+                        src={mg.icon}
+                        alt={mg.en}
+                        style={{
+                          width: '30px', height: '30px', objectFit: 'contain',
                           filter: isSelected ? 'contrast(1.2) brightness(1.1)' : 'grayscale(1) opacity(0.5)',
                           transition: 'all 0.4s ease'
-                        }} 
+                        }}
                       />
                     </div>
-                    <span style={{ 
-                      fontSize: '10px', fontWeight: '900', 
+                    <span style={{
+                      fontSize: '10px', fontWeight: '900',
                       color: isSelected ? 'var(--accent-color)' : 'var(--text-secondary)',
                       textTransform: 'uppercase', letterSpacing: '1px'
                     }}>
@@ -352,12 +352,12 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                 <input className="glass-input" style={{ paddingLeft: '40px' }} placeholder={t('searchExercise')} value={search} onChange={e => setSearch(e.target.value)} />
               </div>
-              <button 
+              <button
                 type="button"
-                onClick={() => { 
-                  if (search.trim()) { 
-                    tracker.addCustomExercise(selectedMuscle, search.trim()); 
-                    setSearch(''); 
+                onClick={() => {
+                  if (search.trim()) {
+                    tracker.addCustomExercise(selectedMuscle, search.trim());
+                    setSearch('');
                   } else {
                     window.alert('Please enter an exercise name first!');
                   }
@@ -369,7 +369,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {filtered.length === 0 && search && (
-                <button 
+                <button
                   onClick={() => { tracker.addCustomExercise(selectedMuscle, search); setSearch(''); }}
                   style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--accent-color-alpha)', borderRadius: '16px', color: 'var(--accent-color)', fontWeight: '700', cursor: 'pointer' }}
                 >
@@ -381,13 +381,13 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 const lastData = tracker.getLastSession(name);
                 const isCustom = tracker.customExercises[selectedMuscle]?.includes(name);
                 return (
-                  <div 
-                    key={name} 
-                    onClick={() => toggleExercise(name)} 
+                  <div
+                    key={name}
+                    onClick={() => toggleExercise(name)}
                     className="exercise-select-btn"
-                    style={{ 
+                    style={{
                       position: 'relative',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       padding: '16px 12px', background: 'transparent',
                       border: 'none',
                       borderBottom: `1.2px solid ${isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.04)'}`,
@@ -411,9 +411,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                         </div>
                       )}
                       {isSelected && (
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (isCustom) {
                               tracker.removeCustomExercise(selectedMuscle, name);
                             } else {

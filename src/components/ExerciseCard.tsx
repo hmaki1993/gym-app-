@@ -88,7 +88,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
       if (intervalRef.current) clearInterval(intervalRef.current);
       return;
     }
-    
+
     if (tracker.settings.soundEnabled) playSetDoneSound();
     setRestRemaining(restDuration);
     setRestActive(true);
@@ -133,9 +133,9 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
   const totalVolume = sets.reduce((s, set) => s + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0);
 
   return (
-    <div 
-      ref={cardRef} 
-      className={(inline || fullPage) ? "" : "glass-card"} 
+    <div
+      ref={cardRef}
+      className={(inline || fullPage) ? "" : "glass-card"}
       style={fullPage ? {
         display: 'flex',
         flexDirection: 'column',
@@ -153,8 +153,8 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
         borderBottom: '1.5px solid var(--accent-color-alpha-heavy)',
         animation: 'slideDown 0.3s ease'
       } : {
-        padding: '24px', 
-        marginBottom: '20px', 
+        padding: '24px',
+        marginBottom: '20px',
         background: 'rgba(255,255,255,0.06)',
         border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: '28px'
@@ -175,11 +175,11 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
               )}
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            style={{ 
-              background: 'rgba(255, 51, 102, 0.15)', border: 'none', padding: '0', 
-              width: '32px', height: '32px', borderRadius: '10px', color: '#ff3366', 
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255, 51, 102, 0.15)', border: 'none', padding: '0',
+              width: '32px', height: '32px', borderRadius: '10px', color: '#ff3366',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s ease', flexShrink: 0
             }}
@@ -211,7 +211,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
         )}
       </div>
 
-      <div style={{ 
+      <div style={{
         flex: 1,
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -222,8 +222,8 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
           {sets.map((set, i) => (
-            <div key={i} style={{ 
-              display: 'flex', alignItems: 'center', padding: '12px 0', 
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', padding: '12px 0',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
               gap: '8px'
             }}>
@@ -251,14 +251,14 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
                     borderRadius: '4px'
                   }}
                 />
-                <div 
+                <div
                   onClick={cycleUnit}
-                  style={{ 
-                    fontSize: '12px', 
-                    fontWeight: '900', 
-                    color: 'var(--text-secondary)', 
-                    textTransform: 'uppercase', 
-                    opacity: 0.9, 
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: '900',
+                    color: 'var(--text-secondary)',
+                    textTransform: 'uppercase',
+                    opacity: 0.9,
                     letterSpacing: '0.5px',
                     cursor: 'pointer',
                     minWidth: '40px',
@@ -298,7 +298,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
                     {set.restTime}s
                   </div>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => startRest(i)}
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: restingSetIndex === i ? 'var(--accent-color)' : 'rgba(255,255,255,0.2)', padding: '4px' }}
                   >
@@ -316,8 +316,8 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
           ))}
         </div>
 
-        <button onClick={addSet} style={{ 
-          width: '100%', padding: '14px', background: 'transparent', 
+        <button onClick={addSet} style={{
+          width: '100%', padding: '14px', background: 'transparent',
           border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '16px',
           color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '700',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -336,7 +336,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
       </div>
 
       {/* ── ZONE 3: FIXED FOOTER ── */}
-      <div style={{ 
+      <div style={{
         flexShrink: 0,
         marginTop: 'auto',
         paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
@@ -347,7 +347,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
         borderTop: '1px solid rgba(255,255,255,0.08)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button 
+          <button
             onClick={() => {
               const newDur = Math.max(5, restDuration - 5);
               setRestDuration(newDur);
@@ -357,8 +357,8 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
           >
             -
           </button>
-          
-          <button onClick={() => startRest()} style={{ 
+
+          <button onClick={() => startRest()} style={{
             background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
             color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '800',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
@@ -368,7 +368,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
             <Clock size={14} color="var(--accent-color)" /> {restDuration}s
           </button>
 
-          <button 
+          <button
             onClick={() => {
               const newDur = restDuration + 5;
               setRestDuration(newDur);
@@ -413,11 +413,11 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
             </div>
           </div>
         </div>
-        
-        <button 
-          onClick={handleDone} 
-          style={{ 
-            background: 'transparent', border: 'none', 
+
+        <button
+          onClick={handleDone}
+          style={{
+            background: 'transparent', border: 'none',
             color: 'var(--accent-color)', fontSize: '16px', fontWeight: '900',
             padding: '4px 8px', width: 'fit-content', cursor: 'pointer',
             textTransform: 'uppercase', letterSpacing: '12px', outline: 'none',

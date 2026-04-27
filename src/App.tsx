@@ -14,7 +14,7 @@ import './index.css';
 
 type Tab = 'home' | 'history' | 'progress' | 'settings';
 
-function App() {
+export default function App() {
   const tracker = useGymTracker();
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
@@ -80,48 +80,49 @@ function App() {
   return (
     <div ref={appRef} dir={isRtl ? 'rtl' : 'ltr'}
       style={{ 
-        width: '100%', 
-        margin: '0 auto', 
-        minHeight: '100vh', 
+        width: '100vw', 
+        minWidth: '100%',        height: '100dvh', 
         display: 'flex', 
         flexDirection: 'column', 
-        padding: showWorkout ? '0' : '16px 20px 90px',
+        padding: showWorkout ? '0' : '16px 20px 0', 
         position: 'relative',
-        boxSizing: 'border-box'
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+        background: 'var(--bg-color)'
       }}>
 
       {!showWorkout && (
         <>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', direction: 'ltr' }}>
-            <div>
-              <h1 className="logo-text" style={{ margin: 0, fontSize: 'var(--logo-font-size)' }}>GYMLOG</h1>
-              <div className="subtitle-text">{t('premiumSystem')}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {tab !== 'home' && (
-                <button
-                  onClick={() => setShowWorkout(true)}
-                  style={{
-                    width: '42px', height: '42px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--accent-color), var(--accent-secondary))',
-                    border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 16px rgba(0,229,160,0.35)',
-                    transition: 'transform 0.2s ease'
-                  }}
-                >
-                  <Dumbbell size={18} color="#000" strokeWidth={2.5} />
-                </button>
-              )}
-            </div>
+          <div style={{ marginBottom: '16px', direction: 'ltr' }}>
+            {tab === 'home' ? (
+              <div>
+                <h1 className="logo-text" style={{ margin: 0, fontSize: 'var(--logo-font-size)' }}>GYMLOG</h1>
+                <div className="subtitle-text">{t('premiumSystem')}</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.7 }}>
+                  GYMLOG
+                </div>
+                <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-1px' }}>
+                  {t(tab)}
+                </h1>
+              </div>
+            )}
           </div>
 
           {/* Accent divider */}
           <div className="accent-divider" style={{ marginBottom: '20px' }} />
 
-          {/* Page Content */}
-          <div ref={contentRef} style={{ flex: 1 }}>
+          {/* Main Content Area - Handles internal scroll and padding */}
+          <div ref={contentRef} className="hide-scroll" style={{ 
+            flex: 1, 
+            position: 'relative', 
+            overflowY: 'auto', 
+            overflowX: 'hidden',
+            paddingBottom: '100px' // Padding for fixed nav at the bottom of SCROLL content
+          }}>
             {tab === 'home' && (
               <Dashboard
                 tracker={tracker}
@@ -182,5 +183,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

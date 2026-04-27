@@ -23,16 +23,18 @@
   -webkit-tap-highlight-color: transparent !important;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   background: var(--primary-bg);
   color: var(--text-primary);
   font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  width: 100%;
   overflow-x: hidden;
   overscroll-behavior: none !important;
-  touch-action: pan-y !important; /* Force vertical only at root */
+  touch-action: pan-y !important;
 }
 
 /* Subtle animated background */
@@ -52,13 +54,11 @@ body::before {
 
 #root {
   width: 100%;
-  max-width: 480px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 1;
-  margin: 0 auto;
 }
 
 /* ── Glass System ── */
@@ -285,10 +285,6 @@ input[type=number] {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
-  border-radius: 0;
-  border: none;
-  border-top: 1px solid var(--glass-border);
   z-index: 100;
   touch-action: pan-y;
 }
@@ -618,10 +614,13 @@ input[type=number] {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
     text-shadow: 0 0 2px var(--accent-color);
   }
+
   50% {
     opacity: 0.8;
     text-shadow: 0 0 8px var(--accent-color);
