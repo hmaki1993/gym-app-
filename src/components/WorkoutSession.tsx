@@ -7,7 +7,7 @@ import { ExerciseCard } from './ExerciseCard';
 import {
   X, Search, Plus, CheckCircle, Dumbbell,
   Activity, Heart, Move, Zap, Waves, User,
-  GripVertical, Trophy, LogOut
+  GripVertical, Trophy, LogOut, Clock
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -32,8 +32,39 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
 
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const workoutStartTime = useRef<number | null>(null);
+
   useEffect(() => {
-    if (containerRef.current) {
+    if (phase === 'logging') {
+      if (!workoutStartTime.current) {
+        workoutStartTime.current = Date.now();
+      }
+      const interval = setInterval(() => {
+        const now = Date.now();
+        setElapsedSeconds(Math.floor((now - workoutStartTime.current!) / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      workoutStartTime.current = null;
+      setElapsedSeconds(0);
+    }
+  }, [phase]);
+
+  const formatElapsed = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const parts = [
+      h > 0 ? h.toString().padStart(2, '0') : null,
+      m.toString().padStart(2, '0'),
+      s.toString().padStart(2, '0')
+    ].filter(p => p !== null);
+    return parts.join(':');
+  };
+
+  useEffect(() => {
+    if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
         { y: 20, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.06, duration: 0.4, ease: 'power3.out' }
@@ -82,7 +113,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       }));
     if (exercises.length === 0) { onClose(); return; }
 
-    const log: Omit<WorkoutLog, 'id' | 'durationMinutes'> = {
+    const log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'> = {
       date: new Date().toISOString(),
       muscleGroup: selectedMuscle,
       exercises,
@@ -222,7 +253,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const totalVolume = Object.values(loggedData).flat().reduce((s, set) => s + set.weight * set.reps, 0);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden', padding: '16px 20px 0' }}>
       {openExercise && (
         <div style={{
           position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
@@ -287,11 +318,36 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-1.2px', lineHeight: '1', marginBottom: '3px' }}>
-            {phase === 'exercises' ? t('startWorkout').toUpperCase() : t('finishSession').toUpperCase()}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div>
+            <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-1.2px', lineHeight: '1', marginBottom: '3px' }}>
+              {phase === 'exercises' ? t('startWorkout').toUpperCase() : t('finishSession').toUpperCase()}
+            </div>
+            <div style={{ width: '30px', height: '2.5px', background: 'var(--accent-color)', borderRadius: '2px' }} />
           </div>
-          <div style={{ width: '30px', height: '2.5px', background: 'var(--accent-color)', borderRadius: '2px' }} />
+          
+          {/* Live Timer Badge */}
+          <div style={{ 
+            background: 'rgba(255, 107, 0, 0.08)', 
+            padding: '5px 12px', 
+            borderRadius: '12px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '6px',
+            border: '1px solid rgba(255, 107, 0, 0.15)',
+            boxShadow: '0 0 15px rgba(255, 107, 0, 0.05)'
+          }}>
+            <Clock size={12} color="var(--accent-color)" strokeWidth={3} />
+            <span style={{ 
+              fontFamily: 'Inter, sans-serif', 
+              fontSize: '14px', 
+              fontWeight: '800', 
+              color: 'var(--accent-color)',
+              letterSpacing: '0.5px'
+            }}>
+              {formatElapsed(elapsedSeconds)}
+            </span>
+          </div>
         </div>
         <button onClick={onClose} style={{ background: 'rgba(255, 51, 102, 0.12)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', color: '#cc0033', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <LogOut size={18} strokeWidth={2.5} />

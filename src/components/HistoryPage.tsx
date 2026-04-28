@@ -3,7 +3,7 @@ import { useGymTracker } from '../hooks/useGymTracker';
 import type { WorkoutLog } from '../types';
 import { MUSCLE_GROUPS } from '../data/exercises';
 import { translations } from '../translations';
-import { Dumbbell, TrendingUp, Calendar, Trash2 } from 'lucide-react';
+import { Dumbbell, TrendingUp, Calendar, Trash2, Clock } from 'lucide-react';
 import gsap from 'gsap';
 
 interface Props {
@@ -14,6 +14,12 @@ interface Props {
 function formatDate(iso: string, lang: 'ar' | 'en') {
   const d = new Date(iso);
   return d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatTime(iso: string, lang: 'ar' | 'en') {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
 function formatDuration(mins: number, t: (k: any) => string) {
@@ -28,7 +34,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
         { y: 20, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.07, duration: 0.4, ease: 'power3.out' }
@@ -76,6 +82,14 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                     <Calendar size={10} color="var(--accent-color)" opacity={0.6} />
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>{formatDate(log.date, lang)}</span>
                   </div>
+                  {log.startTime && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
+                      <Clock size={10} color="var(--accent-color)" opacity={0.6} />
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600', opacity: 0.8 }}>
+                        {formatTime(log.startTime, lang)} — {formatTime(log.endTime, lang)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <button
@@ -101,7 +115,14 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                 <React.Fragment key={stat.label}>
                   {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.1)' }} />}
                   <div style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{stat.value}</div>
+                    <div style={{ 
+                      fontSize: '13px', 
+                      fontWeight: '800', 
+                      color: 'var(--text-primary)', 
+                      whiteSpace: 'nowrap',
+                      fontFamily: 'Inter, sans-serif',
+                      letterSpacing: '0.5px'
+                    }}>{stat.value}</div>
                     <div style={{ fontSize: '8px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px', opacity: 0.5 }}>{stat.label}</div>
                   </div>
                 </React.Fragment>
@@ -119,7 +140,13 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                       <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', opacity: 0.9 }}>{ex.name}</span>
                       {isPR && <span style={{ fontSize: '8px', fontWeight: '950', color: 'var(--accent-color)', background: 'rgba(0,229,160,0.1)', padding: '2px 5px', borderRadius: '4px' }}>PR</span>}
                     </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '900' }}>
+                    <div style={{ 
+                      fontSize: '13px', 
+                      color: 'var(--text-secondary)', 
+                      fontWeight: '800',
+                      fontFamily: 'Inter, sans-serif',
+                      letterSpacing: '0.5px'
+                    }}>
                       {ex.sets.length} <span style={{ fontSize: '9px', opacity: 0.5 }}>SETS</span> × <span style={{ color: 'var(--text-primary)' }}>{bestSet.weight}{unit}</span>
                     </div>
                   </div>

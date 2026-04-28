@@ -20,7 +20,7 @@ export function SettingsPage({ tracker }: Props) {
   }, [tracker.settings.userName]);
 
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
         { y: 20, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.07, duration: 0.4, ease: 'power3.out' }

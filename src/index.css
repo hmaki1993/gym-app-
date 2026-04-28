@@ -601,7 +601,8 @@ input[type=number] {
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 2px;
+  height: 2px;
 }
 
 ::-webkit-scrollbar-track {
@@ -609,8 +610,22 @@ input[type=number] {
 }
 
 ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+}
+
+.hide-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes pulse-glow {

@@ -103,13 +103,15 @@ export function ProgressPage({ tracker }: Props) {
   const chartsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
         { y: 20, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.08, duration: 0.4, ease: 'power3.out' }
       );
     }
   }, []);
+
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   // Weekly bar data
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -122,6 +124,14 @@ export function ProgressPage({ tracker }: Props) {
     tracker.logs.filter(l => new Date(l.date).toDateString() === day).length
   );
 
+  const filteredLogs = selectedDay 
+    ? tracker.logs.filter(l => new Date(l.date).toDateString() === selectedDay)
+    : tracker.logs;
+
+  const totalWorkouts = filteredLogs.length;
+  const weeklyCount = tracker.getWeeklyCount();
+  const totalVolume = filteredLogs.reduce((s, l) => s + tracker.getTotalVolume(l), 0);
+
   const loggedMuscles = Array.from(new Set(tracker.logs.map(l => l.muscleGroup)));
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(loggedMuscles.length > 0 ? loggedMuscles[0] : null);
 
@@ -132,7 +142,7 @@ export function ProgressPage({ tracker }: Props) {
   }, [tracker.logs.length]);
 
   useEffect(() => {
-    if (chartsContainerRef.current) {
+    if (chartsContainerRef.current && chartsContainerRef.current.children.length > 0) {
       gsap.fromTo(chartsContainerRef.current.children,
         { y: 15, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.05, duration: 0.3, ease: 'power2.out' }
@@ -166,27 +176,44 @@ export function ProgressPage({ tracker }: Props) {
     return history;
   };
 
-  const totalWorkouts = tracker.logs.length;
-  const weeklyCount = tracker.getWeeklyCount();
-  const totalVolume = tracker.logs.reduce((s, l) => s + tracker.getTotalVolume(l), 0);
-
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', padding: '10px 4px' }}>
 
       {/* Overview Cards */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        {[
-          { label: t('thisWeek'), value: weeklyCount, sub: t('workouts'), icon: '📅' },
-          { label: t('allTime'), value: totalWorkouts, sub: t('workouts'), icon: '🏆' },
-          { label: t('totalVolume'), value: `${(totalVolume / 1000).toFixed(1)}T`, sub: unit, icon: '📈' },
-        ].map((card, index) => (
-          <div key={card.label} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
-            <div style={{ fontSize: '20px', marginBottom: '8px' }}>{card.icon}</div>
-            <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--accent-color)', lineHeight: '1', letterSpacing: '-1px' }}>{card.value}</div>
-            <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>{card.label}</div>
-            {index < 2 && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: '1px', background: 'rgba(255,255,255,0.06)' }} />}
-          </div>
-        ))}
+      <div style={{ position: 'relative' }}>
+        {selectedDay && (
+          <button 
+            onClick={() => setSelectedDay(null)}
+            style={{ 
+              position: 'absolute', top: '-15px', right: '0', background: 'none', border: 'none', 
+              color: 'var(--accent-color)', fontSize: '10px', fontWeight: '900', cursor: 'pointer',
+              textTransform: 'uppercase', letterSpacing: '1px'
+            }}
+          >
+            {lang === 'ar' ? 'عرض الكل ✕' : 'SHOW ALL ✕'}
+          </button>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          {[
+            { label: selectedDay ? (lang === 'ar' ? 'تمارين اليوم' : 'DAY LOGS') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: '📅' },
+            { label: selectedDay ? (lang === 'ar' ? 'تاريخ اليوم' : 'LOG DATE') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: '🏆' },
+            { label: t('totalVolume'), value: totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}T` : `${totalVolume.toFixed(0)}`, sub: unit, icon: '📈' },
+          ].map((card, index) => (
+            <div key={card.label} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
+              <div style={{ fontSize: '20px', marginBottom: '8px' }}>{card.icon}</div>
+              <div style={{ 
+                fontSize: '24px', 
+                fontWeight: '800', 
+                color: 'var(--accent-color)', 
+                lineHeight: '1', 
+                letterSpacing: '0.5px',
+                fontFamily: 'Inter, sans-serif'
+              }}>{card.value}</div>
+              <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>{card.label}</div>
+              {index < 2 && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: '1px', background: 'rgba(255,255,255,0.06)' }} />}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Weekly Activity Bar Chart */}
@@ -198,29 +225,35 @@ export function ProgressPage({ tracker }: Props) {
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '80px' }}>
           {weekDays.map((day, i) => {
             const isToday = new Date().toDateString() === day;
+            const isSelected = selectedDay === day;
             const count = weekCounts[i];
             const height = count > 0 ? Math.max(30, count * 25) : 14;
             const dayLabel = new Date(day).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { weekday: 'short' });
             return (
-              <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <div 
+                key={day} 
+                onClick={() => setSelectedDay(isSelected ? null : day)}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+              >
                 <div style={{
                   width: '14px', height: `${height}px`,
                   background: count > 0
-                    ? `linear-gradient(180deg, var(--accent-color), #ff8c00)`
+                    ? `linear-gradient(180deg, var(--accent-color), ${isSelected ? '#fff' : '#ff8c00'})`
                     : (isToday ? 'rgba(255, 107, 0, 0.15)' : 'rgba(255,255,255,0.04)'),
                   borderRadius: '10px',
-                  boxShadow: count > 0 
-                    ? '0 4px 12px rgba(255, 107, 0, 0.35)' 
-                    : (isToday ? '0 0 8px rgba(255, 107, 0, 0.2)' : 'none'),
-                  border: isToday && count === 0 ? '1px solid rgba(255, 107, 0, 0.4)' : 'none',
-                  transition: 'height 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: isSelected
+                    ? `0 0 15px var(--accent-color)`
+                    : (count > 0 ? '0 4px 12px rgba(255, 107, 0, 0.35)' : 'none'),
+                  border: isSelected ? '2px solid #fff' : (isToday && count === 0 ? '1px solid rgba(255, 107, 0, 0.4)' : 'none'),
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  opacity: (selectedDay && !isSelected) ? 0.3 : 1
                 }} />
                 <span style={{ 
                   fontSize: '10px', 
-                  fontWeight: isToday ? '900' : '700', 
-                  color: isToday ? 'var(--text-primary)' : 'var(--text-secondary)', 
+                  fontWeight: isToday || isSelected ? '900' : '700', 
+                  color: isSelected ? 'var(--accent-color)' : (isToday ? 'var(--text-primary)' : 'var(--text-secondary)'), 
                   textTransform: 'uppercase',
-                  opacity: isToday ? 1 : 0.4
+                  opacity: isToday || isSelected ? 1 : 0.4
                 }}>
                   {dayLabel.slice(0, 2)}
                 </span>
@@ -237,19 +270,51 @@ export function ProgressPage({ tracker }: Props) {
             <Award size={16} color="#ffd700" />
             <span className="section-label" style={{ color: '#ffd700', letterSpacing: '1px' }}>{t('personalRecord')}</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {tracker.prs.filter(pr => pr.exerciseName && pr.exerciseName.trim() !== '').map((pr, index, arr) => (
-              <div key={pr.exerciseName} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '16px 0', borderBottom: index === arr.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.03)'
-              }}>
-                <span style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{pr.exerciseName}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '900', color: '#ffd700' }}>🏆 {pr.weight}{unit}×{pr.reps}</span>
+          
+          {(() => {
+            const groupedPRs: Record<string, typeof tracker.prs> = {};
+            tracker.prs.filter(pr => pr.exerciseName && pr.exerciseName.trim() !== '').forEach(pr => {
+              const cleanPRName = pr.exerciseName.trim().toLowerCase();
+              const exData = MUSCLE_GROUPS.flatMap(g => g?.exercises || []).find(e => e && e.name.trim().toLowerCase() === cleanPRName);
+              const mg = exData ? exData.muscleGroup : 'other';
+              if (!groupedPRs[mg]) groupedPRs[mg] = [];
+              groupedPRs[mg].push(pr);
+            });
+
+            return Object.entries(groupedPRs).map(([mg, prs]) => {
+              const mgInfo = MUSCLE_GROUPS.find(g => g.key === mg);
+              return (
+                <div key={mg} style={{ marginBottom: '20px' }}>
+                  <div style={{ 
+                    fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', 
+                    opacity: 0.5, marginBottom: '8px', textTransform: 'uppercase',
+                    letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '8px'
+                  }}>
+                    {mg === 'other' 
+                      ? (lang === 'ar' ? 'تمارين أخرى' : 'OTHER EXERCISES') 
+                      : (lang === 'ar' ? mgInfo?.ar : mgInfo?.en)}
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.03)' }} />
+                  </div>
+                  {prs.map((pr) => (
+                    <div key={pr.exerciseName} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 0'
+                    }}>
+                      <span style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{pr.exerciseName}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ 
+                          fontSize: '14px', 
+                          fontWeight: '800', 
+                          color: '#ffd700',
+                          fontFamily: 'Inter, sans-serif'
+                        }}>🏆 {pr.weight}{unit}×{pr.reps}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
+              );
+            });
+          })()}
         </div>
       )}
 
@@ -293,34 +358,67 @@ export function ProgressPage({ tracker }: Props) {
           </div>
 
           <div ref={chartsContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {topExercises.length === 0 && (
+            {topExercises.length === 0 ? (
               <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px', padding: '20px 0' }}>
                 {t('noData')}
               </div>
-            )}
-            {topExercises.map(name => {
-              const history = getExerciseHistory(name);
-              if (history.length < 2) return null;
-              const latest = history[history.length - 1].value;
-              const first = history[0].value;
-              const diff = latest - first;
-              return (
-                <div key={name}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{name}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '16px', fontWeight: '900', color: 'var(--accent-color)' }}>{latest}{unit}</span>
-                      {diff !== 0 && (
-                        <span style={{ fontSize: '11px', fontWeight: '700', color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)' }}>
-                          {diff > 0 ? '+' : ''}{diff}{unit}
-                        </span>
-                      )}
+            ) : (
+              (() => {
+                const charts = topExercises.map(name => {
+                  const history = getExerciseHistory(name);
+                  if (history.length < 2) return null;
+                  const latest = history[history.length - 1].value;
+                  const first = history[0].value;
+                  const diff = latest - first;
+                  return (
+                    <div key={name}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ 
+                            fontSize: '16px', 
+                            fontWeight: '800', 
+                            color: 'var(--accent-color)',
+                            fontFamily: 'Inter, sans-serif'
+                          }}>{latest}{unit}</span>
+                          {diff !== 0 && (
+                            <span style={{ 
+                              fontSize: '11px', 
+                              fontWeight: '800', 
+                              color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)',
+                              fontFamily: 'Inter, sans-serif'
+                            }}>
+                              {diff > 0 ? '+' : ''}{diff}{unit}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <MiniChart data={history} color="var(--accent-color)" title={name} accentColor={tracker.settings.accentColor} />
                     </div>
-                  </div>
-                  <MiniChart data={history} color="var(--accent-color)" title={name} accentColor={tracker.settings.accentColor} />
-                </div>
-              );
-            })}
+                  );
+                }).filter(Boolean);
+
+                if (charts.length === 0) {
+                  return (
+                    <div style={{ 
+                      textAlign: 'center', padding: '30px 20px',
+                      opacity: 0.8
+                    }}>
+                      <div style={{ fontSize: '24px', marginBottom: '10px' }}>📈</div>
+                      <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                        {lang === 'ar' ? 'محتاج تتمرن أكتر!' : 'More Workouts Needed!'}
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                        {lang === 'ar' 
+                          ? 'سجل تمرينتين على الأقل لنفس العضلة عشان نقدر نوريكم رسم بياني لتطور مستواك.' 
+                          : 'Complete at least 2 sessions for this muscle group to see your progress charts.'}
+                      </div>
+                    </div>
+                  );
+                }
+                return charts;
+              })()
+            )}
           </div>
         </div>
       )}

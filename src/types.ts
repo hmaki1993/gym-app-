@@ -22,6 +22,8 @@ export interface ExerciseLog {
 export interface WorkoutLog {
   id: string;
   date: string; // ISO
+  startTime: string; // ISO
+  endTime: string; // ISO
   muscleGroup: MuscleGroup;
   exercises: ExerciseLog[];
   durationMinutes: number;

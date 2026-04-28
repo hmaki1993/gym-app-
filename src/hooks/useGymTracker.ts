@@ -175,36 +175,31 @@ export function useGymTracker() {
     return state.prs.find(p => p.exerciseName === exerciseName) ?? null;
   }, [state.prs]);
 
-  const saveWorkout = useCallback((log: Omit<WorkoutLog, 'id' | 'durationMinutes'>) => {
-    const durationMinutes = Math.round((Date.now() - sessionStartRef.current) / 60000);
+  const saveWorkout = useCallback((log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'>) => {
+    const now = Date.now();
+    const start = sessionStartRef.current;
+    const durationMinutes = Math.round((now - start) / 60000);
     const newLog: WorkoutLog = {
       ...log,
-      id: `wl_${Date.now()}`,
+      id: `wl_${now}`,
+      startTime: new Date(start).toISOString(),
+      endTime: new Date(now).toISOString(),
       durationMinutes: Math.max(1, durationMinutes),
     };
 
-    // Update PRs
-    const updatedPRs = [...state.prs];
-    for (const ex of log.exercises) {
-      const maxWeight = Math.max(...ex.sets.map(s => s.weight));
-      const maxReps = ex.sets.find(s => s.weight === maxWeight)?.reps ?? 0;
-      const existing = updatedPRs.find(p => p.exerciseName === ex.name);
-      if (!existing || maxWeight > existing.weight || (maxWeight === existing.weight && maxReps > existing.reps)) {
-        const idx = updatedPRs.findIndex(p => p.exerciseName === ex.name);
-        const newPR: PersonalRecord = { exerciseName: ex.name, weight: maxWeight, reps: maxReps, date: log.date };
-        if (idx >= 0) updatedPRs[idx] = newPR;
-        else updatedPRs.push(newPR);
-      }
-    }
+    setState(prev => {
+      const updatedLogs = [newLog, ...prev.logs];
+      const updatedPRs = syncPRsFromLogs(updatedLogs);
+      return {
+        ...prev,
+        logs: updatedLogs,
+        prs: updatedPRs,
+      };
+    });
 
-    setState(prev => ({
-      ...prev,
-      logs: [newLog, ...prev.logs],
-      prs: updatedPRs,
-    }));
     sessionStartRef.current = Date.now();
     return newLog;
-  }, [state.prs]);
+  }, [syncPRsFromLogs]);
 
   const deleteWorkout = useCallback((id: string) => {
     setState(prev => {
