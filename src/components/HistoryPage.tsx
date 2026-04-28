@@ -1,9 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useGymTracker } from '../hooks/useGymTracker';
 import type { WorkoutLog } from '../types';
 import { MUSCLE_GROUPS } from '../data/exercises';
 import { translations } from '../translations';
-import { Dumbbell, TrendingUp, Calendar, Trash2, Clock } from 'lucide-react';
+import { Dumbbell, TrendingUp, Calendar, Trash2, Clock, ChevronDown } from 'lucide-react';
 import gsap from 'gsap';
 
 interface Props {
@@ -31,13 +31,15 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const unit = tracker.settings.weightUnit;
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.07, duration: 0.4, ease: 'power3.out' }
+        { x: -20, opacity: 0 },
+        { x: 0, opacity: 1, stagger: 0.1, duration: 0.4, ease: 'power2.out' }
       );
     }
   }, []);
@@ -65,94 +67,129 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
             animation: 'fadeIn 0.5s ease'
           }}>
             {/* 1. Header: Muscle Group & Date */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {mg?.icon ? (
-                    <img src={mg.icon} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
-                  ) : (
-                    <span style={{ fontSize: '28px' }}>💪</span>
-                  )}
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-                    {mg?.[lang] ?? log.muscleGroup}
-                  </h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
-                    <Calendar size={10} color="var(--accent-color)" opacity={0.6} />
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>{formatDate(log.date, lang)}</span>
-                  </div>
-                  {log.startTime && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
-                      <Clock size={10} color="var(--accent-color)" opacity={0.6} />
-                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600', opacity: 0.8 }}>
-                        {formatTime(log.startTime, lang)} — {formatTime(log.endTime, lang)}
-                      </span>
-                    </div>
-                  )}
+          {/* 1. Header: Muscle Group & Date (Toggle Trigger) */}
+          <div 
+            onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', paddingBottom: expandedLogId === log.id ? '15px' : '0' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {mg?.icon ? (
+                  <img src={mg.icon} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
+                ) : (
+                  <span style={{ fontSize: '28px' }}>💪</span>
+                )}
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                  {mg?.[lang] ?? log.muscleGroup}
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
+                  <Calendar size={10} color="var(--accent-color)" opacity={0.6} />
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>{formatDate(log.date, lang)}</span>
                 </div>
               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button
-                onClick={() => onDeleteWorkout(log.id)}
+                onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.3)', padding: '6px' }}
               >
                 <Trash2 size={18} />
               </button>
+              <div style={{ transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease', opacity: 0.3 }}>
+                <ChevronDown size={18} />
+              </div>
             </div>
+          </div>
 
-            {/* 2. Stats: Clean Linear Row - Optimized for Mobile */}
-            <div style={{ 
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)',
-              marginBottom: '20px', gap: '4px'
-            }}>
-              {[
-                { label: t('exercises'), value: log.exercises.length },
-                { label: t('totalSets'), value: totalSets },
-                { label: t('totalVolume'), value: `${volume.toFixed(0)}${unit}` },
-                { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
-              ].map((stat, idx) => (
-                <React.Fragment key={stat.label}>
-                  {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.1)' }} />}
-                  <div style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ 
-                      fontSize: '13px', 
-                      fontWeight: '800', 
-                      color: 'var(--text-primary)', 
-                      whiteSpace: 'nowrap',
-                      fontFamily: 'Inter, sans-serif',
-                      letterSpacing: '0.5px'
-                    }}>{stat.value}</div>
-                    <div style={{ fontSize: '8px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px', opacity: 0.5 }}>{stat.label}</div>
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
+          {/* 2 & 3. Collapsible Details with Smooth Animation */}
+          <div style={{ 
+            display: 'grid',
+            gridTemplateRows: expandedLogId === log.id ? '1fr' : '0fr',
+            transition: 'grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ minHeight: 0 }}>
+              <div style={{ paddingTop: '10px' }}>
+                {/* Stats Row */}
+                <div style={{ 
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  marginBottom: '20px', gap: '4px',
+                  opacity: expandedLogId === log.id ? 1 : 0,
+                  transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)',
+                  transition: 'all 0.4s ease 0.1s'
+                }}>
+                  {[
+                    { label: t('exercises'), value: log.exercises.length },
+                    { label: t('totalSets'), value: totalSets },
+                    { label: t('totalVolume'), value: `${volume.toFixed(0)}${unit}` },
+                    { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
+                  ].map((stat, idx) => (
+                    <React.Fragment key={stat.label}>
+                      {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.1)' }} />}
+                      <div style={{ flex: 1, textAlign: 'center' }}>
+                        <div style={{ 
+                          fontSize: '13px', 
+                          fontWeight: '800', 
+                          color: 'var(--text-primary)', 
+                          whiteSpace: 'nowrap',
+                          fontFamily: 'Inter, sans-serif',
+                          letterSpacing: '0.5px'
+                        }}>{stat.value}</div>
+                        <div style={{ fontSize: '8px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px', opacity: 0.5 }}>{stat.label}</div>
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
 
-            {/* 3. Exercises: Plain List with side-marker */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '14px', borderLeft: '2px solid var(--accent-color-alpha)' }}>
-              {log.exercises.map(ex => {
-                const bestSet = ex.sets.reduce((best, s) => s.weight > best.weight ? s : best, ex.sets[0] ?? { weight: 0, reps: 0 });
-                const isPR = tracker.getExercisePR(ex.name)?.weight === bestSet.weight;
-                return (
-                  <div key={ex.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', opacity: 0.9 }}>{ex.name}</span>
-                      {isPR && <span style={{ fontSize: '8px', fontWeight: '950', color: 'var(--accent-color)', background: 'rgba(0,229,160,0.1)', padding: '2px 5px', borderRadius: '4px' }}>PR</span>}
-                    </div>
-                    <div style={{ 
-                      fontSize: '13px', 
-                      color: 'var(--text-secondary)', 
-                      fontWeight: '800',
-                      fontFamily: 'Inter, sans-serif',
-                      letterSpacing: '0.5px'
-                    }}>
-                      {ex.sets.length} <span style={{ fontSize: '9px', opacity: 0.5 }}>SETS</span> × <span style={{ color: 'var(--text-primary)' }}>{bestSet.weight}{unit}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                {/* Exercises List */}
+                <div style={{ 
+                  display: 'flex', flexDirection: 'column', gap: '14px', 
+                  padding: '4px 0 10px 12px', borderLeft: '2px solid rgba(255, 107, 0, 0.2)' 
+                }}>
+                  {log.exercises.map((ex, exIdx) => {
+                    const bestSet = ex.sets.reduce((best, s) => s.weight > best.weight ? s : best, ex.sets[0] ?? { weight: 0, reps: 0 });
+                    const isPR = tracker.getExercisePR(ex.name)?.weight === bestSet.weight;
+                    return (
+                      <div 
+                        key={ex.name} 
+                        style={{ 
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          opacity: expandedLogId === log.id ? 1 : 0,
+                          transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)',
+                          transition: `all 0.3s ease ${0.2 + exIdx * 0.05}s`
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                          <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', opacity: 0.95 }}>{ex.name}</span>
+                          {isPR && (
+                            <div style={{ 
+                              fontSize: '8px', fontWeight: '900', color: 'var(--accent-color)', 
+                              background: 'rgba(255, 107, 0, 0.08)', padding: '2px 6px', 
+                              borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px'
+                            }}>PR</div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '110px', justifyContent: 'flex-end' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>{ex.sets.length}</span>
+                            <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', marginLeft: '3px', opacity: 0.5 }}>SETS</span>
+                          </div>
+                          <div style={{ width: '1px', height: '10px', background: 'rgba(255,255,255,0.06)' }} />
+                          <div style={{ textAlign: 'right', minWidth: '45px' }}>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
+                            <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginLeft: '2px', opacity: 0.7 }}>{unit}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
+          </div>
           </div>
         );
       })}

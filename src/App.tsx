@@ -36,6 +36,36 @@ export default function App() {
     if (theme) root.style.setProperty('--accent-secondary', theme.secondary);
   }, [tracker.settings.accentColor]);
 
+  // Global edge-swipe prevention & History Trap (Kill Chrome Back Arrow)
+  useEffect(() => {
+    // 1. Block the gesture via JS
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const threshold = 60; // Larger threshold to catch the gesture
+      
+      // ONLY block if we are NOT in the bottom navigation area (approx bottom 80px)
+      if (touch.pageY < window.innerHeight - 80) {
+        if (touch.pageX < threshold || touch.pageX > window.innerWidth - threshold) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    // 2. Trap history so there's 'nowhere to go back to'
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   // Entrance animation
   useEffect(() => {
     if (appRef.current) {
@@ -88,7 +118,8 @@ export default function App() {
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        background: 'var(--bg-color)'
+        background: 'var(--bg-color)',
+        touchAction: 'pan-y'
       }}>
 
       {!showWorkout && (
@@ -121,7 +152,8 @@ export default function App() {
             position: 'relative', 
             overflowY: 'auto', 
             overflowX: 'hidden',
-            paddingBottom: '100px' // Padding for fixed nav at the bottom of SCROLL content
+            paddingBottom: '100px', // Padding for fixed nav at the bottom of SCROLL content
+            touchAction: 'pan-y'
           }}>
             {tab === 'home' && (
               <Dashboard

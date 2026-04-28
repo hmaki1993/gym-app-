@@ -24,17 +24,19 @@
 }
 
 html,
-body {
+body,
+#root {
   margin: 0;
   padding: 0;
   background: var(--primary-bg);
   color: var(--text-primary);
   font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
+  height: 100%;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
+  position: fixed;
   overscroll-behavior: none !important;
-  touch-action: pan-y !important;
+  touch-action: none !important;
 }
 
 /* Subtle animated background */
@@ -286,7 +288,7 @@ input[type=number] {
   transform: translateX(-50%);
   width: 100%;
   z-index: 100;
-  touch-action: pan-y;
+  touch-action: auto !important;
 }
 
 .nav-btn {
@@ -306,6 +308,7 @@ input[type=number] {
   letter-spacing: 0.5px;
   font-family: 'Inter', sans-serif;
   flex: 1;
+  touch-action: auto !important;
 }
 
 .nav-btn.active {
