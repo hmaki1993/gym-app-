@@ -38,8 +38,8 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
   useEffect(() => {
     if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
-        { x: -20, opacity: 0 },
-        { x: 0, opacity: 1, stagger: 0.1, duration: 0.4, ease: 'power2.out' }
+        { opacity: 0 },
+        { opacity: 1, stagger: 0.05, duration: 0.3, ease: 'none' }
       );
     }
   }, []);
@@ -63,8 +63,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
         return (
           <div key={log.id} style={{ 
             padding: '32px 0', 
-            borderBottom: '2px solid rgba(255,255,255,0.03)',
-            animation: 'fadeIn 0.5s ease'
+            borderBottom: '2px solid rgba(255,255,255,0.03)'
           }}>
             {/* 1. Header: Muscle Group & Date */}
           {/* 1. Header: Muscle Group & Date (Toggle Trigger) */}
@@ -84,9 +83,20 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                 <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
                   {mg?.[lang] ?? log.muscleGroup}
                 </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
-                  <Calendar size={10} color="var(--accent-color)" opacity={0.6} />
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>{formatDate(log.date, lang)}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Calendar size={10} color="var(--accent-color)" opacity={0.6} />
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>{formatDate(log.date, lang)}</span>
+                  </div>
+                  {log.startTime && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ width: '1px', height: '10px', background: 'rgba(255,255,255,0.1)', margin: '0 2px' }} />
+                      <Clock size={10} color="var(--accent-color)" opacity={0.6} />
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600', opacity: 0.8 }}>
+                        {formatTime(log.startTime, lang)} — {formatTime(log.endTime, lang)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
