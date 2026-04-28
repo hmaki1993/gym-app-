@@ -66,13 +66,6 @@ export default function App() {
     };
   }, []);
 
-  // Entrance animation
-  useEffect(() => {
-    if (appRef.current) {
-      gsap.fromTo(appRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power2.out' });
-    }
-  }, []);
-
   // Tab change animation
   const switchTab = (newTab: Tab) => {
     if (newTab === tab) return;
@@ -114,7 +107,7 @@ export default function App() {
         minWidth: '100%',        height: '100dvh', 
         display: 'flex', 
         flexDirection: 'column', 
-        padding: showWorkout ? '0' : '16px 20px 0', 
+        padding: showWorkout ? '0' : '5px 16px 0', 
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
@@ -125,7 +118,7 @@ export default function App() {
       {!showWorkout && (
         <>
           {/* Header */}
-          <div style={{ marginBottom: '16px', direction: 'ltr' }}>
+          <div style={{ marginBottom: '5px', direction: 'ltr' }}>
             {tab === 'home' ? (
               <div>
                 <h1 className="logo-text" style={{ margin: 0, fontSize: 'var(--logo-font-size)' }}>GYMLOG</h1>
@@ -144,15 +137,16 @@ export default function App() {
           </div>
 
           {/* Accent divider */}
-          <div className="accent-divider" style={{ marginBottom: '20px' }} />
+          <div className="accent-divider" style={{ marginBottom: '5px' }} />
 
           {/* Main Content Area - Handles internal scroll and padding */}
           <div ref={contentRef} className="hide-scroll" style={{ 
             flex: 1, 
-            position: 'relative', 
+            display: 'flex',
+            flexDirection: 'column',
             overflowY: 'auto', 
             overflowX: 'hidden',
-            paddingBottom: '100px', // Padding for fixed nav at the bottom of SCROLL content
+            paddingBottom: '10px', 
             touchAction: 'pan-y'
           }}>
             {tab === 'home' && (

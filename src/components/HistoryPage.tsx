@@ -35,15 +35,6 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current && containerRef.current.children.length > 0) {
-      gsap.fromTo(containerRef.current.children,
-        { opacity: 0 },
-        { opacity: 1, stagger: 0.05, duration: 0.3, ease: 'none' }
-      );
-    }
-  }, []);
-
   if (tracker.logs.length === 0) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', gap: '16px', opacity: 0.6 }}>

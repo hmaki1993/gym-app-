@@ -9,31 +9,18 @@ interface Props {
   tracker: ReturnType<typeof useGymTracker>;
 }
 
+const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0' }}>
+    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>{label}</span>
+    {children}
+  </div>
+);
+
 export function SettingsPage({ tracker }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const containerRef = useRef<HTMLDivElement>(null);
   const [localName, setLocalName] = React.useState(tracker.settings.userName);
-
-  useEffect(() => {
-    setLocalName(tracker.settings.userName);
-  }, [tracker.settings.userName]);
-
-  useEffect(() => {
-    if (containerRef.current && containerRef.current.children.length > 0) {
-      gsap.fromTo(containerRef.current.children,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.07, duration: 0.4, ease: 'power3.out' }
-      );
-    }
-  }, []);
-
-  const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0' }}>
-      <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>{label}</span>
-      {children}
-    </div>
-  );
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

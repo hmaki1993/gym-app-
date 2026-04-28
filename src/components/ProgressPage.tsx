@@ -102,15 +102,6 @@ export function ProgressPage({ tracker }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartsContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current && containerRef.current.children.length > 0) {
-      gsap.fromTo(containerRef.current.children,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.08, duration: 0.4, ease: 'power3.out' }
-      );
-    }
-  }, []);
-
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   // Weekly bar data
