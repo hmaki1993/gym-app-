@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { useGymTracker } from '../hooks/useGymTracker';
-import { translations } from '../translations';
-import { MUSCLE_GROUPS } from '../data/exercises';
-import { Dumbbell, TrendingUp, Flame, Activity, Award, History } from 'lucide-react';
+import { useGymTracker } from '../../hooks/useGymTracker';
+import { translations } from '../../translations';
+import { MUSCLE_GROUPS } from '../../data/exercises';
+import { Flame, Activity, Award, History } from 'lucide-react';
 import gsap from 'gsap';
 
 interface Props {
@@ -28,11 +28,35 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
   useEffect(() => {
     if (containerRef.current) {
       gsap.fromTo(containerRef.current.children,
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, stagger: 0.1, duration: 0.5, ease: 'power2.out' }
+        { opacity: 0, y: 20, rotateX: 10, translateZ: -50 },
+        { opacity: 1, y: 0, rotateX: 0, translateZ: 0, stagger: 0.1, duration: 0.8, ease: 'power4.out' }
       );
     }
   }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    gsap.to(btn, {
+      rotateY: x * 15,
+      rotateX: -y * 15,
+      translateZ: 20,
+      duration: 0.5,
+      ease: 'power2.out'
+    });
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    gsap.to(e.currentTarget, {
+      rotateY: 0,
+      rotateX: 0,
+      translateZ: 0,
+      duration: 0.8,
+      ease: 'elastic.out(1, 0.5)'
+    });
+  };
 
   const workoutWords = t('startWorkout').toUpperCase().split(' ');
 
@@ -41,23 +65,24 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       display: 'flex', flexDirection: 'column',
       flex: 1,
       padding: '5px 16px',
-      minHeight: '80vh'
+      minHeight: '80vh',
+      transformStyle: 'preserve-3d'
     }}>
 
       {/* 1. TOP: Welcome & Stats */}
-      <div style={{ marginBottom: '25px' }}>
+      <div style={{ marginBottom: '25px', transformStyle: 'preserve-3d' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '25px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+          <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-secondary)', opacity: 0.4, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
             {lang === 'ar' ? 'أهلاً، ' : 'WELCOME, '}
           </span>
-          <span style={{ fontSize: '26px', fontWeight: '950', color: '#fff', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
+          <span style={{ fontSize: '26px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
             {tracker.settings.userName || 'Ahmed'}
           </span>
         </div>
 
-        <div style={{ 
+        <div className="glass-panel antigravity-card" style={{ 
           background: 'none', 
-          border: '1px solid rgba(255, 255, 255, 0.05)', 
+          border: '1px solid var(--glass-border)', 
           borderRadius: '20px',
           padding: '12px 0',
           marginBottom: '20px',
@@ -69,7 +94,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
               { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <History size={14} color="var(--accent-color)" /> }
             ].map((s, i) => (
               <React.Fragment key={i}>
-                <div 
+                <button 
                   onClick={() => onTabSwitch(s.target)}
                   style={{ 
                     textAlign: 'center', 
@@ -80,13 +105,19 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                     justifyContent: 'center',
                     gap: '4px',
                     flex: 1,
-                    padding: '8px 0'
+                    padding: '8px 0',
+                    transform: 'translateZ(10px)',
+                    background: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    WebkitTapHighlightColor: 'transparent'
                   }}
+                  className="stat-btn-elite"
                 >
                   <div style={{ opacity: 0.5, marginBottom: '2px' }}>{s.icon}</div>
-                  <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
-                  <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.2)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>{s.label}</div>
-                </div>
+                  <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
+                  <div style={{ fontSize: '8px', color: 'var(--text-secondary)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'Inter, sans-serif' }}>{s.label}</div>
+                </button>
                 {i < 2 && <div style={{ width: '1px', height: '25px', background: 'rgba(255,255,255,0.05)' }} />}
               </React.Fragment>
             ))}
@@ -94,27 +125,31 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
         </div>
       </div>
 
-      {/* 2. MIDDLE: Start Workout CTA (The Vertical Bar Style) */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '40px 0' }}>
+      {/* 2. MIDDLE: Start Workout CTA */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '40px 0', perspective: '1000px' }}>
         <button
           onClick={onStartWorkout}
-          className="pulse-elite"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className="pulse-elite antigravity-card"
           style={{
             background: 'none', border: 'none',
             color: '#fff', cursor: 'pointer',
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', gap: '20px',
             width: '100%',
-            fontFamily: 'Outfit, sans-serif'
+            fontFamily: 'Outfit, sans-serif',
+            transformStyle: 'preserve-3d'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              {workoutWords.map((word, i) => (
+          <div style={{ display: 'flex', alignItems: 'center', transformStyle: 'preserve-3d' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'translateZ(30px)' }}>
+              {workoutWords.map((word: string, i: number) => (
                 <div key={i} className="premium-title" style={{ 
                   fontSize: '48px', 
                   lineHeight: '0.9',
                   letterSpacing: '1px',
+                  marginBottom: '2px'
                 }}>
                   {word}
                 </div>
@@ -124,27 +159,29 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
           
           <span style={{ 
             fontSize: '10px', 
-            fontWeight: '950', 
-            color: 'rgba(255,255,255,0.2)', 
+            fontWeight: '900', 
+            color: 'var(--accent-color)', 
             letterSpacing: '8px', 
-            opacity: 0.5,
-            textTransform: 'uppercase'
+            opacity: 0.6,
+            textTransform: 'uppercase',
+            fontFamily: 'Outfit, sans-serif',
+            transform: 'translateZ(10px)'
           }}>TAP TO BEGIN</span>
         </button>
       </div>
 
       {/* 3. BOTTOM: Last Session */}
-      <div style={{ marginTop: 'auto', paddingBottom: '20px' }}>
+      <div style={{ marginTop: 'auto', paddingBottom: '20px', transformStyle: 'preserve-3d' }}>
         {recentLog ? (
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+          <div className="antigravity-card" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', opacity: 0.5 }}>
               <Flame size={12} color="var(--accent-color)" />
-              <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '2px' }}>{t('lastSession')}</span>
+              <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession')}</span>
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
+                <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
                   {MUSCLE_GROUPS.find(m => m.key === recentLog.muscleGroup)?.[lang] ?? recentLog.muscleGroup}
                 </div>
                 <div style={{ width: '1px', height: '12px', background: 'rgba(255,255,255,0.1)' }} />
@@ -168,7 +205,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '15px', opacity: 0.15 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '15px', height: '1px', background: '#fff' }} />
-          <span style={{ fontSize: '7px', fontWeight: '950', color: '#fff', letterSpacing: '3px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
+          <span style={{ fontSize: '7px', fontWeight: '900', color: '#fff', letterSpacing: '4px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
             GYMLOG ELITE
           </span>
           <div style={{ width: '15px', height: '1px', background: '#fff' }} />

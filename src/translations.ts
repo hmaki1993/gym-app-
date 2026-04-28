@@ -71,6 +71,9 @@ export const translations = {
     improved: 'Improved vs last',
     same: 'Same as last',
     decreased: 'Less than last',
+    themeMode: 'Appearance',
+    dark: 'DARK',
+    light: 'LIGHT',
   },
   ar: {
     appName: 'جيم لوج',
@@ -144,6 +147,9 @@ export const translations = {
     improved: 'أحسن من آخر مرة',
     same: 'نفس آخر مرة',
     decreased: 'أقل من آخر مرة',
+    themeMode: 'المظهر',
+    dark: 'ليلي',
+    light: 'نهاري',
   },
 };
 

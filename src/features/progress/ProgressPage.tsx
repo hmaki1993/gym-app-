@@ -1,9 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { useGymTracker } from '../hooks/useGymTracker';
-import { translations } from '../translations';
+import { useGymTracker } from '../../hooks/useGymTracker';
+import { translations } from '../../translations';
 import { TrendingUp, Award, BarChart2 } from 'lucide-react';
-import { MUSCLE_GROUPS } from '../data/exercises';
-import gsap from 'gsap';
+import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -43,7 +42,7 @@ function MiniChart({ data, color, title, accentColor }: { data: { date: string; 
   const gradId = `grad-${title.replace(/[^a-zA-Z0-9]/g, '')}`;
 
   return (
-    <div style={{ position: 'relative', width: '100%', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.04)', padding: '20px 0 10px', marginTop: '12px' }}>
+    <div style={{ position: 'relative', width: '100%', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px solid var(--glass-border)', padding: '20px 0 10px', marginTop: '12px' }}>
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
@@ -53,9 +52,9 @@ function MiniChart({ data, color, title, accentColor }: { data: { date: string; 
         </defs>
         
         {/* Grid lines */}
-        <line x1="10" y1={H*0.1} x2={W-10} y2={H*0.1} stroke="rgba(255,255,255,0.04)" strokeDasharray="4 4" strokeWidth="1" />
-        <line x1="10" y1={H*0.5} x2={W-10} y2={H*0.5} stroke="rgba(255,255,255,0.04)" strokeDasharray="4 4" strokeWidth="1" />
-        <line x1="10" y1={H*0.9} x2={W-10} y2={H*0.9} stroke="rgba(255,255,255,0.04)" strokeDasharray="4 4" strokeWidth="1" />
+        <line x1="10" y1={H*0.1} x2={W-10} y2={H*0.1} stroke="var(--glass-border)" strokeDasharray="4 4" strokeWidth="1" />
+        <line x1="10" y1={H*0.5} x2={W-10} y2={H*0.5} stroke="var(--glass-border)" strokeDasharray="4 4" strokeWidth="1" />
+        <line x1="10" y1={H*0.9} x2={W-10} y2={H*0.9} stroke="var(--glass-border)" strokeDasharray="4 4" strokeWidth="1" />
 
         {/* Area */}
         <path d={areaD} fill={`url(#${gradId})`} />
@@ -69,9 +68,9 @@ function MiniChart({ data, color, title, accentColor }: { data: { date: string; 
             <circle 
               cx={p.x} cy={p.y} 
               r={i === pts.length - 1 ? "5" : "2.5"} 
-              fill={i === pts.length - 1 ? color : '#fff'} 
-              stroke={i === pts.length - 1 ? '#fff' : 'none'}
-              strokeWidth={i === pts.length - 1 ? "1.5" : "0"}
+              fill={i === pts.length - 1 ? color : 'var(--text-primary)'} 
+              stroke={i === pts.length - 1 ? 'var(--primary-bg)' : 'none'}
+              strokeWidth={i === pts.length - 1 ? "2" : "0"}
               style={i === pts.length - 1 ? { filter: `drop-shadow(0 0 8px ${color})` } : { opacity: 0.5 }} 
             />
             {/* Show value for first and last point */}
@@ -204,14 +203,14 @@ export function ProgressPage({ tracker }: Props) {
                 fontFamily: 'Inter, sans-serif'
               }}>{card.value}</div>
               <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>{card.label}</div>
-              {index < 2 && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: '1px', background: 'rgba(255,255,255,0.06)' }} />}
+              {index < 2 && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: '1px', background: 'var(--glass-border)' }} />}
             </div>
           ))}
         </div>
       </div>
 
       {/* Weekly Activity Bar Chart */}
-      <div style={{ padding: '24px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '24px 0', borderBottom: '1px solid var(--glass-border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <BarChart2 size={16} color="var(--accent-color)" />
           <span className="section-label">{t('thisWeek')}</span>
@@ -250,15 +249,15 @@ export function ProgressPage({ tracker }: Props) {
                   width: '16px', 
                   height: `${height}px`,
                   background: isSelected
-                    ? `linear-gradient(180deg, #fff, var(--accent-color))`
+                    ? `linear-gradient(180deg, var(--text-primary), var(--accent-color))`
                     : (count > 0 
-                        ? `linear-gradient(180deg, var(--accent-color), #ff8c00)` 
-                        : (isToday ? 'rgba(255, 140, 0, 0.3)' : 'rgba(255,255,255,0.06)')),
+                        ? `linear-gradient(180deg, var(--accent-color), var(--danger-color))` 
+                        : (isToday ? 'rgba(255, 140, 0, 0.3)' : 'var(--glass-border)')),
                   borderRadius: '12px',
                   boxShadow: isSelected
                     ? `0 0 20px var(--accent-color)`
                     : (isToday ? '0 0 10px rgba(255, 140, 0, 0.4)' : 'none'),
-                  border: isSelected ? '2px solid #fff' : (isToday ? '1px solid rgba(255, 140, 0, 0.6)' : 'none'),
+                  border: isSelected ? '2px solid var(--text-primary)' : (isToday ? '1px solid rgba(255, 140, 0, 0.6)' : 'none'),
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   opacity: (selectedDay && !isSelected) ? 0.3 : 1,
                   animation: isToday && !isSelected ? 'pulse-orange 2s infinite ease-in-out' : 'none'
@@ -302,8 +301,27 @@ export function ProgressPage({ tracker }: Props) {
             const groupedPRs: Record<string, typeof tracker.prs> = {};
             tracker.prs.filter(pr => pr.exerciseName && pr.exerciseName.trim() !== '').forEach(pr => {
               const cleanPRName = pr.exerciseName.trim().toLowerCase();
-              const exData = MUSCLE_GROUPS.flatMap(g => g?.exercises || []).find(e => e && e.name.trim().toLowerCase() === cleanPRName);
-              const mg = exData ? exData.muscleGroup : 'other';
+              
+              // Find which muscle group this exercise belongs to
+              let mg: string = 'other';
+              
+              // Check default exercises
+              for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
+                if (exercises.some(e => e.toLowerCase() === cleanPRName)) {
+                  mg = group;
+                  break;
+                }
+              }
+              
+              // Check custom exercises if not found in defaults
+              if (mg === 'other') {
+                for (const [group, exercises] of Object.entries(tracker.customExercises)) {
+                  if (exercises.some(e => e.toLowerCase() === cleanPRName)) {
+                    mg = group;
+                    break;
+                  }
+                }
+              }
               if (!groupedPRs[mg]) groupedPRs[mg] = [];
               groupedPRs[mg].push(pr);
             });

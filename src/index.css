@@ -2,9 +2,9 @@
 
 :root {
   --primary-bg: #0a0a0c;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover: rgba(255, 255, 255, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.035);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-hover: rgba(255, 255, 255, 0.07);
   --accent-color: #00e5a0;
   --accent-secondary: #00b37d;
   --danger-color: #ff3366;
@@ -15,21 +15,50 @@
   --logo-font-size: 28px;
   --header-btn-size: 34px;
   --header-gap: 6px;
+  
+  /* Antigravity Tokens */
+  --soft-glow: 0 0 20px var(--accent-color-alpha);
+  --glass-blur: blur(25px);
+  --elite-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --nav-bg: rgba(10, 10, 12, 0.9);
+  --modal-bg: #111114;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+[data-theme='light'] {
+  --primary-bg: #f8f9fa;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-hover: rgba(0, 0, 0, 0.04);
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --elite-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  --glass-blur: blur(20px);
+  --nav-bg: rgba(255, 255, 255, 0.9);
+  --modal-bg: #ffffff;
 }
 
 /* ── Elite Typography System ── */
 .premium-title {
   font-family: 'Outfit', sans-serif;
-  font-weight: 950;
-  color: #fff;
+  font-weight: 900;
+  color: var(--text-primary);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: -0.5px;
   position: relative;
   display: inline-block;
-  /* Ultra-subtle Chromatic Aberration */
+  line-height: 1.1;
+  /* Premium depth effect */
   text-shadow: 
-    -1px -1px 0 rgba(255, 0, 80, 0.15),
-    1px 1px 0 rgba(0, 229, 160, 0.15);
+    1.5px 1.5px 0px var(--accent-color-alpha),
+    -1px -1px 0px var(--danger-color-alpha);
+}
+
+.premium-3d-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
 @keyframes pulse-glow {
@@ -75,7 +104,8 @@ body,
   position: fixed;
   overscroll-behavior: none !important;
   overscroll-behavior-x: none !important;
-  touch-action: pan-y !important; /* Allow scroll, block edge-swipe navigation */
+  touch-action: pan-y !important;
+  perspective: 1200px; /* Enable 3D depth for the entire app */
 }
 
 .heading-font {
@@ -96,19 +126,8 @@ body,
   filter: drop-shadow(0 0 10px rgba(0,229,160,0.1));
 }
 
-.premium-title {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 950;
-  letter-spacing: -1.5px;
-  text-transform: uppercase;
-  color: #fff;
-  text-shadow: 
-    1px 1px 0px rgba(0, 229, 160, 0.4),
-    -1px -1px 0px rgba(255, 51, 102, 0.3);
-  position: relative;
-  display: inline-block;
-  line-height: 1.1;
-}
+/* ── Remove Redundant Classes ── */
+/* Removed duplicate .premium-title and .logo-text definitions */
 
 
 
@@ -139,11 +158,12 @@ body::before {
 /* ── Glass System ── */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--elite-shadow);
+  transform-style: preserve-3d;
 }
 
 .glass-card {
@@ -152,14 +172,26 @@ body::before {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-style: preserve-3d;
 }
 
 .glass-card:hover {
   background: var(--glass-hover);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-4px) translateZ(20px);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5);
+}
+
+.antigravity-card {
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.stat-btn-elite:active {
+  transform: translateZ(5px) scale(0.95) !important;
+  opacity: 0.7;
 }
 
 .glass-button {
@@ -200,19 +232,20 @@ body::before {
   font-size: 15px;
   font-weight: 900;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: 'Outfit', sans-serif;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 20px rgba(0, 229, 160, 0.3);
+  box-shadow: 0 8px 25px var(--accent-color-alpha);
+  transform-style: preserve-3d;
 }
 
 .accent-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 229, 160, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 35px var(--accent-color-alpha-heavy);
 }
 
 .accent-button:active {
@@ -281,14 +314,14 @@ input[type=number] {
 
 /* ── Logo ── */
 .logo-text {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 900;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
   text-transform: uppercase;
-  background: linear-gradient(135deg, #ffffff 0%, #ffffff 40%, var(--accent-color) 100%);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-primary) 40%, var(--accent-color) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  letter-spacing: -0.5px;
+  letter-spacing: -2px;
   line-height: 1;
   position: relative;
 }
@@ -351,7 +384,7 @@ input[type=number] {
   justify-content: space-around;
   gap: 0;
   padding: 4px;
-  background: rgba(10, 10, 12, 0.9);
+  background: var(--nav-bg);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-top: 1px solid var(--glass-border);
@@ -398,7 +431,7 @@ input[type=number] {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -411,7 +444,7 @@ input[type=number] {
 .modal-sheet {
   width: 100%;
   max-width: 480px;
-  background: #111114;
+  background: var(--modal-bg);
   border-radius: 28px 28px 0 0;
   border: 1px solid var(--glass-border);
   border-bottom: none;
@@ -424,7 +457,7 @@ input[type=number] {
 .modal-handle {
   width: 40px;
   height: 4px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--glass-border);
   border-radius: 2px;
   margin: 0 auto 20px;
 }
@@ -491,7 +524,7 @@ input[type=number] {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   animation: fadeIn 0.2s ease;

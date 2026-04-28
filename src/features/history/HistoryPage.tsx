@@ -1,10 +1,9 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { useGymTracker } from '../hooks/useGymTracker';
-import type { WorkoutLog } from '../types';
-import { MUSCLE_GROUPS } from '../data/exercises';
-import { translations } from '../translations';
-import { Dumbbell, TrendingUp, Calendar, Trash2, Clock, ChevronDown } from 'lucide-react';
-import gsap from 'gsap';
+import React, { useRef, useState } from 'react';
+import { useGymTracker } from '../../hooks/useGymTracker';
+import type { WorkoutLog } from '../../types';
+import { MUSCLE_GROUPS } from '../../data/exercises';
+import { translations } from '../../translations';
+import { Dumbbell, Calendar, Trash2, Clock, ChevronDown } from 'lucide-react';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -51,11 +50,11 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
           width: '80px', 
           height: '80px', 
           borderRadius: '50%', 
-          background: 'rgba(255,255,255,0.03)',
+          background: 'var(--glass-bg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '1px solid rgba(255,255,255,0.05)'
+          border: '1px solid var(--glass-border)'
         }}>
           <Dumbbell size={32} color="var(--text-secondary)" strokeWidth={1.5} />
         </div>
@@ -83,7 +82,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
         return (
           <div key={log.id} style={{ 
             padding: '32px 0', 
-            borderBottom: '2px solid rgba(255,255,255,0.03)'
+            borderBottom: '2px solid var(--glass-border)'
           }}>
             {/* 1. Header: Muscle Group & Date */}
           {/* 1. Header: Muscle Group & Date (Toggle Trigger) */}
@@ -105,13 +104,13 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                 </h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Calendar size={10} color="var(--accent-color)" opacity={0.6} />
+                    <Calendar size={10} color="var(--accent-color)" />
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>{formatDate(log.date, lang)}</span>
                   </div>
                   {log.startTime && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <div style={{ width: '1px', height: '10px', background: 'rgba(255,255,255,0.1)', margin: '0 2px' }} />
-                      <Clock size={10} color="var(--accent-color)" opacity={0.6} />
+                      <div style={{ width: '1px', height: '10px', background: 'var(--glass-border)', margin: '0 2px' }} />
+                      <Clock size={10} color="var(--accent-color)" />
                       <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600', opacity: 0.8 }}>
                         {formatTime(log.startTime, lang)} — {formatTime(log.endTime, lang)}
                       </span>
@@ -145,7 +144,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                 {/* Stats Row */}
                 <div style={{ 
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  padding: '10px 0', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)',
                   marginBottom: '20px', gap: '4px',
                   opacity: expandedLogId === log.id ? 1 : 0,
                   transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)',
@@ -158,7 +157,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                     { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
                   ].map((stat, idx) => (
                     <React.Fragment key={stat.label}>
-                      {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.1)' }} />}
+                      {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'var(--glass-border)' }} />}
                       <div style={{ flex: 1, textAlign: 'center' }}>
                         <div style={{ 
                           fontSize: '13px', 
@@ -207,7 +206,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>{ex.sets.length}</span>
                             <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', marginLeft: '3px', opacity: 0.5 }}>SETS</span>
                           </div>
-                          <div style={{ width: '1px', height: '10px', background: 'rgba(255,255,255,0.06)' }} />
+                          <div style={{ width: '1px', height: '10px', background: 'var(--glass-border)' }} />
                           <div style={{ textAlign: 'right', minWidth: '45px' }}>
                             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
                             <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginLeft: '2px', opacity: 0.7 }}>{unit}</span>

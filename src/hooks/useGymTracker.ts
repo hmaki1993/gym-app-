@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS: GymSettings = {
   weightUnit: 'kg',
   language: 'ar',
   accentColor: THEME_COLORS[0].hex,
+  themeMode: 'dark',
   defaultRestSeconds: 90,
   soundEnabled: true,
 };
@@ -83,10 +84,14 @@ export function useGymTracker() {
 
   useEffect(() => {
     saveState(state);
-    // Apply theme color
+    // Apply theme & color
     const root = document.documentElement;
     const theme = THEME_COLORS.find(c => c.hex === state.settings.accentColor);
+    
+    root.setAttribute('data-theme', state.settings.themeMode);
     root.style.setProperty('--accent-color', state.settings.accentColor);
+    root.style.setProperty('--accent-color-alpha', `${state.settings.accentColor}25`);
+    root.style.setProperty('--accent-color-alpha-heavy', `${state.settings.accentColor}50`);
     if (theme) root.style.setProperty('--accent-secondary', theme.secondary);
   }, [state]);
 

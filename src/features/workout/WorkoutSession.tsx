@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useGymTracker } from '../hooks/useGymTracker';
-import type { MuscleGroup, SetLog, ExerciseLog, WorkoutLog } from '../types';
-import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../data/exercises';
-import { translations } from '../translations';
+import { useGymTracker } from '../../hooks/useGymTracker';
+import type { MuscleGroup, SetLog, ExerciseLog, WorkoutLog } from '../../types';
+import { DEFAULT_EXERCISES } from '../../data/exercises';
+import { translations } from '../../translations';
 import { ExerciseCard } from './ExerciseCard';
 import {
-  X, Search, Plus, CheckCircle, Dumbbell,
-  Activity, Heart, Move, Zap, Waves, User,
-  GripVertical, Trophy, LogOut, Clock
+  LogOut, Clock, Activity
 } from 'lucide-react';
 import gsap from 'gsap';
+
+import { MuscleSelector } from './components/MuscleSelector';
+import { ExercisePicker } from './components/ExercisePicker';
+import { SessionLogger } from './components/SessionLogger';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -28,7 +30,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [showSaved, setShowSaved] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
@@ -128,8 +129,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       exercises,
     };
     tracker.saveWorkout(log);
-    setShowSaved(true);
-    setTimeout(() => { setShowSaved(false); onSaved(); }, 1500);
+    onSaved();
   };
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -234,7 +234,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     }
   };
 
-  const handleOverlayPointerCancel = (e: React.PointerEvent) => {
+  const handleOverlayPointerCancel = () => {
     if (swipeContainerRef.current) {
       gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.4, ease: 'power2.out' });
       touchState.current.isAnimating = false;
@@ -267,16 +267,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     });
   };
 
-  const loggedCount = Object.keys(loggedData).filter(k => activeExercises.includes(k)).length;
-  const totalVolume = Object.values(loggedData).flat().reduce((s, set) => s + set.weight * set.reps, 0);
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden', padding: '16px 20px 0', touchAction: 'pan-y', overscrollBehaviorX: 'none' }}>
       {openExercise && (
         <div style={{
           position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
-          background: 'rgba(0,0,0,0.4)', zIndex: 2000,
+          background: 'rgba(0,0,0,0.8)', zIndex: 2000,
           display: 'flex', justifyContent: 'center',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
           touchAction: 'none',
           overscrollBehavior: 'none',
           boxSizing: 'border-box'
@@ -291,11 +290,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             boxSizing: 'border-box'
           }}>
             {/* Dots */}
-            <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
+            <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: 'var(--primary-bg)' }}>
               {activeExercises.map((name, i) => (
                 <div key={i} style={{
                   width: name === openExercise ? '20px' : '6px', height: '6px', borderRadius: '3px',
-                  background: name === openExercise ? 'var(--accent-color)' : 'rgba(255,255,255,0.2)',
+                  background: name === openExercise ? 'var(--accent-color)' : 'var(--glass-border)',
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                 }} />
               ))}
@@ -358,7 +357,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 fontFamily: 'Outfit, sans-serif', 
                 fontSize: '20px', 
                 fontWeight: '800', 
-                color: '#fff',
+                color: 'var(--text-primary)',
                 letterSpacing: '0.5px',
                 textShadow: '0 0 10px var(--accent-color-alpha)'
               }}>
@@ -398,170 +397,50 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
       <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
         {phase === 'exercises' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0 }}>
-            <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', padding: '10px 4px 16px', scrollbarWidth: 'none', marginBottom: '10px' }}>
-              {MUSCLE_GROUPS.map(mg => {
-                const isSelected = selectedMuscle === mg.key;
-                return (
-                  <button
-                    key={mg.key}
-                    onClick={() => setSelectedMuscle(mg.key)}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                      background: 'none', border: 'none', padding: '0',
-                      flexShrink: 0, minWidth: '50px', cursor: 'pointer',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      opacity: isSelected ? 1 : 0.4
-                    }}
-                  >
-                    <div style={{
-                      width: '44px', height: '44px', borderRadius: '12px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: isSelected ? 'rgba(255,255,255,0.03)' : 'transparent',
-                      border: `1.2px solid ${isSelected ? 'var(--accent-color)' : 'transparent'}`,
-                      transition: 'all 0.4s ease'
-                    }}>
-                      <img
-                        src={mg.icon}
-                        alt={mg.en}
-                        style={{
-                          width: '30px', height: '30px', objectFit: 'contain',
-                          filter: isSelected ? 'contrast(1.2) brightness(1.1)' : 'grayscale(1) opacity(0.5)',
-                          transition: 'all 0.4s ease'
-                        }}
-                      />
-                    </div>
-                    <span style={{
-                      fontSize: '10px', fontWeight: '900',
-                      color: isSelected ? 'var(--accent-color)' : 'var(--text-secondary)',
-                      textTransform: 'uppercase', letterSpacing: '1px'
-                    }}>
-                      {mg[lang]}
-                    </span>
-                    {isSelected && (
-                      <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)', marginTop: '-2px' }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-                <input className="glass-input" style={{ paddingLeft: '40px' }} placeholder={t('searchExercise')} value={search} onChange={e => setSearch(e.target.value)} />
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (search.trim()) {
-                    tracker.addCustomExercise(selectedMuscle, search.trim());
-                    setSearch('');
-                  } else {
-                    window.alert('Please enter an exercise name first!');
-                  }
-                }}
-                style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1.5px solid var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', cursor: 'pointer' }}
-              >
-                <Plus size={20} strokeWidth={3} />
-              </button>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {filtered.length === 0 && search && (
-                <button
-                  onClick={() => { tracker.addCustomExercise(selectedMuscle, search); setSearch(''); }}
-                  style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--accent-color-alpha)', borderRadius: '16px', color: 'var(--accent-color)', fontWeight: '700', cursor: 'pointer' }}
-                >
-                  {t('addCustom')}: "{search}"
-                </button>
-              )}
-              {filtered.map(name => {
-                const isSelected = activeExercises.includes(name);
-                const lastData = tracker.getLastSession(name);
-                const isCustom = tracker.customExercises[selectedMuscle]?.includes(name);
-                return (
-                  <div
-                    key={name}
-                    onClick={() => toggleExercise(name)}
-                    className="exercise-select-btn"
-                    style={{
-                      position: 'relative',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '16px 12px', background: 'transparent',
-                      border: 'none',
-                      borderBottom: `1.2px solid ${isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.04)'}`,
-                      width: '100%', cursor: 'pointer',
-                      borderRadius: '12px',
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                      <div style={{ fontSize: '15px', fontWeight: '800', color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)', transition: 'color 0.3s ease' }}>{name}</div>
-                      {lastData && (
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '600', opacity: 0.6 }}>
-                          {t('lastSession')}: {lastData.sets[0]?.weight}{tracker.settings.weightUnit} × {lastData.sets[0]?.reps}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {isSelected && (
-                        <div style={{ color: 'var(--accent-color)', display: 'flex', alignItems: 'center' }}>
-                          <CheckCircle size={18} strokeWidth={3} />
-                        </div>
-                      )}
-                      {isSelected && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isCustom) {
-                              tracker.removeCustomExercise(selectedMuscle, name);
-                            } else {
-                              tracker.hideDefaultExercise(selectedMuscle, name);
-                            }
-                            if (isSelected) toggleExercise(name);
-                          }}
-                          style={{ padding: '6px', background: 'rgba(255,51,102,0.1)', border: 'none', borderRadius: '8px', color: '#ff3366', cursor: 'pointer', display: 'flex', zIndex: 10, opacity: 0.6 }}
-                        >
-                          <X size={14} strokeWidth={3} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <>
+            <MuscleSelector 
+              selectedMuscle={selectedMuscle} 
+              onSelect={setSelectedMuscle} 
+              lang={lang} 
+            />
+            <ExercisePicker
+              search={search}
+              onSearchChange={setSearch}
+              filteredExercises={filtered}
+              activeExercises={activeExercises}
+              onToggle={toggleExercise}
+              onAddCustom={(name) => tracker.addCustomExercise(selectedMuscle, name)}
+              onRemove={(name, isCustom) => {
+                if (isCustom) tracker.removeCustomExercise(selectedMuscle, name);
+                else tracker.hideDefaultExercise(selectedMuscle, name);
+                if (activeExercises.includes(name)) toggleExercise(name);
+              }}
+              isRtl={isRtl}
+              t={t}
+              weightUnit={tracker.settings.weightUnit}
+              getLastSession={(name) => tracker.getLastSession(name)}
+              customExercises={tracker.customExercises[selectedMuscle]}
+            />
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <button onClick={() => setPhase('logging')} disabled={activeExercises.length === 0} style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px', opacity: activeExercises.length === 0 ? 0.3 : 1 }}>
                 <Activity size={16} /> {t('startWorkout')}
               </button>
             </div>
-          </div>
+          </>
         )}
 
         {phase === 'logging' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0 }}>
-            <div style={{ padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div><div className="section-label">{t('todaySummary')}</div><div style={{ fontSize: '22px', fontWeight: '900' }}>{loggedCount}/{activeExercises.length}</div></div>
-                <div style={{ textAlign: 'right' }}><div className="section-label">{t('totalVolume')}</div><div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-color)' }}>{totalVolume.toFixed(0)}{tracker.settings.weightUnit}</div></div>
-              </div>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {activeExercises.map((name, index) => (
-                <div key={name} data-index={index} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div onTouchStart={() => handleTouchStart(index)} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{ color: 'rgba(255,255,255,0.25)', padding: '10px' }}><GripVertical size={20} /></div>
-                  <button onClick={() => setOpenExercise(name)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', background: 'none', border: 'none', borderBottom: `1px solid ${loggedData[name] ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)'}`, flex: 1, textAlign: 'left' }}>
-                    <div><div style={{ fontSize: '15px', fontWeight: '700', color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)' }}>{loggedData[name] ? '✓ ' : ''}{name}</div></div>
-                    <Plus size={16} color="var(--text-secondary)" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-              <button onClick={handleSave} style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px' }}>
-                <Trophy size={16} /> {t('finishSession')}
-              </button>
-            </div>
-          </div>
+          <SessionLogger
+            activeExercises={activeExercises}
+            loggedData={loggedData}
+            weightUnit={tracker.settings.weightUnit}
+            onOpenExercise={setOpenExercise}
+            onSave={handleSave}
+            handleTouchStart={handleTouchStart}
+            handleTouchMove={handleTouchMove}
+            handleTouchEnd={handleTouchEnd}
+            t={t}
+          />
         )}
       </div>
     </div>

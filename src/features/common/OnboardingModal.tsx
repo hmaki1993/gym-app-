@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useGymTracker } from '../hooks/useGymTracker';
-import { translations } from '../translations';
-import { THEME_COLORS } from '../data/exercises';
+import { useState, useRef, useEffect } from 'react';
+import { useGymTracker } from '../../hooks/useGymTracker';
+import { translations } from '../../translations';
 import { Dumbbell } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -11,8 +10,9 @@ interface Props {
 }
 
 export function OnboardingModal({ tracker, onComplete }: Props) {
-  const lang = tracker.settings.language;
-  const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
+
+
+
   const [name, setName] = useState('');
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
@@ -40,11 +40,11 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
         <div style={{ marginBottom: '24px' }}>
           <div style={{
             width: '72px', height: '72px', borderRadius: '22px',
-            background: 'linear-gradient(135deg, rgba(0,229,160,0.15), rgba(0,229,160,0.05))',
-            border: '1.5px solid rgba(0,229,160,0.3)',
+            background: 'var(--accent-color-alpha)',
+            border: '1.5px solid var(--accent-color-alpha-heavy)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px',
-            boxShadow: '0 8px 32px rgba(0,229,160,0.15)'
+            boxShadow: '0 8px 32px var(--accent-color-alpha)'
           }}>
             <Dumbbell size={36} color="var(--accent-color)" strokeWidth={1.5} />
           </div>
@@ -65,7 +65,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
                 style={{
                   flex: 1, fontSize: '13px', fontWeight: '900',
                   border: `1.5px solid ${language === lg ? 'var(--accent-color)' : 'var(--glass-border)'}`,
-                  background: language === lg ? 'rgba(0,229,160,0.08)' : 'var(--glass-bg)',
+                  background: language === lg ? 'var(--accent-color-alpha)' : 'var(--glass-bg)',
                   color: language === lg ? 'var(--accent-color)' : 'var(--text-secondary)'
                 }}>
                 {lg === 'ar' ? 'عربي 🇪🇬' : 'English 🇬🇧'}
@@ -97,7 +97,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
                 style={{
                   flex: 1, fontSize: '14px', fontWeight: '900',
                   border: `1.5px solid ${unit === u ? 'var(--accent-color)' : 'var(--glass-border)'}`,
-                  background: unit === u ? 'rgba(0,229,160,0.08)' : 'var(--glass-bg)',
+                  background: unit === u ? 'var(--accent-color-alpha)' : 'var(--glass-bg)',
                   color: unit === u ? 'var(--accent-color)' : 'var(--text-secondary)'
                 }}>
                 {u === 'kg' ? '⚖️ KG' : '🏋️ LBS'}

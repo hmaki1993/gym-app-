@@ -51,6 +51,7 @@ export interface GymSettings {
   weightUnit: WeightUnit;
   language: Language;
   accentColor: string;
+  themeMode: 'dark' | 'light';
   defaultRestSeconds: number;
   soundEnabled: boolean;
 }

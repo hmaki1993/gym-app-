@@ -1,16 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useGymTracker } from './hooks/useGymTracker';
 import { translations } from './translations';
-import { Dashboard } from './components/Dashboard';
-import { WorkoutSession } from './components/WorkoutSession';
-import { HistoryPage } from './components/HistoryPage';
-import { ProgressPage } from './components/ProgressPage';
-import { SettingsPage } from './components/SettingsPage';
-import { OnboardingModal } from './components/OnboardingModal';
-import { Dumbbell, TrendingUp, History, Settings, Home } from 'lucide-react';
-import { THEME_COLORS } from './data/exercises';
+import { Dashboard } from './features/dashboard/Dashboard';
+import { WorkoutSession } from './features/workout/WorkoutSession';
+import { HistoryPage } from './features/history/HistoryPage';
+import { ProgressPage } from './features/progress/ProgressPage';
+import { SettingsPage } from './features/settings/SettingsPage';
+import { OnboardingModal } from './features/common/OnboardingModal';
+import { BottomNav } from './features/common/BottomNav';
+import { TrendingUp, History, Settings, Home } from 'lucide-react';
 import gsap from 'gsap';
 import './index.css';
+
+import { Header } from './features/common/Header';
+import { ConfirmModal } from './features/common/ConfirmModal';
 
 type Tab = 'home' | 'history' | 'progress' | 'settings';
 
@@ -26,15 +29,6 @@ export default function App() {
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Apply theme color CSS vars
-  useEffect(() => {
-    const root = document.documentElement;
-    const theme = THEME_COLORS.find(c => c.hex === tracker.settings.accentColor);
-    root.style.setProperty('--accent-color', tracker.settings.accentColor);
-    root.style.setProperty('--accent-color-alpha', `${tracker.settings.accentColor}25`); // 15% opacity for glows
-    root.style.setProperty('--accent-color-alpha-heavy', `${tracker.settings.accentColor}50`); // 30% opacity
-    if (theme) root.style.setProperty('--accent-secondary', theme.secondary);
-  }, [tracker.settings.accentColor]);
 
   // Global edge-swipe prevention & History Trap (Kill Chrome Back Arrow)
   useEffect(() => {
@@ -88,10 +82,18 @@ export default function App() {
     if (newTab === tab) return;
     if (contentRef.current) {
       gsap.to(contentRef.current, {
-        opacity: 0, y: 10, duration: 0.15, ease: 'power2.in',
+        opacity: 0, 
+        y: 20, 
+        scale: 0.95,
+        rotateX: 5,
+        duration: 0.2, 
+        ease: 'power2.in',
         onComplete: () => {
           setTab(newTab);
-          gsap.to(contentRef.current, { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' });
+          gsap.fromTo(contentRef.current, 
+            { opacity: 0, y: -20, scale: 1.05, rotateX: -5 },
+            { opacity: 1, y: 0, scale: 1, rotateX: 0, duration: 0.4, ease: 'power3.out' }
+          );
         }
       });
     } else {
@@ -134,21 +136,7 @@ export default function App() {
 
       {!showWorkout && (
         <>
-          {/* Header */}
-          <div style={{ marginBottom: '5px', direction: 'ltr' }}>
-            {tab === 'home' ? (
-              <div>
-                <h1 className="logo-text" style={{ margin: 0, fontSize: 'var(--logo-font-size)' }}>GYMLOG</h1>
-                <div className="subtitle-text">{t('premiumSystem')}</div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', paddingLeft: '12px' }}>
-                <h1 className="premium-title" style={{ margin: 0, fontSize: '32px' }}>
-                  {t(tab)}
-                </h1>
-              </div>
-            )}
-          </div>
+          <Header tab={tab} t={t} />
 
           {/* Accent divider */}
           <div className="accent-divider" style={{ marginBottom: '5px' }} />
@@ -178,17 +166,11 @@ export default function App() {
           </div>
 
           {/* Bottom Navigation */}
-          <nav className="bottom-nav">
-            {NAV_ITEMS.map(item => (
-              <button
-                key={item.key}
-                className={`nav-btn ${tab === item.key ? 'active' : ''}`}
-                onClick={() => switchTab(item.key)}
-              >
-                {item.icon}
-              </button>
-            ))}
-          </nav>
+          <BottomNav 
+            items={NAV_ITEMS}
+            activeTab={tab}
+            onTabChange={switchTab}
+          />
         </>
       )}
 
@@ -208,19 +190,14 @@ export default function App() {
 
       {/* Delete Confirm Dialog */}
       {confirmDelete && (
-        <div className="modal-overlay" style={{ alignItems: 'center' }}>
-          <div className="glass-panel" style={{ width: '85%', maxWidth: '340px', padding: '28px 24px', textAlign: 'center', borderRadius: '20px' }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>🗑️</div>
-            <div className="premium-title" style={{ fontSize: '32px', marginBottom: '8px' }}>
-              {t('deleteWorkout').toUpperCase()}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>{t('confirmDelete')}</div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => setConfirmDelete(null)} className="glass-button" style={{ flex: 1, borderRadius: '12px' }}>{t('cancel')}</button>
-              <button onClick={confirmDeleteAction} className="danger-button" style={{ flex: 1, borderRadius: '12px' }}>{t('confirm')}</button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title={t('deleteWorkout')}
+          message={t('confirmDelete')}
+          confirmLabel={t('confirm')}
+          cancelLabel={t('cancel')}
+          onConfirm={confirmDeleteAction}
+          onCancel={() => setConfirmDelete(null)}
+        />
       )}
     </div>
   );
