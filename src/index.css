@@ -21,6 +21,7 @@
   box-sizing: border-box;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
+  touch-action: pan-y; /* Block horizontal gestures globally */
 }
 
 html,
@@ -36,7 +37,8 @@ body,
   overflow: hidden;
   position: fixed;
   overscroll-behavior: none !important;
-  touch-action: none !important;
+  overscroll-behavior-x: none !important;
+  touch-action: pan-y !important; /* Allow scroll, block edge-swipe navigation */
 }
 
 .heading-font {

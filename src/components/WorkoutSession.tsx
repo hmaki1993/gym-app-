@@ -31,6 +31,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [showSaved, setShowSaved] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<HTMLDivElement>(null);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const workoutStartTime = useRef<number | null>(null);
@@ -68,6 +69,14 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       gsap.fromTo(containerRef.current.children,
         { y: 20, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.06, duration: 0.4, ease: 'power3.out' }
+      );
+    }
+
+    // Timer Curtain Drop Effect
+    if (phase === 'logging' && timerRef.current) {
+      gsap.fromTo(timerRef.current,
+        { y: -30, opacity: 0, scale: 0.9 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.7)', delay: 0.2 }
       );
     }
   }, [phase]);
@@ -155,13 +164,22 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!openExercise) return;
       const x = e.touches[0].clientX;
       const y = e.touches[0].clientY;
       const dx = Math.abs(x - touchState.current.startX);
       const dy = Math.abs(y - touchState.current.startY);
 
-      // Block horizontal swipe immediately to prevent browser back arrow
+      // CRITICAL: Block edge-swipe navigation arrows for the browser
+      const threshold = 80;
+      const isEdge = touchState.current.startX < threshold || touchState.current.startX > window.innerWidth - threshold;
+      
+      if (isEdge && dx > dy && dx > 2) {
+        if (e.cancelable) e.preventDefault();
+      }
+
+      if (!openExercise) return;
+      
+      // Block horizontal swipe immediately to prevent browser back arrow during exercise view
       if (dx > 2) {
         if (e.cancelable) e.preventDefault();
       }
@@ -253,7 +271,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const totalVolume = Object.values(loggedData).flat().reduce((s, set) => s + set.weight * set.reps, 0);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden', padding: '16px 20px 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden', padding: '16px 20px 0', touchAction: 'pan-y', overscrollBehaviorX: 'none' }}>
       {openExercise && (
         <div style={{
           position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
@@ -307,6 +325,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 <ExerciseCard
                   key={openExercise} exerciseName={openExercise} muscleGroup={selectedMuscle!}
                   tracker={tracker} initialSets={loggedData[openExercise]}
+                  elapsedSeconds={elapsedSeconds}
                   onDone={(sets) => handleSetsDone(openExercise, sets)}
                   onClose={() => setOpenExercise(null)} fullPage={true}
                 />
@@ -320,38 +339,62 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div>
-            <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-1.2px', lineHeight: '1', marginBottom: '3px' }}>
+            <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-1.2px', lineHeight: '1', marginBottom: '3px', fontFamily: 'Kanit, sans-serif' }}>
               {phase === 'exercises' ? t('startWorkout').toUpperCase() : t('finishSession').toUpperCase()}
             </div>
             <div style={{ width: '30px', height: '2.5px', background: 'var(--accent-color)', borderRadius: '2px' }} />
           </div>
           
-          {/* Live Timer Badge */}
-          <div style={{ 
-            background: 'rgba(255, 107, 0, 0.08)', 
-            padding: '5px 12px', 
+          {/* Live Timer Badge - Minimal Floating Style */}
+          {phase === 'logging' && (
+            <div ref={timerRef} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              animation: 'pulse-glow 2s infinite ease-in-out',
+              padding: '0 5px'
+            }}>
+              <Clock size={16} color="var(--accent-color)" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }} />
+              <span style={{ 
+                fontFamily: 'Kanit, sans-serif', 
+                fontSize: '20px', 
+                fontWeight: '800', 
+                color: '#fff',
+                letterSpacing: '0.5px',
+                textShadow: '0 0 10px var(--accent-color-alpha)'
+              }}>
+                {formatElapsed(elapsedSeconds)}
+              </span>
+            </div>
+          )}
+        </div>
+        <button 
+          onClick={onClose} 
+          onPointerDown={(e) => e.stopPropagation()}
+          className="exit-btn-premium"
+          style={{ 
+            background: 'rgba(255, 51, 102, 0.12)', 
+            border: 'none', 
+            width: '40px', 
+            height: '40px', 
             borderRadius: '12px', 
+            color: '#ff3366', 
+            cursor: 'pointer', 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '6px',
-            border: '1px solid rgba(255, 107, 0, 0.15)',
-            boxShadow: '0 0 15px rgba(255, 107, 0, 0.05)'
-          }}>
-            <Clock size={12} color="var(--accent-color)" strokeWidth={3} />
-            <span style={{ 
-              fontFamily: 'Inter, sans-serif', 
-              fontSize: '14px', 
-              fontWeight: '800', 
-              color: 'var(--accent-color)',
-              letterSpacing: '0.5px'
-            }}>
-              {formatElapsed(elapsedSeconds)}
-            </span>
-          </div>
-        </div>
-        <button onClick={onClose} style={{ background: 'rgba(255, 51, 102, 0.12)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', color: '#cc0033', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <LogOut size={18} strokeWidth={2.5} />
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <LogOut size={22} strokeWidth={2.5} />
         </button>
+
+        <style>{`
+          .exit-btn-premium:active {
+            transform: scale(0.9);
+            background: rgba(255, 51, 102, 0.22) !important;
+          }
+        `}</style>
       </div>
 
       <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>

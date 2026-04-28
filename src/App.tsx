@@ -38,15 +38,30 @@ export default function App() {
 
   // Global edge-swipe prevention & History Trap (Kill Chrome Back Arrow)
   useEffect(() => {
-    // 1. Block the gesture via JS
+    const touchState = { startX: 0, startY: 0, isEdge: false };
+
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      const threshold = 60; // Larger threshold to catch the gesture
+      const threshold = 100; // Increased threshold
+      touchState.startX = touch.pageX;
+      touchState.startY = touch.pageY;
+      touchState.isEdge = touch.pageX < threshold || touch.pageX > window.innerWidth - threshold;
       
-      // ONLY block if we are NOT in the bottom navigation area (approx bottom 80px)
-      if (touch.pageY < window.innerHeight - 80) {
-        if (touch.pageX < threshold || touch.pageX > window.innerWidth - threshold) {
-          e.preventDefault();
+      // If NOT on a button and in edge zone, block immediately
+      if (touchState.isEdge && !(e.target as HTMLElement).closest('button, a, input, [role="button"]')) {
+        if (e.cancelable) e.preventDefault();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchState.isEdge) {
+        const touch = e.touches[0];
+        const dx = Math.abs(touch.pageX - touchState.startX);
+        const dy = Math.abs(touch.pageY - touchState.startY);
+
+        // AGGRESSIVE KILL: If any horizontal movement starts in edge zone, block it
+        if (dx > 0 && dx > dy) {
+          if (e.cancelable) e.preventDefault();
         }
       }
     };
@@ -57,11 +72,13 @@ export default function App() {
       window.history.pushState(null, '', window.location.href);
     };
 
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
     window.addEventListener('popstate', handlePopState);
     
     return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchstart', handleTouchStart, { capture: true } as any);
+      window.removeEventListener('touchmove', handleTouchMove, { capture: true } as any);
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
@@ -125,11 +142,8 @@ export default function App() {
                 <div className="subtitle-text">{t('premiumSystem')}</div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.7 }}>
-                  GYMLOG
-                </div>
-                <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-1px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-1.5px', fontFamily: 'Kanit, sans-serif' }}>
                   {t(tab)}
                 </h1>
               </div>

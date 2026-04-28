@@ -16,9 +16,10 @@ interface Props {
   onPrev?: () => void;
   inline?: boolean;
   fullPage?: boolean;
+  elapsedSeconds?: number;
 }
 
-export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClose, onNext, onPrev, inline, fullPage }: Props) {
+export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClose, onNext, onPrev, inline, fullPage, elapsedSeconds }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const unit = tracker.settings.weightUnit;
@@ -28,7 +29,6 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
 
   const [sets, setSets] = useState<{ weight: string | number; reps: string | number; restTime?: number }[]>(() => {
     if (initialSets && initialSets.length > 0) return initialSets.map(s => ({ ...s }));
-    if (last && last.sets.length > 0) return last.sets.map(s => ({ ...s }));
     return [{ weight: '', reps: '' }];
   });
 
@@ -54,6 +54,18 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
       gsap.fromTo(cardRef.current, { y: 30, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'power3.out' });
     }
   }, [fullPage]);
+
+  const formatElapsed = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const parts = [
+      h > 0 ? h.toString().padStart(2, '0') : null,
+      m.toString().padStart(2, '0'),
+      s.toString().padStart(2, '0')
+    ].filter(p => p !== null);
+    return parts.join(':');
+  };
 
   useEffect(() => {
     if (restActive && restRemaining > 0) {
@@ -165,28 +177,67 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '4px', height: '28px', background: 'var(--accent-color)', borderRadius: '2px', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Kanit, sans-serif' }}>
                 {exerciseName}
               </h2>
-              {pr && (
-                <div className="pr-badge" style={{ marginTop: '2px', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '700' }}>
-                  🏆 PR: {pr.weight}{unit} × {pr.reps}
-                </div>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
+                {pr && (
+                  <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '12px', fontWeight: '700', fontFamily: 'Kanit, sans-serif' }}>
+                    🏆 PR: {pr.weight}{unit} × {pr.reps}
+                  </div>
+                )}
+                
+                {/* Live Session Timer inside Exercise Card */}
+                {elapsedSeconds !== undefined && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px',
+                    opacity: 0.8,
+                    animation: 'pulse-glow 2s infinite ease-in-out'
+                  }}>
+                    <Clock size={12} color="var(--accent-color)" strokeWidth={2.5} />
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: '#fff', fontFamily: 'Kanit, sans-serif' }}>
+                      {formatElapsed(elapsedSeconds)}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <button
             onClick={onClose}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="close-btn-premium"
             style={{
-              background: 'rgba(255, 51, 102, 0.15)', border: 'none', padding: '0',
-              width: '32px', height: '32px', borderRadius: '10px', color: '#ff3366',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.2s ease', flexShrink: 0
+              background: 'rgba(255, 51, 102, 0.15)', 
+              border: 'none', 
+              padding: '0',
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '10px', 
+              color: '#ff3366',
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
+              flexShrink: 0,
+              zIndex: 100,
+              position: 'relative',
+              pointerEvents: 'auto'
             }}
           >
             <X size={20} strokeWidth={3} />
           </button>
         </div>
+
+        <style>{`
+          .close-btn-premium:active {
+            transform: scale(0.9);
+            background: rgba(255, 51, 102, 0.25) !important;
+          }
+        `}</style>
 
         {last && (
           <div style={{

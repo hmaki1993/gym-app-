@@ -104,10 +104,13 @@ export function ProgressPage({ tracker }: Props) {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  // Weekly bar data
+  // Weekly bar data (Saturday to Friday)
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
+    // Adjust to get the most recent Saturday (JS: Sunday=0, Monday=1... Saturday=6)
+    const day = d.getDay();
+    const diff = (day + 1) % 7; // Distance to previous Saturday
+    d.setDate(d.getDate() - diff + i);
     return d.toDateString();
   });
 
@@ -218,33 +221,55 @@ export function ProgressPage({ tracker }: Props) {
             const isToday = new Date().toDateString() === day;
             const isSelected = selectedDay === day;
             const count = weekCounts[i];
-            const height = count > 0 ? Math.max(30, count * 25) : 14;
+            // Increased min height for better touch/visibility
+            const height = count > 0 ? Math.max(34, count * 25) : 24; 
             const dayLabel = new Date(day).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { weekday: 'short' });
+            
             return (
               <div 
                 key={day} 
                 onClick={() => setSelectedDay(isSelected ? null : day)}
-                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                onPointerDown={(e) => e.stopPropagation()}
+                role="button"
+                className="day-column"
+                style={{ 
+                  flex: 1, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'flex-end',
+                  gap: '10px', 
+                  cursor: 'pointer',
+                  paddingBottom: '5px',
+                  height: '100%',
+                  transition: 'transform 0.2s ease',
+                  pointerEvents: 'auto'
+                }}
               >
                 <div style={{
-                  width: '14px', height: `${height}px`,
-                  background: count > 0
-                    ? `linear-gradient(180deg, var(--accent-color), ${isSelected ? '#fff' : '#ff8c00'})`
-                    : (isToday ? 'rgba(255, 107, 0, 0.15)' : 'rgba(255,255,255,0.04)'),
-                  borderRadius: '10px',
+                  width: '16px', 
+                  height: `${height}px`,
+                  background: isSelected
+                    ? `linear-gradient(180deg, #fff, var(--accent-color))`
+                    : (count > 0 
+                        ? `linear-gradient(180deg, var(--accent-color), #ff8c00)` 
+                        : (isToday ? 'rgba(255, 140, 0, 0.3)' : 'rgba(255,255,255,0.06)')),
+                  borderRadius: '12px',
                   boxShadow: isSelected
-                    ? `0 0 15px var(--accent-color)`
-                    : (count > 0 ? '0 4px 12px rgba(255, 107, 0, 0.35)' : 'none'),
-                  border: isSelected ? '2px solid #fff' : (isToday && count === 0 ? '1px solid rgba(255, 107, 0, 0.4)' : 'none'),
+                    ? `0 0 20px var(--accent-color)`
+                    : (isToday ? '0 0 10px rgba(255, 140, 0, 0.4)' : 'none'),
+                  border: isSelected ? '2px solid #fff' : (isToday ? '1px solid rgba(255, 140, 0, 0.6)' : 'none'),
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  opacity: (selectedDay && !isSelected) ? 0.3 : 1
+                  opacity: (selectedDay && !isSelected) ? 0.3 : 1,
+                  animation: isToday && !isSelected ? 'pulse-orange 2s infinite ease-in-out' : 'none'
                 }} />
                 <span style={{ 
-                  fontSize: '10px', 
-                  fontWeight: isToday || isSelected ? '900' : '700', 
-                  color: isSelected ? 'var(--accent-color)' : (isToday ? 'var(--text-primary)' : 'var(--text-secondary)'), 
+                  fontSize: '11px', 
+                  fontWeight: isToday || isSelected ? '950' : '700', 
+                  color: isSelected ? 'var(--accent-color)' : (isToday ? '#ff8c00' : 'var(--text-secondary)'), 
                   textTransform: 'uppercase',
-                  opacity: isToday || isSelected ? 1 : 0.4
+                  opacity: isToday || isSelected ? 1 : 0.4,
+                  letterSpacing: '0.5px'
                 }}>
                   {dayLabel.slice(0, 2)}
                 </span>
@@ -252,6 +277,17 @@ export function ProgressPage({ tracker }: Props) {
             );
           })}
         </div>
+
+        <style>{`
+          @keyframes pulse-orange {
+            0% { box-shadow: 0 0 5px rgba(255, 140, 0, 0.2); border-color: rgba(255, 140, 0, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(255, 140, 0, 0.6); border-color: rgba(255, 140, 0, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(255, 140, 0, 0.2); border-color: rgba(255, 140, 0, 0.3); }
+          }
+          .day-column:active {
+            transform: scale(0.9);
+          }
+        `}</style>
       </div>
 
       {/* Personal Records */}
