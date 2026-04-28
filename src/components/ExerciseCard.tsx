@@ -174,10 +174,9 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
 
       <div style={{ flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '4px', height: '28px', background: 'var(--accent-color)', borderRadius: '2px', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Kanit, sans-serif' }}>
+              <h2 className="premium-title" style={{ margin: 0, fontSize: '28px' }}>
                 {exerciseName}
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>

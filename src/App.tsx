@@ -46,7 +46,7 @@ export default function App() {
       touchState.startX = touch.pageX;
       touchState.startY = touch.pageY;
       touchState.isEdge = touch.pageX < threshold || touch.pageX > window.innerWidth - threshold;
-      
+
       // If NOT on a button and in edge zone, block immediately
       if (touchState.isEdge && !(e.target as HTMLElement).closest('button, a, input, [role="button"]')) {
         if (e.cancelable) e.preventDefault();
@@ -75,7 +75,7 @@ export default function App() {
     window.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
     window.addEventListener('popstate', handlePopState);
-    
+
     return () => {
       window.removeEventListener('touchstart', handleTouchStart, { capture: true } as any);
       window.removeEventListener('touchmove', handleTouchMove, { capture: true } as any);
@@ -119,12 +119,12 @@ export default function App() {
 
   return (
     <div ref={appRef} dir={isRtl ? 'rtl' : 'ltr'}
-      style={{ 
-        width: '100vw', 
-        minWidth: '100%',        height: '100dvh', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        padding: showWorkout ? '0' : '5px 16px 0', 
+      style={{
+        width: '100vw',
+        minWidth: '100%', height: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: showWorkout ? '0' : '5px 16px 0',
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
@@ -142,8 +142,8 @@ export default function App() {
                 <div className="subtitle-text">{t('premiumSystem')}</div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-                <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-1.5px', fontFamily: 'Kanit, sans-serif' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', paddingLeft: '12px' }}>
+                <h1 className="premium-title" style={{ margin: 0, fontSize: '32px' }}>
                   {t(tab)}
                 </h1>
               </div>
@@ -154,13 +154,13 @@ export default function App() {
           <div className="accent-divider" style={{ marginBottom: '5px' }} />
 
           {/* Main Content Area - Handles internal scroll and padding */}
-          <div ref={contentRef} className="hide-scroll" style={{ 
-            flex: 1, 
+          <div ref={contentRef} className="hide-scroll" style={{
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            overflowY: 'auto', 
+            overflowY: 'auto',
             overflowX: 'hidden',
-            paddingBottom: '10px', 
+            paddingBottom: '10px',
             touchAction: 'pan-y'
           }}>
             {tab === 'home' && (
@@ -211,7 +211,9 @@ export default function App() {
         <div className="modal-overlay" style={{ alignItems: 'center' }}>
           <div className="glass-panel" style={{ width: '85%', maxWidth: '340px', padding: '28px 24px', textAlign: 'center', borderRadius: '20px' }}>
             <div style={{ fontSize: '32px', marginBottom: '12px' }}>🗑️</div>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '8px' }}>{t('deleteWorkout')}</div>
+            <div className="premium-title" style={{ fontSize: '32px', marginBottom: '8px' }}>
+              {t('deleteWorkout').toUpperCase()}
+            </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>{t('confirmDelete')}</div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setConfirmDelete(null)} className="glass-button" style={{ flex: 1, borderRadius: '12px' }}>{t('cancel')}</button>

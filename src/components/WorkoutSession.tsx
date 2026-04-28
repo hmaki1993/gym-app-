@@ -339,10 +339,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div>
-            <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-1.2px', lineHeight: '1', marginBottom: '3px', fontFamily: 'Kanit, sans-serif' }}>
+            <div className="premium-title" style={{ fontSize: '24px', color: 'var(--text-primary)', lineHeight: '1', marginBottom: '3px', fontFamily: 'Outfit, sans-serif' }}>
               {phase === 'exercises' ? t('startWorkout').toUpperCase() : t('finishSession').toUpperCase()}
             </div>
-            <div style={{ width: '30px', height: '2.5px', background: 'var(--accent-color)', borderRadius: '2px' }} />
           </div>
           
           {/* Live Timer Badge - Minimal Floating Style */}
@@ -356,7 +355,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             }}>
               <Clock size={16} color="var(--accent-color)" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }} />
               <span style={{ 
-                fontFamily: 'Kanit, sans-serif', 
+                fontFamily: 'Outfit, sans-serif', 
                 fontSize: '20px', 
                 fontWeight: '800', 
                 color: '#fff',
@@ -373,7 +372,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           onPointerDown={(e) => e.stopPropagation()}
           className="exit-btn-premium"
           style={{ 
-            background: 'rgba(255, 51, 102, 0.12)', 
+            background: 'none', 
             border: 'none', 
             width: '40px', 
             height: '40px', 

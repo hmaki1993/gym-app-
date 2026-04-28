@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { useGymTracker } from '../hooks/useGymTracker';
 import { translations } from '../translations';
 import { THEME_COLORS } from '../data/exercises';
-import { Volume2, VolumeX, Settings } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import gsap from 'gsap';
 
 interface Props {
@@ -10,8 +10,21 @@ interface Props {
 }
 
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0' }}>
-    <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>{label}</span>
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '18px 0',
+    borderBottom: '1px solid rgba(255,255,255,0.03)'
+  }}>
+    <span style={{
+      fontSize: '13px',
+      fontWeight: '700',
+      color: 'rgba(255,255,255,0.4)',
+      textTransform: 'uppercase',
+      letterSpacing: '1px',
+      fontFamily: 'Outfit, sans-serif'
+    }}>{label}</span>
     {children}
   </div>
 );
@@ -22,23 +35,52 @@ export function SettingsPage({ tracker }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [localName, setLocalName] = React.useState(tracker.settings.userName);
 
-  return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+  useEffect(() => {
+    if (containerRef.current) {
+      gsap.fromTo(containerRef.current.children,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: 'power2.out' }
+      );
+    }
+  }, []);
 
-      {/* Account Section */}
-      <div style={{ padding: '0 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Settings size={14} color="var(--accent-color)" />
-          <span className="section-label">{t('settings')}</span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <Row label={t('userName')}>
+  return (
+    <div ref={containerRef} style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      padding: '40px 16px',
+      minHeight: '80vh',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    }}>
+
+      {/* Group 1: Identity & Language */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', alignItems: 'center' }}>
+        
+        {/* Name Frame */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('userName')}</span>
+          <div style={{ 
+            background: 'none', 
+            padding: '14px 20px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            width: '240px',
+            transition: 'all 0.3s ease'
+          }} className="name-box-elite">
             <input
               style={{
-                background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)',
-                padding: '4px 0', fontSize: '15px', fontWeight: '800', color: '#fff',
-                outline: 'none', width: '160px', textAlign: lang === 'ar' ? 'right' : 'left',
-                fontFamily: 'Outfit'
+                background: 'none', 
+                border: 'none', 
+                fontSize: '18px', 
+                fontWeight: '950', 
+                color: '#fff',
+                outline: 'none', 
+                width: '100%', 
+                textAlign: 'center',
+                fontFamily: 'Outfit, sans-serif'
               }}
               value={localName}
               onChange={e => setLocalName(e.target.value)}
@@ -48,119 +90,109 @@ export function SettingsPage({ tracker }: Props) {
               }}
               placeholder="..."
             />
-          </Row>
+          </div>
+        </div>
 
-          <Row label={t('language')}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {(['ar', 'en'] as const).map((lg, idx) => (
-                <React.Fragment key={lg}>
-                  {idx > 0 && <span style={{ color: 'rgba(255,255,255,0.05)', margin: '0 12px' }}>|</span>}
-                  <button
-                    onClick={() => tracker.setSettings({ language: lg })}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: '13px', fontWeight: '900',
-                      color: tracker.settings.language === lg ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
-                      transition: 'all 0.2s ease', padding: '6px'
-                    }}
-                  >
-                    {lg === 'ar' ? 'عربي' : 'ENGLISH'}
-                  </button>
-                </React.Fragment>
-              ))}
-            </div>
-          </Row>
-
-          <Row label={t('weightUnit')}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {(['kg', 'lbs'] as const).map((u, idx) => (
-                <React.Fragment key={u}>
-                  {idx > 0 && <span style={{ color: 'rgba(255,255,255,0.05)', margin: '0 12px' }}>|</span>}
-                  <button
-                    onClick={() => tracker.setSettings({ weightUnit: u })}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: '13px', fontWeight: '900',
-                      color: tracker.settings.weightUnit === u ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
-                      transition: 'all 0.2s ease', padding: '6px'
-                    }}
-                  >
-                    {u.toUpperCase()}
-                  </button>
-                </React.Fragment>
-              ))}
-            </div>
-          </Row>
+        {/* Language Frame */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('language')}</span>
+          <div style={{ 
+            display: 'flex', 
+            gap: '1px', 
+            background: 'none', 
+            border: '1px solid rgba(255,255,255,0.1)', 
+            padding: '4px', 
+            borderRadius: '8px',
+            width: '240px',
+            justifyContent: 'space-between'
+          }}>
+            {(['ar', 'en'] as const).map((lg) => (
+              <button
+                key={lg}
+                onClick={() => tracker.setSettings({ language: lg })}
+                style={{
+                  background: tracker.settings.language === lg ? 'var(--accent-color)' : 'none',
+                  border: 'none', cursor: 'pointer',
+                  fontSize: '11px', fontWeight: '950',
+                  color: tracker.settings.language === lg ? '#000' : 'rgba(255,255,255,0.3)',
+                  transition: 'all 0.3s ease', 
+                  flex: 1,
+                  padding: '10px 0',
+                  borderRadius: '6px',
+                  letterSpacing: '1px',
+                  fontFamily: 'Outfit, sans-serif'
+                }}
+              >
+                {lg === 'ar' ? 'عربي' : 'ENGLISH'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '8px 0' }} />
-
-      {/* Preferences Section */}
-      <div style={{ padding: '0 4px' }}>
-        <div style={{ marginBottom: '12px' }}>
-          <span className="section-label">TRAINING PREFERENCES</span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <Row label={t('defaultRest')}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {[45, 60, 90, 120, 180].map((s, idx) => (
-                <React.Fragment key={s}>
-                  {idx > 0 && <span style={{ color: 'rgba(255,255,255,0.05)', margin: '0 8px' }}>|</span>}
-                  <button
-                    onClick={() => tracker.setSettings({ defaultRestSeconds: s })}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: '12px', fontWeight: '900',
-                      color: tracker.settings.defaultRestSeconds === s ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
-                      transition: 'all 0.2s ease', padding: '4px'
-                    }}
-                  >
-                    {s}s
-                  </button>
-                </React.Fragment>
-              ))}
-            </div>
-          </Row>
-
-          <Row label={t('sound')}>
-            <button
-              onClick={() => tracker.setSettings({ soundEnabled: !tracker.settings.soundEnabled })}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '13px', fontWeight: '900',
-                color: tracker.settings.soundEnabled ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
-                display: 'flex', alignItems: 'center', gap: '8px', padding: '6px'
-              }}
-            >
-              {tracker.settings.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
-              {tracker.settings.soundEnabled ? t('ON') : t('OFF')}
-            </button>
-          </Row>
-        </div>
+      {/* Group 2: Preferences (Centered Frame) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+        <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('sound')}</span>
+        <button
+          onClick={() => tracker.setSettings({ soundEnabled: !tracker.settings.soundEnabled })}
+          style={{
+            background: 'none', 
+            border: tracker.settings.soundEnabled ? '1px solid var(--accent-color)' : '1px solid rgba(255,255,255,0.1)', 
+            cursor: 'pointer',
+            fontSize: '14px', fontWeight: '950',
+            color: tracker.settings.soundEnabled ? 'var(--accent-color)' : 'rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', 
+            padding: '14px',
+            width: '240px',
+            borderRadius: '8px',
+            fontFamily: 'Outfit, sans-serif',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          {tracker.settings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          {tracker.settings.soundEnabled ? t('ON') : t('OFF')}
+        </button>
       </div>
 
-      <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '8px 0' }} />
-
-      {/* Theme Colors */}
-      <div style={{ padding: '0 4px' }}>
-        <div className="section-label" style={{ marginBottom: '14px', fontSize: '10px' }}>APPEARANCE</div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+      {/* Group 3: Visuals (Bottom) */}
+      <div style={{ marginTop: '20px', padding: '24px 0', width: '100%' }}>
+        <div style={{ 
+          fontSize: '11px', 
+          fontWeight: '900', 
+          color: 'rgba(255,255,255,0.2)', 
+          marginBottom: '24px', 
+          letterSpacing: '3px', 
+          fontFamily: 'Outfit, sans-serif',
+          textTransform: 'uppercase',
+          textAlign: 'center'
+        }}>Appearance</div>
+        <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', justifyContent: 'center' }}>
           {THEME_COLORS.map(theme => (
             <button
-              key={theme.hex}
-              className={`color-dot-btn ${tracker.settings.accentColor === theme.hex ? 'active' : ''}`}
-              style={{ 
-                width: '28px', height: '28px',
-                background: theme.hex, 
-                border: tracker.settings.accentColor === theme.hex ? `2px solid #fff` : '2px solid transparent',
-                boxShadow: tracker.settings.accentColor === theme.hex ? `0 0 10px ${theme.hex}` : 'none'
-              }}
+              key={theme.name}
               onClick={() => tracker.setSettings({ accentColor: theme.hex })}
+              style={{
+                width: '36px', height: '36px',
+                borderRadius: '50%',
+                background: theme.hex,
+                border: tracker.settings.accentColor === theme.hex ? '3px solid #fff' : '3px solid transparent',
+                cursor: 'pointer',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: tracker.settings.accentColor === theme.hex ? `0 0 20px ${theme.hex}` : 'none',
+                transform: tracker.settings.accentColor === theme.hex ? 'scale(1.2)' : 'scale(1)'
+              }}
             />
           ))}
         </div>
       </div>
+
+      <style>{`
+        .name-box-elite:focus-within {
+          border-color: var(--accent-color) !important;
+          box-shadow: 0 0 15px rgba(0,229,160,0.1), inset 0 0 10px rgba(0,0,0,0.2) !important;
+          transform: translateY(-1px);
+        }
+      `}</style>
     </div>
   );
 }

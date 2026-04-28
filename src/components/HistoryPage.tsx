@@ -37,9 +37,38 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
 
   if (tracker.logs.length === 0) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', gap: '16px', opacity: 0.6 }}>
-        <Dumbbell size={48} color="var(--text-secondary)" strokeWidth={1.5} />
-        <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', textAlign: 'center' }}>{t('noHistory')}</div>
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: '24px', 
+        opacity: 0.3,
+        paddingBottom: '20%' // Visual adjustment to feel more centered in the viewport
+      }}>
+        <div style={{ 
+          width: '80px', 
+          height: '80px', 
+          borderRadius: '50%', 
+          background: 'rgba(255,255,255,0.03)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <Dumbbell size={32} color="var(--text-secondary)" strokeWidth={1.5} />
+        </div>
+        <div style={{ 
+          fontSize: '12px', 
+          fontWeight: '950', 
+          color: 'var(--text-secondary)', 
+          textAlign: 'center',
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          {t('noHistory')}
+        </div>
       </div>
     );
   }
