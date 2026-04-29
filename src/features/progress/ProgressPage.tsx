@@ -135,6 +135,8 @@ export function ProgressPage({ tracker }: Props) {
     }
   }, [tracker.logs.length]);
 
+  // Chart entrance animation removed for rocket-speed feel
+  /*
   useEffect(() => {
     if (chartsContainerRef.current && chartsContainerRef.current.children.length > 0) {
       gsap.fromTo(chartsContainerRef.current.children,
@@ -143,6 +145,7 @@ export function ProgressPage({ tracker }: Props) {
       );
     }
   }, [selectedMuscle]);
+  */
 
   // Exercise progress data for selected muscle
   const exerciseFreq: Record<string, number> = {};

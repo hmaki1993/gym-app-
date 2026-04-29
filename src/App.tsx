@@ -30,74 +30,87 @@ export default function App() {
   const contentRef = useRef<HTMLDivElement>(null);
 
 
-  // ── Nuclear Chrome Back-Arrow Killer ──
+  // ── Unified Navigation & History System ──
   useEffect(() => {
     let startX = 0;
     let startY = 0;
-    let edgeSwipeBlocked = false;
-    const EDGE_THRESHOLD = 30; // px from screen edge
+    const EDGE_THRESHOLD = 30;
 
-    const isInsideAllowedScroller = (el: EventTarget | null): boolean => {
-      if (!el) return false;
-      return !!(el as HTMLElement).closest?.('.allow-swipe');
-    };
-
+    // 1. Edge Swipe Blocker (Refined for Internal Back)
     const onTouchStart = (e: TouchEvent) => {
-      const t = e.touches[0];
-      startX = t.clientX;
-      startY = t.clientY;
-      edgeSwipeBlocked = false;
-
-      // If touch starts in the edge zone AND it's not inside an allowed horizontal scroller
-      if (
-        (startX < EDGE_THRESHOLD || startX > window.innerWidth - EDGE_THRESHOLD) &&
-        !isInsideAllowedScroller(e.target)
-      ) {
-        edgeSwipeBlocked = true;
-        // Block immediately at touchstart so Chrome never sees it
-        if (e.cancelable) e.preventDefault();
-      }
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (!edgeSwipeBlocked) return;
-      // Keep blocking the entire gesture until finger lifts
-      if (e.cancelable) e.preventDefault();
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+      const dx = Math.abs(x - startX);
+      const dy = Math.abs(y - startY);
+
+      // Block native browser arrow but ALLOW the gesture to trigger popstate
+      // We block if it's horizontal and near the edge, but we let it pass 
+      // if it's meant to be a fast flick for the system back gesture.
+      if ((startX < EDGE_THRESHOLD || startX > window.innerWidth - EDGE_THRESHOLD) && dx > dy && dx > 10) {
+        // Only prevent if we haven't handled it via history
+        if (!(e.target as HTMLElement).closest('.allow-swipe') && e.cancelable) {
+           // We block the browser's UI arrow but the system back still fires popstate
+           e.preventDefault();
+        }
+      }
     };
 
-    // History trap: push a dummy state so there's nowhere to go back to
+    // 2. The Internal "Back Button" Engine
+    const handlePopState = () => {
+      // Logic: If Workout is open -> Close it. If not on Home -> Go Home.
+      if (showWorkout) {
+        setShowWorkout(false);
+        window.history.pushState(null, '', window.location.href); // Keep the trap active
+      } else if (tab !== 'home') {
+        setTab('home');
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+
+    // Initial trap
     window.history.pushState(null, '', window.location.href);
-    const onPopState = () => {
-      window.history.pushState(null, '', window.location.href);
-    };
 
-    window.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
-    window.addEventListener('popstate', onPopState);
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
-      window.removeEventListener('touchstart', onTouchStart, { capture: true } as any);
-      window.removeEventListener('touchmove', onTouchMove, { capture: true } as any);
-      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [tab, showWorkout]); // Re-bind when state changes to have fresh values
 
-  // Tab change animation
+  // When opening workout, push a state so back gesture can close it
+  useEffect(() => {
+    if (showWorkout) {
+      window.history.pushState({ workout: true }, '', window.location.href);
+    }
+  }, [showWorkout]);
+
+  // Update history when tab changes so back gesture knows where to go
   const switchTab = (newTab: Tab) => {
     if (newTab === tab) return;
+    window.history.pushState({ tab: newTab }, '', window.location.href);
+    
     if (contentRef.current) {
+      // Rocket-speed transition
       gsap.to(contentRef.current, {
-        opacity: 0, 
-        y: 20, 
-        scale: 0.95,
-        rotateX: 5,
-        duration: 0.2, 
+        opacity: 0,
+        x: newTab === 'home' ? 10 : -10,
+        duration: 0.1, // Ultra fast
+        force3D: true,
         ease: 'power2.in',
         onComplete: () => {
           setTab(newTab);
-          gsap.fromTo(contentRef.current, 
-            { opacity: 0, y: -20, scale: 1.05, rotateX: -5 },
-            { opacity: 1, y: 0, scale: 1, rotateX: 0, duration: 0.4, ease: 'power3.out' }
+          gsap.fromTo(contentRef.current,
+            { opacity: 0, x: newTab === 'home' ? -10 : 10 },
+            { opacity: 1, x: 0, duration: 0.15, ease: 'power2.out', force3D: true }
           );
         }
       });
@@ -131,7 +144,7 @@ export default function App() {
         minWidth: '100%', height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        padding: showWorkout ? '0' : '5px 16px 0',
+        padding: showWorkout ? '0' : 'calc(env(safe-area-inset-top) + 5px) 16px 0',
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',

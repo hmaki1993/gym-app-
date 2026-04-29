@@ -150,7 +150,18 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', transform: 'translateZ(20px)' }}>
-              <h2 className="premium-title" style={{ margin: 0, fontSize: '28px' }}>{exerciseName}</h2>
+              <h2 className="heading-font" style={{ 
+                margin: 0, 
+                fontSize: '34px', 
+                fontWeight: '950',
+                background: 'linear-gradient(to bottom, var(--text-primary) 30%, var(--accent-color) 160%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-1.5px',
+                textTransform: 'uppercase',
+                lineHeight: '0.9',
+                filter: 'drop-shadow(0 0 10px var(--accent-color-alpha))'
+              }}>{exerciseName}</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
                 {pr && <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', fontFamily: 'Syne, sans-serif' }}>🏆 PR: {pr.weight}{unit} × {pr.reps}</div>}
                 {elapsedSeconds !== undefined && (
@@ -162,8 +173,32 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
               </div>
             </div>
           </div>
-          <button onClick={onClose} onPointerDown={(e) => e.stopPropagation()} className="close-btn-premium" style={{ background: 'var(--glass-border)', border: 'none', padding: '0', width: '32px', height: '32px', borderRadius: '10px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', flexShrink: 0, zIndex: 100, position: 'relative', pointerEvents: 'auto', transform: 'translateZ(10px)' }}>
-            <X size={20} strokeWidth={3} />
+          <button 
+            onClick={onClose} 
+            onPointerDown={(e) => e.stopPropagation()} 
+            className="close-btn-premium" 
+            style={{ 
+              background: 'rgba(255, 51, 102, 0.08)', 
+              border: '1px solid rgba(255, 51, 102, 0.15)', 
+              padding: '0', 
+              width: '36px', 
+              height: '36px', 
+              borderRadius: '12px', 
+              color: '#ff3366', 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
+              flexShrink: 0, 
+              zIndex: 100, 
+              position: 'relative', 
+              pointerEvents: 'auto', 
+              transform: 'translateZ(10px)',
+              boxShadow: '0 0 15px rgba(255, 51, 102, 0.1)'
+            }}
+          >
+            <X size={22} strokeWidth={3} />
           </button>
         </div>
 
@@ -238,7 +273,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
           </div>
         </div>
 
-        <button onClick={handleDone} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: '16px', fontWeight: '800', padding: '4px 8px', width: 'fit-content', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '12px', outline: 'none', animation: 'pulse-glow 2.5s ease-in-out infinite', fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)' }}>
+        <button onClick={handleDone} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: '16px', fontWeight: '800', padding: '4px 8px', width: 'fit-content', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '12px', outline: 'none', animation: 'pulse-glow 2.5s ease-in-out infinite', fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation' }}>
           {t('done')}
         </button>
       </div>

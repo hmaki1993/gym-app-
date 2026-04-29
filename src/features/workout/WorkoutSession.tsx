@@ -5,7 +5,7 @@ import { DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
 import { ExerciseCard } from './ExerciseCard';
 import {
-  LogOut, Clock, Activity
+  LogOut, Clock, Activity, X
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -169,6 +169,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       touchState.current.startY = startY;
       // Flag if the touch started inside an allowed horizontal scroller
       targetIsScroller = !!(e.target as HTMLElement).closest?.('.allow-swipe');
+      // NEVER preventDefault on touchstart here to keep clicks alive
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -180,17 +181,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       // If inside the muscle selector or any allowed scroller → never block
       if (targetIsScroller) return;
 
-      // Block edge-swipe (back/forward navigation) - tighter 30px threshold
+      // Only block if it's a horizontal swipe that might trigger browser back (dx > dy)
       const EDGE = 30;
       const isEdge = startX < EDGE || startX > window.innerWidth - EDGE;
-      if (isEdge && dx > dy && dx > 5) {
+      if (isEdge && dx > dy && dx > 8) {
         if (e.cancelable) e.preventDefault();
-        return;
       }
 
-      // While exercise overlay is open → block ALL horizontal swipes (for card swiping)
-      if (!openExercise) return;
-      if (dx > 5) {
+      // While exercise overlay is open → block horizontal swipes for card navigation
+      if (openExercise && dx > dy && dx > 5) {
         if (e.cancelable) e.preventDefault();
       }
     };
@@ -278,7 +277,22 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflowX: 'hidden', overflowY: 'auto', padding: '16px 20px 0', touchAction: 'auto', overscrollBehaviorX: 'none' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'var(--primary-bg)',
+      zIndex: 1000,
+      overflowX: 'hidden', 
+      overflowY: 'auto', 
+      padding: 'calc(env(safe-area-inset-top) + 25px) 20px 0', 
+      touchAction: 'auto', 
+      overscrollBehavior: 'none' 
+    }}>
       {openExercise && (
         <div style={{
           position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
@@ -345,67 +359,102 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', transformStyle: 'preserve-3d' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', transform: 'translateZ(20px)' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        marginBottom: '32px', 
+        transformStyle: 'preserve-3d',
+        position: 'relative',
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px', 
+          transform: 'translateZ(20px)',
+          flex: 1,
+          minWidth: 0 // Allows shrinking
+        }}>
           <div style={{ 
             width: '4px', 
             height: '20px', 
             background: 'var(--accent-color)', 
             borderRadius: '2px',
-            boxShadow: '0 0 15px var(--accent-color-alpha)'
+            boxShadow: '0 0 15px var(--accent-color-alpha)',
+            flexShrink: 0
           }} />
           <h1 className="heading-font" style={{ 
             margin: 0, 
-            fontSize: '24px',
+            fontSize: 'min(20px, 5.5vw)', // Slightly smaller for better fit
             background: 'linear-gradient(to bottom, var(--text-primary) 50%, var(--accent-color) 150%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            letterSpacing: '-1px',
-            textTransform: 'uppercase'
+            letterSpacing: '-0.5px',
+            textTransform: 'uppercase',
+            whiteSpace: 'normal', // Allow wrapping
+            lineHeight: 1.1,
+            flex: 1
           }}>
             {phase === 'exercises' ? t('startWorkout') : t('finishSession')}
           </h1>
-          
-          {/* Live Timer Badge */}
-          {phase === 'logging' && (
-            <div ref={timerRef} style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              animation: 'pulse-glow 2s infinite ease-in-out',
-              marginLeft: '10px'
-            }}>
-              <Clock size={16} color="var(--accent-color)" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }} />
-              <span style={{ 
-                fontFamily: 'Outfit, sans-serif', 
-                fontSize: '20px', 
-                fontWeight: '900', 
-                color: 'var(--text-primary)',
-                textShadow: '0 0 10px var(--accent-color-alpha)'
-              }}>
-                {formatElapsed(elapsedSeconds)}
-              </span>
-            </div>
-          )}
         </div>
-        <button 
-          onClick={onClose} 
-          className="exit-btn-premium"
-          style={{ 
-            background: 'rgba(255, 51, 102, 0.05)', 
-            border: '1px solid rgba(255, 51, 102, 0.1)', 
-            width: '40px', 
-            height: '40px', 
-            borderRadius: '12px', 
-            color: '#ff3366', 
-            cursor: 'pointer', 
+
+        {/* Live Timer Badge */}
+        {phase === 'logging' && (
+          <div ref={timerRef} style={{ 
             display: 'flex', 
             alignItems: 'center', 
+            gap: '8px',
+            animation: 'pulse-glow 2s infinite ease-in-out',
+            background: 'rgba(255,255,255,0.03)',
+            padding: '6px 12px',
+            borderRadius: '12px',
+            border: '1px solid var(--glass-border)',
+            marginRight: '12px', // Spacing between timer and X
+            flexShrink: 0
+          }}>
+            <Clock size={16} color="var(--accent-color)" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }} />
+            <span style={{ 
+              fontFamily: 'Outfit, sans-serif', 
+              fontSize: '20px', 
+              fontWeight: '900', 
+              color: 'var(--text-primary)',
+              textShadow: '0 0 10px var(--accent-color-alpha)'
+            }}>
+              {formatElapsed(elapsedSeconds)}
+            </span>
+          </div>
+        )}
+
+        {/* Close Button */}
+        <button 
+          onClick={onClose} 
+          className="nav-btn"
+          style={{ 
+            width: '38px', 
+            height: '38px', 
+            minWidth: '38px',
+            minHeight: '38px',
+            padding: 0, 
+            borderRadius: '50%', 
+            background: 'rgba(255, 51, 102, 0.08)', 
+            border: '1px solid rgba(255, 51, 102, 0.15)', 
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
-            transition: 'all 0.2s ease'
+            color: '#ff3366', 
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 0 15px rgba(255, 51, 102, 0.05)',
+            flexShrink: 0,
+            flex: 'none', // Override global nav-btn flex: 1
+            touchAction: 'manipulation',
+            maxWidth: '38px'
           }}
         >
-          <LogOut size={20} strokeWidth={2.5} />
+          <X size={22} strokeWidth={3} />
         </button>
       </div>
 
@@ -454,7 +503,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   opacity: activeExercises.length === 0 ? 0.3 : 1,
                   boxShadow: '0 0 15px var(--accent-color-alpha)',
                   cursor: 'pointer',
-                  fontFamily: 'Outfit, sans-serif'
+                  fontFamily: 'Outfit, sans-serif',
+                  touchAction: 'manipulation'
                 }}
               >
                 <Activity size={16} strokeWidth={3} /> {t('startWorkout').toUpperCase()}

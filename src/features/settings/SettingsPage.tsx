@@ -18,6 +18,8 @@ export function SettingsPage({ tracker }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [localName, setLocalName] = React.useState(tracker.settings.userName);
 
+  // Entrance animation removed to ensure instant feel
+  /*
   useEffect(() => {
     if (containerRef.current) {
       gsap.fromTo(containerRef.current.children,
@@ -26,6 +28,7 @@ export function SettingsPage({ tracker }: Props) {
       );
     }
   }, []);
+  */
 
   return (
     <div ref={containerRef} style={{ 

@@ -25,6 +25,8 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
   const recentLog = tracker.logs[0];
   const totalVolume = recentLog ? tracker.getTotalVolume(recentLog) : 0;
 
+  // Entrance animation removed to prevent 'refresh' feeling on tab switch
+  /*
   useEffect(() => {
     if (containerRef.current) {
       gsap.fromTo(containerRef.current.children,
@@ -33,6 +35,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       );
     }
   }, []);
+  */
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     const btn = e.currentTarget;
@@ -152,6 +155,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           className="pulse-elite antigravity-card"
+          role="button"
           style={{
             background: 'none', border: 'none',
             color: '#fff', cursor: 'pointer',
@@ -159,7 +163,8 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
             justifyContent: 'center', gap: '20px',
             width: '100%',
             fontFamily: 'Outfit, sans-serif',
-            transformStyle: 'preserve-3d'
+            transformStyle: 'preserve-3d',
+            touchAction: 'manipulation'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', transformStyle: 'preserve-3d' }}>
