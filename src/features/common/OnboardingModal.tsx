@@ -14,7 +14,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
 
 
   const [name, setName] = useState('');
-  const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
+  const [unit] = useState<'kg' | 'lbs'>('kg');
   const [language, setLanguage] = useState<'ar' | 'en'>('en');
   const ref = useRef<HTMLDivElement>(null);
 
