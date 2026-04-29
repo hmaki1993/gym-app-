@@ -3,6 +3,7 @@ import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
 import { TrendingUp, Award, BarChart2 } from 'lucide-react';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
+import gsap from 'gsap';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;

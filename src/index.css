@@ -87,7 +87,14 @@
   box-sizing: border-box;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
-  touch-action: pan-y; /* Block horizontal gestures globally */
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 html,
@@ -100,6 +107,7 @@ body,
   font-family: 'Outfit', sans-serif;
   background: var(--primary-bg);
   color: var(--text-primary);
+  overscroll-behavior-x: none;
   overflow: hidden;
   position: fixed;
   overscroll-behavior: none !important;

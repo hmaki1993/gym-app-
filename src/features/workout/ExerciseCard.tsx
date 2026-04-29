@@ -207,37 +207,35 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
         </button>
 
         {!hasAddedSet && (
-          <div style={{ padding: '20px 0', opacity: 0.1, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: '20px' }}>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '6px', textTransform: 'uppercase', lineHeight: '1.2', fontFamily: 'Syne, sans-serif' }}>STAY FOCUSED{'\n'}{tracker.settings.userName.toUpperCase()}</div>
+          <div style={{ padding: '20px 0', opacity: 0.15, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: '30px' }}>
+            <div style={{ 
+              fontSize: '24px', 
+              fontWeight: '900', 
+              color: 'var(--text-primary)', 
+              letterSpacing: '2px', 
+              textTransform: 'uppercase', 
+              lineHeight: '1.4', 
+              fontFamily: 'Outfit, sans-serif' 
+            }}>
+              STAY FOCUSED<br/>{tracker.settings.userName.toUpperCase()}
+            </div>
           </div>
         )}
       </div>
 
       <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', background: 'var(--primary-bg)', borderTop: '1px solid var(--glass-border)', transformStyle: 'preserve-3d' }}>
         
-        <RestTimer 
-          restActive={restActive}
-          restRemaining={restRemaining}
-          restDuration={restDuration}
-          t={t}
-          onAdjustDuration={(amt) => {
-            const newDur = Math.max(5, restDuration + amt);
-            setRestDuration(newDur);
-            if (!restActive) setRestRemaining(newDur);
-          }}
-          onToggleRest={() => startRest()}
-          onSkip={() => { setRestActive(false); if (intervalRef.current) clearInterval(intervalRef.current); }}
-        />
+        {/* Rest Timer Removed */}
 
         <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center', gap: '40px', padding: '4px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '9px', color: 'var(--text-secondary)', opacity: 0.4, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px', fontFamily: 'Syne, sans-serif' }}>{t('totalVolume')}</div>
-            <div style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{totalVolume.toFixed(0)}<span style={{ fontSize: '11px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}>{unit}</span></div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('totalVolume')}</div>
+            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{totalVolume.toFixed(0)}<span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}>{unit}</span></div>
           </div>
           <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '9px', color: 'var(--text-secondary)', opacity: 0.4, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px', fontFamily: 'Syne, sans-serif' }}>Max Today</div>
-            <div style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{Math.max(...sets.map(s => Number(s.weight) || 0), 0)}<span style={{ fontSize: '11px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}>{unit}</span></div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
+            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{Math.max(...sets.map(s => Number(s.weight) || 0), 0)}<span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}>{unit}</span></div>
           </div>
         </div>
 

@@ -3,8 +3,7 @@ export type MuscleGroup =
   | 'back'
   | 'legs'
   | 'shoulders'
-  | 'biceps'
-  | 'triceps'
+  | 'arms'
   | 'abs'
   | 'cardio';
 

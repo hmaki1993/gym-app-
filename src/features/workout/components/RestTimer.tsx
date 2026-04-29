@@ -27,13 +27,6 @@ export const RestTimer: React.FC<Props> = ({
       transformStyle: 'preserve-3d'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button
-          onClick={() => onAdjustDuration(-5)}
-          style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px', fontWeight: '800' }}
-        >
-          -
-        </button>
-
         <button onClick={onToggleRest} style={{
           background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
           color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '800',
@@ -43,13 +36,6 @@ export const RestTimer: React.FC<Props> = ({
           fontFamily: 'Outfit, sans-serif'
         }}>
           <Clock size={14} color="var(--accent-color)" /> {restDuration}s
-        </button>
-
-        <button
-          onClick={() => onAdjustDuration(5)}
-          style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px', fontWeight: '800' }}
-        >
-          +
         </button>
       </div>
 

@@ -113,10 +113,10 @@ export default function App() {
   };
 
   const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
-    { key: 'home', icon: <Home size={20} strokeWidth={2} />, label: lang === 'ar' ? 'الرئيسية' : 'Home' },
-    { key: 'history', icon: <History size={20} strokeWidth={2} />, label: t('history') },
-    { key: 'progress', icon: <TrendingUp size={20} strokeWidth={2} />, label: t('progress') },
-    { key: 'settings', icon: <Settings size={20} strokeWidth={2} />, label: t('settings') },
+    { key: 'home', icon: <Home size={26} strokeWidth={2} />, label: lang === 'ar' ? 'الرئيسية' : 'Home' },
+    { key: 'history', icon: <History size={26} strokeWidth={2} />, label: t('history') },
+    { key: 'progress', icon: <TrendingUp size={26} strokeWidth={2} />, label: t('progress') },
+    { key: 'settings', icon: <Settings size={26} strokeWidth={2} />, label: t('settings') },
   ];
 
   return (
@@ -131,7 +131,8 @@ export default function App() {
         overflow: 'hidden',
         boxSizing: 'border-box',
         background: 'var(--bg-color)',
-        touchAction: 'pan-y'
+        touchAction: 'auto',
+        overscrollBehaviorX: 'none'
       }}>
 
       {!showWorkout && (
@@ -142,13 +143,13 @@ export default function App() {
           <div className="accent-divider" style={{ marginBottom: '5px' }} />
 
           {/* Main Content Area - Handles internal scroll and padding */}
-          <div ref={contentRef} className="hide-scroll" style={{
+          <div ref={contentRef} className="hide-scrollbar" style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'auto',
             overflowX: 'hidden',
-            paddingBottom: '10px',
+            paddingBottom: '65px',
             touchAction: 'pan-y'
           }}>
             {tab === 'home' && (

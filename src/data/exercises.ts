@@ -5,8 +5,7 @@ export const MUSCLE_GROUPS: { key: MuscleGroup; ar: string; en: string; icon: st
   { key: 'back',      ar: 'ظهر',       en: 'Back',      icon: '/assets/muscles/back.png' },
   { key: 'legs',      ar: 'رجلين',     en: 'Legs',      icon: '/assets/muscles/legs.png' },
   { key: 'shoulders', ar: 'أكتاف',     en: 'Shoulders', icon: '/assets/muscles/shoulders.png' },
-  { key: 'biceps',    ar: 'بايسبس',    en: 'Biceps',    icon: '/assets/muscles/biceps.png' },
-  { key: 'triceps',   ar: 'ترايسبس',   en: 'Triceps',   icon: '/assets/muscles/triceps.png' },
+  { key: 'arms',      ar: 'دراعات',     en: 'Arms',      icon: '/assets/muscles/biceps.png' },
   { key: 'abs',       ar: 'بطن',       en: 'Abs',       icon: '/assets/muscles/abs.png' },
   { key: 'cardio',    ar: 'كارديو',    en: 'Cardio',    icon: '/assets/muscles/cardio.png' },
 ];
@@ -28,13 +27,9 @@ export const DEFAULT_EXERCISES: Record<MuscleGroup, string[]> = {
     'Overhead Press', 'Dumbbell Press', 'Lateral Raise',
     'Front Raise', 'Rear Delt Fly', 'Arnold Press', 'Upright Row',
   ],
-  biceps: [
-    'Barbell Curl', 'Dumbbell Curl', 'Hammer Curl',
-    'Preacher Curl', 'Cable Curl', 'Concentration Curl',
-  ],
-  triceps: [
-    'Tricep Pushdown', 'Skull Crusher', 'Overhead Extension',
-    'Close Grip Bench', 'Tricep Dip', 'Cable Kickback',
+  arms: [
+    'Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Preacher Curl',
+    'Tricep Pushdown', 'Skull Crusher', 'Overhead Extension', 'Tricep Dip',
   ],
   abs: [
     'Crunch', 'Plank', 'Leg Raise', 'Russian Twist',

@@ -61,17 +61,17 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
   const workoutWords = t('startWorkout').toUpperCase().split(' ');
 
   return (
-    <div ref={containerRef} style={{
+    <div ref={containerRef} className="hide-scrollbar" style={{
       display: 'flex', flexDirection: 'column',
-      flex: 1,
-      padding: '5px 16px',
-      minHeight: '80vh',
+      width: '100%',
+      height: '100%',
+      padding: '5px 16px 10px',
       transformStyle: 'preserve-3d'
     }}>
 
       {/* 1. TOP: Welcome & Stats */}
-      <div style={{ marginBottom: '25px', transformStyle: 'preserve-3d' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '25px' }}>
+      <div style={{ marginBottom: '15px', transformStyle: 'preserve-3d' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '15px' }}>
           <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-secondary)', opacity: 0.4, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
             {lang === 'ar' ? 'أهلاً، ' : 'WELCOME, '}
           </span>
@@ -83,15 +83,15 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
         <div className="glass-panel antigravity-card" style={{ 
           background: 'none', 
           border: '1px solid var(--glass-border)', 
-          borderRadius: '20px',
-          padding: '12px 0',
+          borderRadius: '24px',
+          padding: '18px 0',
           marginBottom: '20px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {[
-              { label: t('thisWeek'), val: weeklyCount, target: 'history' as const, icon: <Activity size={14} color="var(--accent-color)" /> },
-              { label: 'PRs', val: tracker.prs.length, target: 'progress' as const, icon: <Award size={14} color="var(--accent-color)" /> },
-              { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <History size={14} color="var(--accent-color)" /> }
+              { label: t('thisWeek'), val: weeklyCount, target: 'history' as const, icon: <Activity size={18} color="var(--accent-color)" /> },
+              { label: 'PRs', val: tracker.prs.length, target: 'progress' as const, icon: <Award size={18} color="var(--accent-color)" /> },
+              { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <History size={18} color="var(--accent-color)" /> }
             ].map((s, i) => (
               <React.Fragment key={i}>
                 <button 
@@ -103,7 +103,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                     flexDirection: 'column', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    gap: '4px',
+                    gap: '6px',
                     flex: 1,
                     padding: '8px 0',
                     transform: 'translateZ(10px)',
@@ -114,11 +114,11 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                   }}
                   className="stat-btn-elite"
                 >
-                  <div style={{ opacity: 0.5, marginBottom: '2px' }}>{s.icon}</div>
-                  <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
-                  <div style={{ fontSize: '8px', color: 'var(--text-secondary)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'Inter, sans-serif' }}>{s.label}</div>
+                  <div style={{ opacity: 0.6, marginBottom: '2px' }}>{s.icon}</div>
+                  <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: 'Inter, sans-serif' }}>{s.label}</div>
                 </button>
-                {i < 2 && <div style={{ width: '1px', height: '25px', background: 'rgba(255,255,255,0.05)' }} />}
+                {i < 2 && <div style={{ width: '1px', height: '35px', background: 'rgba(255,255,255,0.08)' }} />}
               </React.Fragment>
             ))}
           </div>
@@ -126,7 +126,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       </div>
 
       {/* 2. MIDDLE: Start Workout CTA */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '40px 0', perspective: '1000px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '20px 0', perspective: '1000px' }}>
         <button
           onClick={onStartWorkout}
           onMouseMove={handleMouseMove}
@@ -201,16 +201,6 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
         )}
       </div>
 
-      {/* 4. FOOTER Branding */}
-      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '15px', opacity: 0.15 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '15px', height: '1px', background: '#fff' }} />
-          <span style={{ fontSize: '7px', fontWeight: '900', color: '#fff', letterSpacing: '4px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
-            GYMLOG ELITE
-          </span>
-          <div style={{ width: '15px', height: '1px', background: '#fff' }} />
-        </div>
-      </div>
     </div>
   );
 }

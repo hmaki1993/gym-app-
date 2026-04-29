@@ -1,4 +1,5 @@
-import { Search, Plus, CheckCircle, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, CheckCircle, X, ChevronRight } from 'lucide-react';
 
 interface Props {
   search: string;
@@ -20,37 +21,84 @@ export function ExercisePicker({
   onAddCustom, onRemove, isRtl, t, weightUnit,
   getLastSession, customExercises
 }: Props) {
+  const [showInput, setShowInput] = useState(false);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0 }}>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
-          <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-          <input className="glass-input" style={{ paddingLeft: '40px' }} placeholder={t('searchExercise')} value={search} onChange={e => onSearchChange(e.target.value)} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0 }}>
+      {/* Header with Minimal Plus Action */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
+        <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.5 }}>
+          {t('exercises') || 'Exercises'}
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (search.trim()) {
-              onAddCustom(search.trim());
-              onSearchChange('');
-            } else {
-              window.alert('Please enter an exercise name first!');
-            }
-          }}
-          style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--glass-bg)', border: '1.5px solid var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', cursor: 'pointer' }}
-        >
-          <Plus size={20} strokeWidth={3} />
-        </button>
-      </div>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {filteredExercises.length === 0 && search && (
-          <button
-            onClick={() => { onAddCustom(search); onSearchChange(''); }}
-            style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--accent-color-alpha)', borderRadius: '16px', color: 'var(--accent-color)', fontWeight: '700', cursor: 'pointer' }}
+        {!showInput && (
+          <button 
+            onClick={() => setShowInput(true)}
+            style={{ background: 'none', border: 'none', padding: '8px', cursor: 'pointer', color: 'var(--accent-color)' }}
           >
-            {t('addCustom')}: "{search}"
+            <Plus size={24} strokeWidth={3} />
           </button>
         )}
+      </div>
+
+      {showInput && (
+        <div style={{ 
+          background: 'var(--glass-bg)', 
+          padding: '8px', 
+          borderRadius: '20px', 
+          border: '1px solid var(--accent-color-alpha)',
+          display: 'flex',
+          gap: '8px',
+          animation: 'fadeIn 0.3s ease'
+        }}>
+          <input 
+            className="glass-input" 
+            autoFocus
+            style={{ 
+              paddingLeft: '16px', 
+              height: '44px',
+              fontSize: '14px',
+              borderRadius: '14px',
+              flex: 1
+            }} 
+            placeholder={t('customExercise') || 'Exercise Name...'} 
+            value={search} 
+            onChange={e => onSearchChange(e.target.value)} 
+          />
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              onClick={() => {
+                if (search.trim()) {
+                  onAddCustom(search.trim());
+                  onSearchChange('');
+                  setShowInput(false);
+                }
+              }}
+              style={{
+                width: '44px', height: '44px', borderRadius: '12px',
+                background: 'var(--accent-color)', border: 'none', color: '#000',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+              }}
+            >
+              <ChevronRight size={20} strokeWidth={3} />
+            </button>
+            <button
+              onClick={() => {
+                onSearchChange('');
+                setShowInput(false);
+              }}
+              style={{
+                width: '44px', height: '44px', borderRadius: '12px',
+                background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-secondary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {filteredExercises.map(name => {
           const isSelected = activeExercises.includes(name);
           const lastData = getLastSession(name);

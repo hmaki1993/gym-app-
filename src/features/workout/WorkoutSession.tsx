@@ -268,7 +268,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden', padding: '16px 20px 0', touchAction: 'pan-y', overscrollBehaviorX: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflowX: 'hidden', overflowY: 'auto', padding: '16px 20px 0', touchAction: 'auto', overscrollBehaviorX: 'none' }}>
       {openExercise && (
         <div style={{
           position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
@@ -421,8 +421,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               getLastSession={(name) => tracker.getLastSession(name)}
               customExercises={tracker.customExercises[selectedMuscle]}
             />
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button onClick={() => setPhase('logging')} disabled={activeExercises.length === 0} style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px', opacity: activeExercises.length === 0 ? 0.3 : 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '30px' }}>
+              <button onClick={() => setPhase('logging')} disabled={activeExercises.length === 0} style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px', opacity: activeExercises.length === 0 ? 0.3 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Activity size={16} /> {t('startWorkout')}
               </button>
             </div>
