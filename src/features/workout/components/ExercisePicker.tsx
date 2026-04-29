@@ -27,8 +27,11 @@ export function ExercisePicker({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0 }}>
       {/* Header with Minimal Plus Action */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
-        <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.5 }}>
-          {t('exercises') || 'Exercises'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px var(--accent-color)' }} />
+          <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.6 }}>
+            {t('exercises') || 'Exercises'}
+          </div>
         </div>
         {!showInput && (
           <button 
@@ -111,25 +114,33 @@ export function ExercisePicker({
               style={{
                 position: 'relative',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '16px 12px', background: 'transparent',
+                padding: '18px 12px', 
+                background: isSelected ? 'rgba(255,255,255,0.03)' : 'transparent',
                 border: 'none',
-                borderBottom: `1.2px solid ${isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.04)'}`,
+                borderBottom: `1px solid ${isSelected ? 'var(--accent-color-alpha)' : 'rgba(255,255,255,0.03)'}`,
                 width: '100%', cursor: 'pointer',
-                borderRadius: '12px',
-                transition: 'all 0.3s ease'
+                borderRadius: '16px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                marginBottom: '2px'
               }}
             >
               <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
-                <div style={{ fontSize: '15px', fontWeight: '800', color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)', transition: 'color 0.3s ease' }}>{name}</div>
+                <div style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '800', 
+                  color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)', 
+                  transition: 'color 0.3s ease',
+                  fontFamily: 'Outfit, sans-serif'
+                }}>{name}</div>
                 {lastData && (
-                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '600', opacity: 0.6 }}>
-                    {t('lastSession')}: {lastData.sets[0]?.weight}{weightUnit} × {lastData.sets[0]?.reps}
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '800', opacity: 0.5, letterSpacing: '0.5px' }}>
+                    {t('lastSession').toUpperCase()}: {lastData.sets[0]?.weight}{weightUnit} × {lastData.sets[0]?.reps}
                   </div>
                 )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 {isSelected && (
-                  <div style={{ color: 'var(--accent-color)', display: 'flex', alignItems: 'center' }}>
+                  <div style={{ color: 'var(--accent-color)', display: 'flex', alignItems: 'center', filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }}>
                     <CheckCircle size={18} strokeWidth={3} />
                   </div>
                 )}

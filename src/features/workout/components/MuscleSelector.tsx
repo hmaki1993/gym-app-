@@ -39,31 +39,41 @@ export function MuscleSelector({ selectedMuscle, onSelect, lang }: Props) {
               }}
             >
             <div style={{
-              width: '56px', height: '56px', borderRadius: '16px',
+              width: '60px', height: '60px', borderRadius: '18px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: isSelected ? 'var(--glass-bg)' : 'transparent',
-              border: `1.5px solid ${isSelected ? 'var(--accent-color)' : 'transparent'}`,
-              transition: 'all 0.4s ease'
+              background: isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+              border: `1.5px solid ${isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)'}`,
+              boxShadow: isSelected ? '0 10px 25px -5px var(--accent-color-alpha)' : 'none',
+              transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+              transform: isSelected ? 'translateY(-2px)' : 'none'
             }}>
               <img
                 src={mg.icon}
                 alt={mg.en}
                 style={{
-                  width: '38px', height: '38px', objectFit: 'contain',
-                  filter: isSelected ? 'contrast(1.2) brightness(1.1)' : 'grayscale(1) opacity(0.3)',
+                  width: '40px', height: '40px', objectFit: 'contain',
+                  filter: isSelected ? 'contrast(1.2) brightness(1.2) drop-shadow(0 0 5px var(--accent-color-alpha))' : 'grayscale(1) opacity(0.3)',
                   transition: 'all 0.4s ease'
                 }}
               />
             </div>
             <span style={{
-              fontSize: '10px', fontWeight: '900',
+              fontSize: '10px', fontWeight: '950',
               color: isSelected ? 'var(--accent-color)' : 'var(--text-secondary)',
-              textTransform: 'uppercase', letterSpacing: '1px'
+              textTransform: 'uppercase', letterSpacing: '1px',
+              marginTop: '4px'
             }}>
               {mg[lang]}
             </span>
             {isSelected && (
-              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)', marginTop: '-2px' }} />
+              <div style={{ 
+                width: '16px', 
+                height: '2px', 
+                borderRadius: '1px', 
+                background: 'var(--accent-color)', 
+                marginTop: '4px',
+                boxShadow: '0 0 10px var(--accent-color)'
+              }} />
             )}
           </button>
         );

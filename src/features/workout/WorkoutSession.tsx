@@ -335,30 +335,42 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div>
-            <div className="premium-title" style={{ fontSize: '24px', color: 'var(--text-primary)', lineHeight: '1', marginBottom: '3px', fontFamily: 'Outfit, sans-serif' }}>
-              {phase === 'exercises' ? t('startWorkout').toUpperCase() : t('finishSession').toUpperCase()}
-            </div>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', transformStyle: 'preserve-3d' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', transform: 'translateZ(20px)' }}>
+          <div style={{ 
+            width: '4px', 
+            height: '20px', 
+            background: 'var(--accent-color)', 
+            borderRadius: '2px',
+            boxShadow: '0 0 15px var(--accent-color-alpha)'
+          }} />
+          <h1 className="heading-font" style={{ 
+            margin: 0, 
+            fontSize: '24px',
+            background: 'linear-gradient(to bottom, var(--text-primary) 50%, var(--accent-color) 150%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-1px',
+            textTransform: 'uppercase'
+          }}>
+            {phase === 'exercises' ? t('startWorkout') : t('finishSession')}
+          </h1>
           
-          {/* Live Timer Badge - Minimal Floating Style */}
+          {/* Live Timer Badge */}
           {phase === 'logging' && (
             <div ref={timerRef} style={{ 
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px',
               animation: 'pulse-glow 2s infinite ease-in-out',
-              padding: '0 5px'
+              marginLeft: '10px'
             }}>
               <Clock size={16} color="var(--accent-color)" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }} />
               <span style={{ 
                 fontFamily: 'Outfit, sans-serif', 
                 fontSize: '20px', 
-                fontWeight: '800', 
+                fontWeight: '900', 
                 color: 'var(--text-primary)',
-                letterSpacing: '0.5px',
                 textShadow: '0 0 10px var(--accent-color-alpha)'
               }}>
                 {formatElapsed(elapsedSeconds)}
@@ -368,11 +380,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         </div>
         <button 
           onClick={onClose} 
-          onPointerDown={(e) => e.stopPropagation()}
           className="exit-btn-premium"
           style={{ 
-            background: 'none', 
-            border: 'none', 
+            background: 'rgba(255, 51, 102, 0.05)', 
+            border: '1px solid rgba(255, 51, 102, 0.1)', 
             width: '40px', 
             height: '40px', 
             borderRadius: '12px', 
@@ -384,15 +395,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             transition: 'all 0.2s ease'
           }}
         >
-          <LogOut size={22} strokeWidth={2.5} />
+          <LogOut size={20} strokeWidth={2.5} />
         </button>
-
-        <style>{`
-          .exit-btn-premium:active {
-            transform: scale(0.9);
-            background: rgba(255, 51, 102, 0.22) !important;
-          }
-        `}</style>
       </div>
 
       <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
@@ -421,9 +425,29 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               getLastSession={(name) => tracker.getLastSession(name)}
               customExercises={tracker.customExercises[selectedMuscle]}
             />
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '30px' }}>
-              <button onClick={() => setPhase('logging')} disabled={activeExercises.length === 0} style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px', opacity: activeExercises.length === 0 ? 0.3 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Activity size={16} /> {t('startWorkout')}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', marginTop: '4px' }}>
+              <button 
+                onClick={() => setPhase('logging')} 
+                disabled={activeExercises.length === 0} 
+                style={{ 
+                  background: 'transparent',
+                  border: '1px solid var(--accent-color)',
+                  color: 'var(--accent-color)',
+                  padding: '12px 30px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '900',
+                  letterSpacing: '1px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  opacity: activeExercises.length === 0 ? 0.3 : 1,
+                  boxShadow: '0 0 15px var(--accent-color-alpha)',
+                  cursor: 'pointer',
+                  fontFamily: 'Outfit, sans-serif'
+                }}
+              >
+                <Activity size={16} strokeWidth={3} /> {t('startWorkout').toUpperCase()}
               </button>
             </div>
           </>

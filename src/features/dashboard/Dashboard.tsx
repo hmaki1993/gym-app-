@@ -65,33 +65,55 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       display: 'flex', flexDirection: 'column',
       width: '100%',
       height: '100%',
-      padding: '5px 16px 10px',
+      padding: '10px 16px 80px',
       transformStyle: 'preserve-3d'
     }}>
 
       {/* 1. TOP: Welcome & Stats */}
-      <div style={{ marginBottom: '15px', transformStyle: 'preserve-3d' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '15px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-secondary)', opacity: 0.4, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>
-            {lang === 'ar' ? 'أهلاً، ' : 'WELCOME, '}
-          </span>
-          <span style={{ fontSize: '26px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
-            {tracker.settings.userName || 'Ahmed'}
-          </span>
+      <div style={{ marginBottom: '20px', transformStyle: 'preserve-3d', paddingTop: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', marginBottom: '20px' }}>
+          <div style={{ 
+            fontSize: '10px', 
+            fontWeight: '900', 
+            color: 'var(--accent-color)', 
+            letterSpacing: '4px', 
+            textTransform: 'uppercase', 
+            fontFamily: 'Outfit, sans-serif',
+            opacity: 0.6,
+            marginBottom: '4px'
+          }}>
+            {lang === 'ar' ? 'أهلاً بك،' : 'WELCOME BACK,'}
+          </div>
+          <div className="spatial-name-glow" style={{ 
+            fontSize: '42px', 
+            fontWeight: '950', 
+            color: 'var(--text-primary)', 
+            letterSpacing: '-1.5px', 
+            fontFamily: 'Outfit, sans-serif',
+            lineHeight: '0.85',
+            background: 'linear-gradient(to bottom, var(--text-primary) 0%, var(--accent-color) 200%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            {tracker.settings.userName || 'Elite User'}
+          </div>
         </div>
 
         <div className="glass-panel antigravity-card" style={{ 
-          background: 'none', 
-          border: '1px solid var(--glass-border)', 
-          borderRadius: '24px',
-          padding: '18px 0',
+          background: 'linear-gradient(165deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, var(--accent-color-alpha) 100%)', 
+          border: '1px solid rgba(255,255,255,0.05)', 
+          borderTop: '1px solid rgba(255,255,255,0.12)', 
+          borderRadius: '32px',
+          padding: '24px 0',
           marginBottom: '20px',
+          boxShadow: '0 30px 60px -15px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 30px var(--accent-color-alpha)',
+          overflow: 'hidden'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {[
-              { label: t('thisWeek'), val: weeklyCount, target: 'history' as const, icon: <Activity size={18} color="var(--accent-color)" /> },
-              { label: 'PRs', val: tracker.prs.length, target: 'progress' as const, icon: <Award size={18} color="var(--accent-color)" /> },
-              { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <History size={18} color="var(--accent-color)" /> }
+              { label: t('thisWeek'), val: weeklyCount, target: 'history' as const, icon: <Activity size={16} /> },
+              { label: 'PRs', val: tracker.prs.length, target: 'progress' as const, icon: <Award size={16} /> },
+              { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <History size={16} /> }
             ].map((s, i) => (
               <React.Fragment key={i}>
                 <button 
@@ -103,22 +125,19 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                     flexDirection: 'column', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '4px',
                     flex: 1,
-                    padding: '8px 0',
                     transform: 'translateZ(10px)',
                     background: 'none',
                     border: 'none',
-                    outline: 'none',
-                    WebkitTapHighlightColor: 'transparent'
+                    outline: 'none'
                   }}
-                  className="stat-btn-elite"
                 >
-                  <div style={{ opacity: 0.6, marginBottom: '2px' }}>{s.icon}</div>
-                  <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: 'Inter, sans-serif' }}>{s.label}</div>
+                  <div style={{ color: 'var(--accent-color)', opacity: 0.8, marginBottom: '2px' }}>{s.icon}</div>
+                  <div style={{ fontSize: '28px', fontWeight: '950', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
+                  <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: 'Outfit, sans-serif', opacity: 0.6 }}>{s.label}</div>
                 </button>
-                {i < 2 && <div style={{ width: '1px', height: '35px', background: 'rgba(255,255,255,0.08)' }} />}
+                {i < 2 && <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.05)' }} />}
               </React.Fragment>
             ))}
           </div>
@@ -171,9 +190,9 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       </div>
 
       {/* 3. BOTTOM: Last Session */}
-      <div style={{ marginTop: 'auto', paddingBottom: '20px', transformStyle: 'preserve-3d' }}>
+      <div style={{ marginTop: '40px', paddingBottom: '20px', transformStyle: 'preserve-3d' }}>
         {recentLog ? (
-          <div className="antigravity-card" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+          <div className="antigravity-card" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', opacity: 0.5 }}>
               <Flame size={12} color="var(--accent-color)" />
               <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession')}</span>
