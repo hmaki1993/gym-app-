@@ -15,7 +15,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
 
   const [name, setName] = useState('');
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
-  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
+  const [language, setLanguage] = useState<'ar' | 'en'>('en');
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,20 +34,21 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
   const t2 = (k: keyof typeof translations.en) => (translations[language] as any)[k] ?? k;
 
   return (
-    <div className="modal-overlay" style={{ alignItems: 'center' }}>
-      <div ref={ref} className="glass-panel" style={{ width: '90%', maxWidth: '380px', padding: '32px 28px', textAlign: 'center' }}>
+    <div className="modal-overlay" style={{ alignItems: 'center', background: 'rgba(0,0,0,0.8)' }}>
+      <div ref={ref} style={{ 
+        width: '92%', 
+        maxWidth: '380px', 
+        padding: '36px 28px', 
+        textAlign: 'center',
+        background: '#111114',
+        borderRadius: '28px',
+        border: '1.5px solid var(--accent-color)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 20px var(--accent-color-alpha)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
         {/* Logo */}
         <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            width: '72px', height: '72px', borderRadius: '22px',
-            background: 'var(--accent-color-alpha)',
-            border: '1.5px solid var(--accent-color-alpha-heavy)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
-            boxShadow: '0 8px 32px var(--accent-color-alpha)'
-          }}>
-            <Dumbbell size={36} color="var(--accent-color)" strokeWidth={1.5} />
-          </div>
           <div className="logo-text" style={{ fontSize: '28px', display: 'block', textAlign: 'center' }}>GYMLOG</div>
           <div className="subtitle-text" style={{ textAlign: 'center' }}>{t2('premiumSystem')}</div>
         </div>
@@ -79,7 +80,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
           <div className="section-label" style={{ marginBottom: '8px' }}>{t2('onboarding_name')}</div>
           <input
             className="glass-input"
-            placeholder={language === 'ar' ? 'اسمك هنا...' : 'Your name here...'}
+            placeholder={language === 'ar' ? 'اسمك...' : 'Your name...'}
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
@@ -88,27 +89,27 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
           />
         </div>
 
-        {/* Weight Unit */}
-        <div style={{ marginBottom: '24px', textAlign: 'left' }}>
-          <div className="section-label" style={{ marginBottom: '8px' }}>{t2('onboarding_unit')}</div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {(['kg', 'lbs'] as const).map(u => (
-              <button key={u} onClick={() => setUnit(u)} className="glass-button"
-                style={{
-                  flex: 1, fontSize: '14px', fontWeight: '900',
-                  border: `1.5px solid ${unit === u ? 'var(--accent-color)' : 'var(--glass-border)'}`,
-                  background: unit === u ? 'var(--accent-color-alpha)' : 'var(--glass-bg)',
-                  color: unit === u ? 'var(--accent-color)' : 'var(--text-secondary)'
-                }}>
-                {u === 'kg' ? '⚖️ KG' : '🏋️ LBS'}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <button onClick={handleSubmit} className="accent-button" style={{ width: '100%', fontSize: '16px' }}
-          disabled={!name.trim()}>
-          <Dumbbell size={16} /> {t2('letsGo')}
+        <button 
+          onClick={handleSubmit} 
+          style={{ 
+            width: '100%', 
+            background: 'transparent', 
+            border: 'none', 
+            color: 'var(--accent-color)', 
+            fontSize: '18px', 
+            fontWeight: '800', 
+            fontFamily: 'Syne, sans-serif', 
+            textTransform: 'uppercase', 
+            letterSpacing: '12px', 
+            cursor: 'pointer', 
+            marginTop: '40px',
+            animation: 'pulse-glow 2.5s ease-in-out infinite',
+            outline: 'none'
+          }}
+          disabled={!name.trim()}
+        >
+          {t2('letsGo')}
         </button>
       </div>
     </div>

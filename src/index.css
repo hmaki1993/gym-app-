@@ -322,29 +322,18 @@ input[type=number] {
 
 /* ── Logo ── */
 .logo-text {
-  font-family: 'Syne', sans-serif;
-  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
   text-transform: uppercase;
   background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-primary) 40%, var(--accent-color) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  letter-spacing: -2px;
+  letter-spacing: -0.5px;
   line-height: 1;
   position: relative;
 }
 
-.logo-text::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 20px;
-  height: 2.5px;
-  background: var(--accent-color);
-  border-radius: 2px;
-  box-shadow: 0 0 8px var(--accent-color);
-}
 
 .subtitle-text {
   font-family: 'Inter', sans-serif;

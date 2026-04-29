@@ -7,7 +7,7 @@ const STORAGE_KEY = 'gymlog_state_v1';
 const DEFAULT_SETTINGS: GymSettings = {
   userName: '',
   weightUnit: 'kg',
-  language: 'ar',
+  language: 'en',
   accentColor: THEME_COLORS[0].hex,
   themeMode: 'dark',
   defaultRestSeconds: 90,
@@ -20,11 +20,11 @@ const DEFAULT_STATE: GymState = {
   settings: DEFAULT_SETTINGS,
   customExercises: {
     chest: [], back: [], legs: [], shoulders: [],
-    biceps: [], triceps: [], abs: [], cardio: [],
+    arms: [], abs: [], cardio: [],
   },
   hiddenExercises: {
     chest: [], back: [], legs: [], shoulders: [],
-    biceps: [], triceps: [], abs: [], cardio: [],
+    arms: [], abs: [], cardio: [],
   },
 };
 

@@ -218,19 +218,19 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     const xPercent = (diff / e.currentTarget.clientWidth) * 100;
     const currentIdx = activeExercises.indexOf(openExercise!);
 
-    if (Math.abs(xPercent) > 20) {
+    if (Math.abs(xPercent) > 15) {
       touchState.current.isAnimating = true; // Lock
-      if (xPercent > 20) {
+      if (xPercent > 15) {
         if (currentIdx > 0) handleSwipeTransition('right', activeExercises[currentIdx - 1]);
         else {
-          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.5, ease: 'elastic.out(1, 0.3)', onComplete: () => { touchState.current.isAnimating = false; } });
+          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.25, ease: 'power4.out', onComplete: () => { touchState.current.isAnimating = false; } });
         }
       } else {
         if (currentIdx < activeExercises.length - 1) handleSwipeTransition('left', activeExercises[currentIdx + 1]);
         else handleSwipeTransition('left', activeExercises[0]); // Loop back to first
       }
     } else {
-      gsap.to(swipeContainerRef.current, { x: 0, opacity: 1, duration: 0.4, ease: 'back.out(1.5)' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.2, ease: 'power4.out' });
     }
   };
 
@@ -254,14 +254,14 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     gsap.to(swipeContainerRef.current, {
       xPercent: xDist,
       opacity: 0,
-      duration: 0.2,
-      ease: 'power2.in',
+      duration: 0.12,
+      ease: 'power4.in',
       onComplete: () => {
         setOpenExercise(nextEx);
         // Animate back in from the opposite side
         gsap.fromTo(swipeContainerRef.current,
           { xPercent: direction === 'left' ? 100 : -100, opacity: 0 },
-          { xPercent: 0, opacity: 1, duration: 0.3, ease: 'power2.out', onComplete: () => { touchState.current.isAnimating = false; } }
+          { xPercent: 0, opacity: 1, duration: 0.18, ease: 'power4.out', onComplete: () => { touchState.current.isAnimating = false; } }
         );
       }
     });
@@ -439,6 +439,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             handleTouchStart={handleTouchStart}
             handleTouchMove={handleTouchMove}
             handleTouchEnd={handleTouchEnd}
+            draggingIndex={draggingIndex}
             t={t}
           />
         )}

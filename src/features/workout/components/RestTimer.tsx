@@ -6,7 +6,6 @@ interface Props {
   restRemaining: number;
   restDuration: number;
   t: (key: string) => string;
-  onAdjustDuration: (amount: number) => void;
   onToggleRest: () => void;
   onSkip: () => void;
 }
@@ -16,7 +15,6 @@ export const RestTimer: React.FC<Props> = ({
   restRemaining,
   restDuration,
   t,
-  onAdjustDuration,
   onToggleRest,
   onSkip
 }) => {

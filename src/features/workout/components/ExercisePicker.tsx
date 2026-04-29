@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, CheckCircle, X, ChevronRight } from 'lucide-react';
 
 interface Props {
@@ -98,7 +98,7 @@ export function ExercisePicker({
         </div>
       )}
 
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div className="hide-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {filteredExercises.map(name => {
           const isSelected = activeExercises.includes(name);
           const lastData = getLastSession(name);

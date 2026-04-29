@@ -5,7 +5,6 @@ import { translations } from '../../translations';
 import { X, Plus, Clock } from 'lucide-react';
 import gsap from 'gsap';
 import { SetRow } from './components/SetRow';
-import { RestTimer } from './components/RestTimer';
 
 interface Props {
   exerciseName: string;
@@ -42,7 +41,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
     setActiveUnit(units[nextIndex]);
   };
   const [restActive, setRestActive] = useState(false);
-  const [restDuration, setRestDuration] = useState(tracker.settings.defaultRestSeconds);
+  const [restDuration] = useState(tracker.settings.defaultRestSeconds);
   const [restRemaining, setRestRemaining] = useState(tracker.settings.defaultRestSeconds);
   const [restingSetIndex, setRestingSetIndex] = useState<number | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
