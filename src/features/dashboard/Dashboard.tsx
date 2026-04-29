@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
 import { MUSCLE_GROUPS } from '../../data/exercises';

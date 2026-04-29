@@ -35,7 +35,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
   const [activeUnit, setActiveUnit] = useState(unit || 'kg');
 
   const cycleUnit = () => {
-    const units = ['kg', 'lbs'] as const;
+    const units = ['kg', 'lbs', 'balata'] as const;
     const currentIndex = units.indexOf(activeUnit as any);
     const nextIndex = (currentIndex + 1) % units.length;
     setActiveUnit(units[nextIndex]);
@@ -152,18 +152,18 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
             <div style={{ display: 'flex', flexDirection: 'column', transform: 'translateZ(20px)' }}>
               <h2 className="heading-font" style={{ 
                 margin: 0, 
-                fontSize: '34px', 
+                fontSize: '22px', 
                 fontWeight: '950',
-                background: 'linear-gradient(to bottom, var(--text-primary) 30%, var(--accent-color) 160%)',
+                background: 'linear-gradient(to bottom, var(--text-primary) 30%, var(--accent-color) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                letterSpacing: '-1.5px',
+                letterSpacing: '-1px',
                 textTransform: 'uppercase',
-                lineHeight: '0.9',
-                filter: 'drop-shadow(0 0 10px var(--accent-color-alpha))'
+                lineHeight: '1',
+                textShadow: '0 5px 15px rgba(0,0,0,0.3)'
               }}>{exerciseName}</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
-                {pr && <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', fontFamily: 'Syne, sans-serif' }}>🏆 PR: {pr.weight}{unit} × {pr.reps}</div>}
+                {pr && <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', fontFamily: 'Syne, sans-serif' }}>🏆 PR: {pr.weight}{t(unit)} × {pr.reps}</div>}
                 {elapsedSeconds !== undefined && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.8 }}>
                     <Clock size={12} color="var(--accent-color)" strokeWidth={2.5} />
@@ -207,7 +207,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
             <div>
               <div className="section-label" style={{ marginBottom: '4px', color: 'var(--text-secondary)', opacity: 0.4, fontSize: '10px', fontFamily: 'Syne, sans-serif' }}>{t('lastSession').toUpperCase()}</div>
               <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>
-                {last.sets.map((s, i) => <span key={i}>{i > 0 ? ' · ' : ''}{s.weight}{unit}×{s.reps}</span>)}
+                {last.sets.map((s, i) => <span key={i}>{i > 0 ? ' · ' : ''}{s.weight}{t(unit)}×{s.reps}</span>)}
               </div>
             </div>
             {Math.max(...sets.map(s => Number(s.weight) || 0)) > Math.max(...last.sets.map(s => s.weight)) && <div style={{ fontSize: '22px' }}>🔥</div>}

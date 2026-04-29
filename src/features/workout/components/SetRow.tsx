@@ -79,7 +79,7 @@ export const SetRow: React.FC<Props> = ({
             fontFamily: 'Outfit, sans-serif'
           }}
         >
-          {activeUnit}
+          {t(activeUnit)}
         </div>
       </div>
 

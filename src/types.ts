@@ -36,7 +36,7 @@ export interface PersonalRecord {
   date: string;
 }
 
-export type WeightUnit = 'kg' | 'lbs';
+export type WeightUnit = 'kg' | 'lbs' | 'balata';
 export type Language = 'ar' | 'en';
 
 export interface ThemeColor {

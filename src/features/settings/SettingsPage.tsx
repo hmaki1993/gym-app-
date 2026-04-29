@@ -1,9 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
 import { THEME_COLORS } from '../../data/exercises';
 import { Volume2, VolumeX } from 'lucide-react';
-import gsap from 'gsap';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -110,6 +109,42 @@ export function SettingsPage({ tracker }: Props) {
                 }}
               >
                 {lg === 'ar' ? 'عربي' : 'ENGLISH'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Weight Unit Frame */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.4, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('weightUnit')}</span>
+          <div style={{ 
+            display: 'flex', 
+            gap: '1px', 
+            background: 'var(--glass-bg)', 
+            border: '1px solid var(--glass-border)', 
+            padding: '4px', 
+            borderRadius: '8px',
+            width: '240px',
+            justifyContent: 'space-between'
+          }}>
+            {(['kg', 'lbs', 'balata'] as const).map((u) => (
+              <button
+                key={u}
+                onClick={() => tracker.setSettings({ weightUnit: u })}
+                style={{
+                  background: tracker.settings.weightUnit === u ? 'var(--accent-color)' : 'none',
+                  border: 'none', cursor: 'pointer',
+                  fontSize: '11px', fontWeight: '950',
+                  color: tracker.settings.weightUnit === u ? '#000' : 'var(--text-secondary)',
+                  transition: 'all 0.3s ease', 
+                  flex: 1,
+                  padding: '10px 0',
+                  borderRadius: '6px',
+                  letterSpacing: '1px',
+                  fontFamily: 'Outfit, sans-serif'
+                }}
+              >
+                {t(u).toUpperCase()}
               </button>
             ))}
           </div>
