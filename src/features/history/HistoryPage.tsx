@@ -80,15 +80,23 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
         const totalSets = log.exercises.reduce((s, ex) => s + ex.sets.length, 0);
 
         return (
-          <div key={log.id} style={{ 
-            padding: '32px 0', 
-            borderBottom: '2px solid var(--glass-border)'
-          }}>
+          <div 
+            key={log.id} 
+            onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
+            role="button"
+            style={{ 
+              padding: '24px 0', 
+              borderBottom: '2px solid var(--glass-border)',
+              cursor: 'pointer',
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
+          >
             {/* 1. Header: Muscle Group & Date */}
           {/* 1. Header: Muscle Group & Date (Toggle Trigger) */}
           <div 
-            onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', paddingBottom: expandedLogId === log.id ? '15px' : '0' }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: expandedLogId === log.id ? '15px' : '0' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -122,13 +130,33 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button
                 onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.3)', padding: '6px' }}
+                style={{ 
+                  background: 'transparent', border: 'none', cursor: 'pointer', 
+                  color: 'rgba(255,51,102,0.3)', padding: '10px',
+                  touchAction: 'manipulation'
+                }}
               >
                 <Trash2 size={18} />
               </button>
-              <div style={{ transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease', opacity: 0.3 }}>
-                <ChevronDown size={18} />
-              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  touchAction: 'manipulation',
+                  color: 'var(--accent-color)',
+                  filter: 'drop-shadow(0 0 6px var(--accent-color-alpha))',
+                  transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease'
+                }}
+              >
+                <ChevronDown size={20} strokeWidth={2.5} />
+              </button>
             </div>
           </div>
 

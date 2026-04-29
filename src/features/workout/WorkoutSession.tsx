@@ -156,31 +156,41 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const handleTouchEnd = () => setDraggingIndex(null);
   const touchState = useRef({ startX: 0, startY: 0, isAnimating: false });
 
-  // Aggressively block browser back/forward swipe gestures
+  // Smart edge-swipe blocker: exempts .allow-swipe scrollers (MuscleSelector)
   useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let targetIsScroller = false;
+
     const handleTouchStart = (e: TouchEvent) => {
-      touchState.current.startX = e.touches[0].clientX;
-      touchState.current.startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      touchState.current.startX = startX;
+      touchState.current.startY = startY;
+      // Flag if the touch started inside an allowed horizontal scroller
+      targetIsScroller = !!(e.target as HTMLElement).closest?.('.allow-swipe');
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       const x = e.touches[0].clientX;
       const y = e.touches[0].clientY;
-      const dx = Math.abs(x - touchState.current.startX);
-      const dy = Math.abs(y - touchState.current.startY);
+      const dx = Math.abs(x - startX);
+      const dy = Math.abs(y - startY);
 
-      // CRITICAL: Block edge-swipe navigation arrows for the browser
-      const threshold = 80;
-      const isEdge = touchState.current.startX < threshold || touchState.current.startX > window.innerWidth - threshold;
-      
-      if (isEdge && dx > dy && dx > 2) {
+      // If inside the muscle selector or any allowed scroller → never block
+      if (targetIsScroller) return;
+
+      // Block edge-swipe (back/forward navigation) - tighter 30px threshold
+      const EDGE = 30;
+      const isEdge = startX < EDGE || startX > window.innerWidth - EDGE;
+      if (isEdge && dx > dy && dx > 5) {
         if (e.cancelable) e.preventDefault();
+        return;
       }
 
+      // While exercise overlay is open → block ALL horizontal swipes (for card swiping)
       if (!openExercise) return;
-      
-      // Block horizontal swipe immediately to prevent browser back arrow during exercise view
-      if (dx > 2) {
+      if (dx > 5) {
         if (e.cancelable) e.preventDefault();
       }
     };

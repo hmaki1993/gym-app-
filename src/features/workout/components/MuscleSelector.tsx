@@ -9,7 +9,7 @@ interface Props {
 
 export function MuscleSelector({ selectedMuscle, onSelect, lang }: Props) {
   return (
-    <div className="hide-scrollbar" style={{ 
+    <div className="hide-scrollbar allow-swipe" style={{ 
       display: 'flex', 
       flexDirection: 'row',
       flexWrap: 'nowrap',

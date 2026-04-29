@@ -118,6 +118,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
               <React.Fragment key={i}>
                 <button 
                   onClick={() => onTabSwitch(s.target)}
+                  role="button"
                   style={{ 
                     textAlign: 'center', 
                     cursor: 'pointer', 
@@ -192,7 +193,17 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       {/* 3. BOTTOM: Last Session */}
       <div style={{ marginTop: '40px', paddingBottom: '20px', transformStyle: 'preserve-3d' }}>
         {recentLog ? (
-          <div className="antigravity-card" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+          <div 
+            onClick={() => onTabSwitch('history')}
+            className="antigravity-card" 
+            role="button"
+            style={{ 
+              borderTop: '1px solid rgba(255,255,255,0.05)', 
+              paddingTop: '12px',
+              cursor: 'pointer',
+              touchAction: 'manipulation'
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', opacity: 0.5 }}>
               <Flame size={12} color="var(--accent-color)" />
               <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession')}</span>

@@ -101,9 +101,13 @@
   display: none;
 }
 
-html,
-body,
-#root {
+html {
+  overscroll-behavior: none !important;
+  overscroll-behavior-x: none !important;
+  touch-action: pan-y !important;
+}
+
+body {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -111,13 +115,23 @@ body,
   font-family: 'Outfit', sans-serif;
   background: var(--primary-bg);
   color: var(--text-primary);
-  overscroll-behavior-x: none;
   overflow: hidden;
   position: fixed;
   overscroll-behavior: none !important;
   overscroll-behavior-x: none !important;
   touch-action: pan-y !important;
-  perspective: 1200px; /* Enable 3D depth for the entire app */
+}
+
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  overscroll-behavior: none !important;
+  touch-action: pan-y !important;
+  perspective: 1200px;
 }
 
 .heading-font {
@@ -204,6 +218,16 @@ body::before {
 .stat-btn-elite:active {
   transform: translateZ(5px) scale(0.95) !important;
   opacity: 0.7;
+}
+
+/* Global Tactile Feedback */
+.antigravity-card:active,
+.glass-card:active,
+.glass-panel:active,
+.nav-btn:active {
+  transform: scale(0.96) translateZ(10px) !important;
+  opacity: 0.8;
+  transition: transform 0.1s ease;
 }
 
 .glass-button {

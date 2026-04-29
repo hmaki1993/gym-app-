@@ -110,7 +110,8 @@ export function ExercisePicker({
             <div
               key={name}
               onClick={() => onToggle(name)}
-              className="exercise-select-btn"
+              className="exercise-select-btn glass-card"
+              role="button"
               style={{
                 position: 'relative',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -121,7 +122,8 @@ export function ExercisePicker({
                 width: '100%', cursor: 'pointer',
                 borderRadius: '16px',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                marginBottom: '2px'
+                marginBottom: '2px',
+                touchAction: 'manipulation'
               }}
             >
               <div style={{ textAlign: isRtl ? 'right' : 'left' }}>

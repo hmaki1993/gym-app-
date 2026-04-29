@@ -10,8 +10,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>GymLog — Elite Training System</title>
     <meta name="description" content="Track your gym workouts, sets, weights, and personal records. Offline-first training tracker." />
+    <style>
+      html, body {
+        overscroll-behavior: none !important;
+        overscroll-behavior-x: none !important;
+        overscroll-behavior-y: none !important;
+        touch-action: pan-y;
+      }
+    </style>
   </head>
-  <body>
+  <body style="overscroll-behavior:none;overflow:hidden;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -30,50 +30,55 @@ export default function App() {
   const contentRef = useRef<HTMLDivElement>(null);
 
 
-  // Global edge-swipe prevention & History Trap (Kill Chrome Back Arrow)
+  // ── Nuclear Chrome Back-Arrow Killer ──
   useEffect(() => {
-    const touchState = { startX: 0, startY: 0, isEdge: false };
+    let startX = 0;
+    let startY = 0;
+    let edgeSwipeBlocked = false;
+    const EDGE_THRESHOLD = 30; // px from screen edge
 
-    const handleTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      const threshold = 100; // Increased threshold
-      touchState.startX = touch.pageX;
-      touchState.startY = touch.pageY;
-      touchState.isEdge = touch.pageX < threshold || touch.pageX > window.innerWidth - threshold;
+    const isInsideAllowedScroller = (el: EventTarget | null): boolean => {
+      if (!el) return false;
+      return !!(el as HTMLElement).closest?.('.allow-swipe');
+    };
 
-      // If NOT on a button and in edge zone, block immediately
-      if (touchState.isEdge && !(e.target as HTMLElement).closest('button, a, input, [role="button"]')) {
+    const onTouchStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+      edgeSwipeBlocked = false;
+
+      // If touch starts in the edge zone AND it's not inside an allowed horizontal scroller
+      if (
+        (startX < EDGE_THRESHOLD || startX > window.innerWidth - EDGE_THRESHOLD) &&
+        !isInsideAllowedScroller(e.target)
+      ) {
+        edgeSwipeBlocked = true;
+        // Block immediately at touchstart so Chrome never sees it
         if (e.cancelable) e.preventDefault();
       }
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (touchState.isEdge) {
-        const touch = e.touches[0];
-        const dx = Math.abs(touch.pageX - touchState.startX);
-        const dy = Math.abs(touch.pageY - touchState.startY);
-
-        // AGGRESSIVE KILL: If any horizontal movement starts in edge zone, block it
-        if (dx > 0 && dx > dy) {
-          if (e.cancelable) e.preventDefault();
-        }
-      }
+    const onTouchMove = (e: TouchEvent) => {
+      if (!edgeSwipeBlocked) return;
+      // Keep blocking the entire gesture until finger lifts
+      if (e.cancelable) e.preventDefault();
     };
 
-    // 2. Trap history so there's 'nowhere to go back to'
+    // History trap: push a dummy state so there's nowhere to go back to
     window.history.pushState(null, '', window.location.href);
-    const handlePopState = () => {
+    const onPopState = () => {
       window.history.pushState(null, '', window.location.href);
     };
 
-    window.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
+    window.addEventListener('popstate', onPopState);
 
     return () => {
-      window.removeEventListener('touchstart', handleTouchStart, { capture: true } as any);
-      window.removeEventListener('touchmove', handleTouchMove, { capture: true } as any);
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('touchstart', onTouchStart, { capture: true } as any);
+      window.removeEventListener('touchmove', onTouchMove, { capture: true } as any);
+      window.removeEventListener('popstate', onPopState);
     };
   }, []);
 
