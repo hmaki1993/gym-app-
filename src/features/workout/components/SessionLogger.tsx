@@ -7,7 +7,8 @@ interface Props {
   loggedData: Record<string, SetLog[]>;
   weightUnit: string;
   onOpenExercise: (name: string) => void;
-  onSave: () => void;
+  handleTouchStart: (index: number) => void;
+  handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
   draggingIndex: number | null;
   t: (k: any) => string;
