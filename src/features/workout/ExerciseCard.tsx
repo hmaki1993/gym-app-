@@ -153,11 +153,11 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
               <h2 className="heading-font" style={{ 
                 margin: 0, 
                 fontSize: '22px', 
-                fontWeight: '950',
+                fontWeight: '800',
                 background: 'linear-gradient(to bottom, var(--text-primary) 30%, var(--accent-color) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                letterSpacing: '-1px',
+                letterSpacing: '-0.5px',
                 textTransform: 'uppercase',
                 lineHeight: '1',
                 textShadow: '0 5px 15px rgba(0,0,0,0.3)'

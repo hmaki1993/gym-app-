@@ -8,14 +8,15 @@ import { ProgressPage } from './features/progress/ProgressPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { OnboardingModal } from './features/common/OnboardingModal';
 import { BottomNav } from './features/common/BottomNav';
-import { TrendingUp, History, Settings, Home } from 'lucide-react';
+import { NutritionPage } from './features/nutrition/NutritionPage';
+import { TrendingUp, History, Settings, Home, Utensils } from 'lucide-react';
 import gsap from 'gsap';
 import './index.css';
 
 import { Header } from './features/common/Header';
 import { ConfirmModal } from './features/common/ConfirmModal';
 
-type Tab = 'home' | 'history' | 'progress' | 'settings';
+type Tab = 'home' | 'history' | 'progress' | 'nutrition' | 'settings';
 
 export default function App() {
   const tracker = useGymTracker();
@@ -133,6 +134,7 @@ export default function App() {
   const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
     { key: 'home', icon: <Home size={26} strokeWidth={2} />, label: lang === 'ar' ? 'الرئيسية' : 'Home' },
     { key: 'history', icon: <History size={26} strokeWidth={2} />, label: t('history') },
+    { key: 'nutrition', icon: <Utensils size={26} strokeWidth={2} />, label: t('nutrition') },
     { key: 'progress', icon: <TrendingUp size={26} strokeWidth={2} />, label: t('progress') },
     { key: 'settings', icon: <Settings size={26} strokeWidth={2} />, label: t('settings') },
   ];
@@ -181,6 +183,7 @@ export default function App() {
               <HistoryPage tracker={tracker} onDeleteWorkout={handleDeleteWorkout} />
             )}
             {tab === 'progress' && <ProgressPage tracker={tracker} />}
+            {tab === 'nutrition' && <NutritionPage tracker={tracker} />}
             {tab === 'settings' && <SettingsPage tracker={tracker} />}
           </div>
 

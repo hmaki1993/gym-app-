@@ -138,8 +138,8 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                   }}
                 >
                   <div style={{ color: 'var(--accent-color)', opacity: 0.8, marginBottom: '2px' }}>{s.icon}</div>
-                  <div style={{ fontSize: '28px', fontWeight: '950', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
-                  <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: 'Outfit, sans-serif', opacity: 0.6 }}>{s.label}</div>
+                  <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif' }}>{s.val}</div>
+                  <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'Outfit, sans-serif', opacity: 0.6 }}>{s.label}</div>
                 </button>
                 {i < 2 && <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.05)' }} />}
               </React.Fragment>
@@ -171,9 +171,8 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'translateZ(30px)' }}>
               {workoutWords.map((word: string, i: number) => (
                 <div key={i} className="premium-title" style={{ 
-                  fontSize: '48px', 
-                  lineHeight: '0.9',
-                  letterSpacing: '1px',
+                  fontSize: '42px', 
+                  lineHeight: '1',
                   marginBottom: '2px'
                 }}>
                   {word}
@@ -184,9 +183,9 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
           
           <span style={{ 
             fontSize: '10px', 
-            fontWeight: '900', 
+            fontWeight: '800', 
             color: 'var(--accent-color)', 
-            letterSpacing: '8px', 
+            letterSpacing: '4px', 
             opacity: 0.6,
             textTransform: 'uppercase',
             fontFamily: 'Outfit, sans-serif',
@@ -216,7 +215,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '0px', fontFamily: 'Outfit, sans-serif' }}>
                   {MUSCLE_GROUPS.find(m => m.key === recentLog.muscleGroup)?.[lang] ?? recentLog.muscleGroup}
                 </div>
                 <div style={{ width: '1px', height: '12px', background: 'rgba(255,255,255,0.1)' }} />
