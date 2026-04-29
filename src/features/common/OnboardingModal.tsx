@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
-import { Dumbbell } from 'lucide-react';
 import gsap from 'gsap';
 
 interface Props {
