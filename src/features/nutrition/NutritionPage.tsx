@@ -3,11 +3,66 @@ import { createPortal } from 'react-dom';
 import { Trash2, Scan, RefreshCw } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { GeminiService } from '../../services/gemini';
+import { ChevronDown, Check } from 'lucide-react';
+
+function EliteSelect({ id, defaultValue, options }: { id: string, defaultValue: string, options: { value: string, label: string }[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState(options.find(o => o.value === defaultValue) || options[0]);
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <input type="hidden" id={id} value={selected.value} />
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '16px', padding: '16px', color: '#fff', fontWeight: '800', fontSize: '15px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
+          transition: 'all 0.3s ease', fontFamily: 'Outfit'
+        }}
+      >
+        {selected.label}
+        <ChevronDown size={18} style={{ opacity: 0.5, transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
+      </div>
+
+      {isOpen && (
+        <>
+          <div onClick={() => setIsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
+          <div style={{
+            position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 20,
+            background: 'rgba(20,20,20,0.8)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px',
+            padding: '8px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            animation: 'slide-up 0.2s ease-out'
+          }}>
+            {options.map(opt => (
+              <div 
+                key={opt.value}
+                onClick={() => { setSelected(opt); setIsOpen(false); }}
+                style={{
+                  padding: '12px 16px', borderRadius: '12px', color: '#fff', fontSize: '14px',
+                  fontWeight: selected.value === opt.value ? '900' : '600',
+                  background: selected.value === opt.value ? 'rgba(0,255,170,0.1)' : 'transparent',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  cursor: 'pointer', transition: 'all 0.2s ease'
+                }}
+              >
+                {opt.label}
+                {selected.value === opt.value && <Check size={14} color="var(--accent-color)" />}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function NutritionPage({ tracker }: { tracker: any }) {
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
 
   const nutritionLogs = tracker.nutritionLogs || [];
   const today = new Date().toISOString().split('T')[0];
@@ -18,7 +73,32 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const consumedCarb = todayMeals.reduce((sum: number, m: any) => sum + m.carbs, 0);
   const consumedFat = todayMeals.reduce((sum: number, m: any) => sum + m.fats, 0);
 
-  const calorieGoal = tracker.settings.dailyCalorieGoal || 2500;
+  const settings = tracker.settings;
+  const profile = settings.nutritionProfile;
+
+  const calculateTargets = (p: any) => {
+    const bmr = (10 * p.weight) + (6.25 * p.height) - (5 * p.age) + (p.gender === 'male' ? 5 : -161);
+    const tdee = bmr * p.activityLevel;
+    let targetCal = tdee;
+    if (p.goal === 'lose') targetCal -= (p.goalRate * 7700 / 7);
+    if (p.goal === 'gain') targetCal += (p.goalRate * 7700 / 7);
+
+    return {
+      calories: Math.round(targetCal),
+      protein: Math.round((targetCal * (p.proteinRatio / 100)) / 4),
+      carbs: Math.round((targetCal * (p.carbsRatio / 100)) / 4),
+      fats: Math.round((targetCal * (p.fatsRatio / 100)) / 9),
+    };
+  };
+
+  const targets = profile ? calculateTargets(profile) : { 
+    calories: settings.dailyCalorieGoal || 2500, 
+    protein: Math.round((settings.dailyCalorieGoal || 2500) * 0.25 / 4), 
+    carbs: Math.round((settings.dailyCalorieGoal || 2500) * 0.45 / 4), 
+    fats: Math.round((settings.dailyCalorieGoal || 2500) * 0.3 / 9) 
+  };
+
+  const calorieGoal = targets.calories;
   const remainingCal = Math.max(0, calorieGoal - consumedCal);
 
   // ── SCAN: Open native camera → analyze → show result card ──
@@ -85,67 +165,135 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             textAlign: 'center',
             animation: 'slide-up 0.4s cubic-bezier(0.34,1.56,0.64,1)'
           }}>
-            {/* Badge */}
+            {/* Status Label */}
             <div style={{
-              display: 'inline-block', padding: '4px 14px', borderRadius: '20px',
-              background: 'var(--accent-color)', color: '#000',
-              fontSize: '10px', fontWeight: '900', letterSpacing: '2px',
-              marginBottom: '20px', textTransform: 'uppercase'
+              color: 'var(--accent-color)',
+              fontSize: '11px',
+              fontWeight: '900',
+              letterSpacing: '3px',
+              marginBottom: '20px',
+              textTransform: 'uppercase',
+              opacity: 0.9
             }}>
-              AI ANALYZED ✓
+              ANALYZED ✓
             </div>
 
             {/* Meal Name */}
-            <div style={{ fontSize: '24px', fontWeight: '950', color: '#fff', marginBottom: '8px', lineHeight: 1.2 }}>
-              {scanResult.name}
+            <div style={{ 
+              display: 'inline-block',
+              padding: '12px 24px',
+              borderRadius: '16px',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              marginBottom: '24px',
+              width: 'auto'
+            }}>
+              <div style={{ fontSize: '20px', fontWeight: '950', color: '#fff', lineHeight: 1.2, fontFamily: 'Outfit' }}>
+                {scanResult.name}
+              </div>
             </div>
 
             {/* Calories */}
-            <div style={{ fontSize: '64px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: 1, letterSpacing: '-3px', marginBottom: '8px' }}>
+            <div style={{ 
+              fontSize: '56px', 
+              fontWeight: '950', 
+              color: 'var(--accent-color)', 
+              lineHeight: 1, 
+              fontFamily: 'Outfit',
+              letterSpacing: '-2px', 
+              marginBottom: '4px' 
+            }}>
               {scanResult.calories}
             </div>
-            <div style={{ fontSize: '10px', fontWeight: '800', color: 'var(--accent-color)', opacity: 0.6, letterSpacing: '3px', marginBottom: '32px' }}>
-              KCAL
+            <div style={{ 
+              fontSize: '9px', 
+              fontWeight: '800', 
+              color: 'var(--accent-color)', 
+              opacity: 0.5, 
+              letterSpacing: '2px', 
+              marginBottom: '28px',
+              textTransform: 'uppercase'
+            }}>
+              TOTAL KCAL
             </div>
 
-            {/* Macros */}
-            <div style={{
-              display: 'flex', justifyContent: 'space-around',
-              background: 'rgba(255,255,255,0.04)', borderRadius: '20px',
-              padding: '18px', marginBottom: '32px'
+            {/* Macros Grid */}
+            <div style={{ 
+              display: 'flex', 
+              background: 'rgba(255,255,255,0.03)', 
+              borderRadius: '24px', 
+              padding: '20px 10px',
+              border: '1px solid rgba(255,255,255,0.12)',
+              marginBottom: '32px',
+              width: '100%',
+              justifyContent: 'space-between'
             }}>
-              {[
-                { label: 'PROTEIN', val: scanResult.protein, color: '#ff4d4d' },
-                { label: 'CARBS', val: scanResult.carbs, color: '#4da6ff' },
-                { label: 'FATS', val: scanResult.fats, color: '#ffcc00' }
-              ].map(m => (
-                <div key={m.label} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '22px', fontWeight: '900', color: m.color }}>{m.val}<span style={{ fontSize: '11px' }}>g</span></div>
-                  <div style={{ fontSize: '8px', opacity: 0.4, fontWeight: '800', letterSpacing: '1px' }}>{m.label}</div>
-                </div>
-              ))}
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ color: '#ffcc00', fontSize: '22px', fontWeight: '950', fontFamily: 'Outfit' }}>{scanResult.fats}<span style={{fontSize:'12px'}}>g</span></div>
+                <div style={{ color: '#fff', opacity: 0.4, fontSize: '10px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>Fats</div>
+              </div>
+              
+              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', height: '30px', alignSelf: 'center' }} />
+
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ color: '#4da6ff', fontSize: '22px', fontWeight: '950', fontFamily: 'Outfit' }}>{scanResult.carbs}<span style={{fontSize:'12px'}}>g</span></div>
+                <div style={{ color: '#fff', opacity: 0.4, fontSize: '10px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>Carbs</div>
+              </div>
+
+              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', height: '30px', alignSelf: 'center' }} />
+
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ color: '#ff4d4d', fontSize: '22px', fontWeight: '950', fontFamily: 'Outfit' }}>{scanResult.protein}<span style={{fontSize:'12px'}}>g</span></div>
+                <div style={{ color: '#fff', opacity: 0.4, fontSize: '10px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>Protein</div>
+              </div>
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={() => { setScanResult(null); setShowResult(false); handleScan(); }}
-                style={{ flex: 1, padding: '16px', borderRadius: '18px', background: 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                style={{ 
+                  flex: 1, padding: '16px', borderRadius: '20px', 
+                  background: 'rgba(255,255,255,0.03)', 
+                  border: '1px solid rgba(255,255,255,0.2)', 
+                  color: '#fff', fontWeight: '800', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                <RefreshCw size={16} /> Retry
+                <RefreshCw size={18} /> RETRY
               </button>
               <button
                 onClick={handleAddLog}
-                style={{ flex: 2, padding: '16px', borderRadius: '18px', background: 'var(--accent-color)', border: 'none', color: '#000', fontWeight: '950', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '14px' }}
+                style={{ 
+                  flex: 1, padding: '16px', borderRadius: '20px', 
+                  background: 'rgba(0, 255, 170, 0.05)', 
+                  border: '1.5px solid var(--accent-color)', 
+                  color: 'var(--accent-color)', fontWeight: '950', 
+                  textTransform: 'uppercase', letterSpacing: '1px', fontSize: '13px',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                ADD TO DIARY
+                ADD TO LOG
               </button>
             </div>
 
             {/* Cancel */}
             <button
               onClick={() => { setScanResult(null); setShowResult(false); }}
-              style={{ marginTop: '16px', background: 'none', border: 'none', color: '#fff', opacity: 0.3, fontSize: '12px', fontWeight: '700' }}
+              style={{ 
+                marginTop: '24px', 
+                background: 'none', 
+                border: 'none', 
+                color: '#ff4d4d', 
+                opacity: 0.8, 
+                fontSize: '13px', 
+                fontWeight: '800',
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
+              }}
             >
               Cancel
             </button>
@@ -177,46 +325,49 @@ export function NutritionPage({ tracker }: { tracker: any }) {
 
         {/* CALORIE HEADER */}
         <div style={{ padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+             <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px' }}>AI DAILY TARGET</div>
+             <button 
+              onClick={() => setShowSetup(true)}
+              style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(0,255,170,0.1)', border: '1px solid rgba(0,255,170,0.2)', color: 'var(--accent-color)', fontSize: '9px', fontWeight: '800' }}
+             >
+               {profile ? 'UPDATE PROFILE' : 'START SMART SETUP'}
+             </button>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ textAlign: 'center', flex: 1 }}>
               <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)' }}>{calorieGoal}</div>
-              <div style={{ fontSize: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6 }}>Goal</div>
+              <div style={{ fontSize: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6 }}>Base</div>
             </div>
             <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.15)', fontWeight: '900' }}>-</div>
             <div style={{ textAlign: 'center', flex: 1 }}>
               <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)' }}>{consumedCal}</div>
-              <div style={{ fontSize: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6 }}>Food</div>
+              <div style={{ fontSize: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6 }}>Consumed</div>
             </div>
             <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.15)', fontWeight: '900' }}>=</div>
             <div style={{ textAlign: 'center', flex: 1 }}>
               <div style={{ fontSize: '28px', fontWeight: '950', color: 'var(--accent-color)' }}>{remainingCal}</div>
-              <div style={{ fontSize: '8px', color: 'var(--accent-color)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Remaining</div>
+              <div style={{ fontSize: '8px', color: 'var(--accent-color)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Left</div>
             </div>
           </div>
 
-          {/* Macro bar */}
-          <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', display: 'flex' }}>
-            {(() => {
-              const total = consumedPro + consumedCarb + consumedFat || 1;
-              return (
-                <>
-                  <div style={{ width: `${(consumedPro / total) * 100}%`, background: '#ff4d4d', transition: 'width 0.6s ease' }} />
-                  <div style={{ width: `${(consumedCarb / total) * 100}%`, background: '#4da6ff', transition: 'width 0.6s ease' }} />
-                  <div style={{ width: `${(consumedFat / total) * 100}%`, background: '#ffcc00', transition: 'width 0.6s ease' }} />
-                </>
-              );
-            })()}
+          {/* Macro Progress */}
+          <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', display: 'flex', marginBottom: '16px' }}>
+            <div style={{ width: `${Math.min(100, (consumedPro / targets.protein) * 100)}%`, background: '#ff4d4d', transition: 'width 0.6s ease' }} />
+            <div style={{ width: `${Math.min(100, (consumedCarb / targets.carbs) * 100)}%`, background: '#4da6ff', transition: 'width 0.6s ease' }} />
+            <div style={{ width: `${Math.min(100, (consumedFat / targets.fats) * 100)}%`, background: '#ffcc00', transition: 'width 0.6s ease' }} />
           </div>
 
-          {/* Macro labels */}
-          <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '12px' }}>
+          {/* Macro labels with targets */}
+          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
             {[
-              { label: 'Protein', val: consumedPro, color: '#ff4d4d' },
-              { label: 'Carbs', val: consumedCarb, color: '#4da6ff' },
-              { label: 'Fats', val: consumedFat, color: '#ffcc00' }
+              { label: 'Protein', val: consumedPro, target: targets.protein, color: '#ff4d4d' },
+              { label: 'Carbs', val: consumedCarb, target: targets.carbs, color: '#4da6ff' },
+              { label: 'Fats', val: consumedFat, target: targets.fats, color: '#ffcc00' }
             ].map(m => (
               <div key={m.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '14px', fontWeight: '800', color: m.color }}>{m.val}g</div>
+                <div style={{ fontSize: '14px', fontWeight: '800', color: m.color }}>{m.val}<span style={{fontSize:'10px', opacity: 0.5}}>/{m.target}g</span></div>
                 <div style={{ fontSize: '8px', opacity: 0.4, letterSpacing: '1px' }}>{m.label.toUpperCase()}</div>
               </div>
             ))}
@@ -241,7 +392,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 {catCal > 0 && <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)' }}>{catCal} kcal</div>}
               </div>
 
-              <div style={{ borderRadius: '18px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.02)' }}>
+              <div>
                 {catMeals.map((meal: any, i: number) => (
                   <div key={meal.id} style={{
                     padding: '14px 16px',
@@ -270,9 +421,31 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 <button
                   onClick={handleScan}
                   disabled={scanning}
-                  style={{ width: '100%', padding: '14px', background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', opacity: scanning ? 0.4 : 0.7 }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '16px', 
+                    background: 'rgba(255,255,255,0.01)', 
+                    border: '1.5px dashed rgba(0, 255, 170, 0.2)', 
+                    borderRadius: '0px',
+                    color: 'var(--accent-color)', 
+                    fontSize: '11px', 
+                    fontWeight: '900', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '2px', 
+                    opacity: scanning ? 0.4 : 0.8,
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px'
+                  }}
                 >
-                  {scanning ? 'ANALYZING...' : '+ ADD FOOD'}
+                  {scanning ? 'ANALYZING...' : (
+                    <>
+                      <div style={{ fontSize: '20px', fontWeight: '400', marginTop: '-2px' }}>+</div>
+                      ADD FOOD
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -287,16 +460,134 @@ export function NutritionPage({ tracker }: { tracker: any }) {
         style={{
           position: 'fixed', bottom: '90px', right: '20px',
           width: '60px', height: '60px', borderRadius: '30px',
-          background: 'var(--accent-color)', border: 'none', color: '#000',
+          background: 'rgba(0, 255, 170, 0.05)', 
+          border: '1.5px solid var(--accent-color)', 
+          color: 'var(--accent-color)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 8px 24px var(--accent-color-alpha)',
+          boxShadow: '0 0 20px rgba(0, 255, 170, 0.1)',
+          backdropFilter: 'blur(10px)',
           zIndex: 100, opacity: scanning ? 0.6 : 1,
-          transition: 'all 0.2s ease'
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         {scanning ? <RefreshCw size={24} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Scan size={24} />}
       </button>
 
+      {/* ── Smart Setup Modal (Elite Edition) ── */}
+      {showSetup && createPortal(
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'radial-gradient(circle at top right, rgba(0,255,170,0.15), transparent), radial-gradient(circle at bottom left, rgba(0,163,255,0.1), transparent), rgba(0,0,0,0.92)',
+          backdropFilter: 'blur(25px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '440px',
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))',
+            borderRadius: '40px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            padding: '40px',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Background Glows */}
+            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'var(--accent-color)', filter: 'blur(80px)', opacity: 0.15 }} />
+
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <h2 style={{ fontSize: '32px', fontWeight: '950', color: '#fff', marginBottom: '8px', letterSpacing: '-1px', fontFamily: 'Outfit' }}>Smart Setup</h2>
+              <div style={{ width: '40px', height: '3px', background: 'var(--accent-color)', margin: '0 auto', borderRadius: '2px', opacity: 0.8 }} />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+              {[
+                { id: 'setup-weight', label: 'Weight', val: profile?.weight || 80, unit: 'kg' },
+                { id: 'setup-height', label: 'Height', val: profile?.height || 180, unit: 'cm' },
+                { id: 'setup-age', label: 'Age', val: profile?.age || 25, unit: 'yr' }
+              ].map(field => (
+                <div key={field.id}>
+                  <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.7 }}>{field.label.toUpperCase()}</label>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="number" defaultValue={field.val}
+                      id={field.id}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px', color: '#fff', fontWeight: '800', fontSize: '16px', outline: 'none', transition: 'all 0.3s ease', fontFamily: 'Outfit' }}
+                      onFocus={(e) => { e.currentTarget.style.border = '1px solid var(--accent-color)'; e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
+                      onBlur={(e) => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    />
+                    <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.3, color: '#fff' }}>{field.unit}</span>
+                  </div>
+                </div>
+              ))}
+              <div>
+                <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.7 }}>GENDER</label>
+                <EliteSelect 
+                  id="setup-gender"
+                  defaultValue={profile?.gender || 'male'}
+                  options={[
+                    { value: 'male', label: 'Male' },
+                    { value: 'female', label: 'Female' }
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '32px' }}>
+              <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.7 }}>FITNESS GOAL</label>
+              <EliteSelect 
+                id="setup-goal"
+                defaultValue={profile?.goal || 'maintain'}
+                options={[
+                  { value: 'lose', label: 'Lose Weight (Cutting)' },
+                  { value: 'maintain', label: 'Maintain Weight' },
+                  { value: 'gain', label: 'Gain Weight (Bulking)' }
+                ]}
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                const weight = Number((document.getElementById('setup-weight') as HTMLInputElement).value);
+                const height = Number((document.getElementById('setup-height') as HTMLInputElement).value);
+                const age = Number((document.getElementById('setup-age') as HTMLInputElement).value);
+                const gender = (document.getElementById('setup-gender') as HTMLSelectElement).value as any;
+                const goal = (document.getElementById('setup-goal') as HTMLSelectElement).value as any;
+
+                tracker.setSettings({
+                  nutritionProfile: {
+                    weight, height, age, gender, goal,
+                    activityLevel: 1.375,
+                    goalRate: goal === 'maintain' ? 0 : 0.5,
+                    proteinRatio: goal === 'gain' ? 35 : 30,
+                    carbsRatio: 40,
+                    fatsRatio: goal === 'lose' ? 20 : 30
+                  }
+                });
+                setShowSetup(false);
+              }}
+              style={{ 
+                width: '100%', padding: '20px', borderRadius: '20px', 
+                background: 'var(--accent-color)', border: 'none', color: '#000', 
+                fontWeight: '950', fontSize: '15px', textTransform: 'uppercase', 
+                letterSpacing: '1px', marginBottom: '16px', cursor: 'pointer',
+                boxShadow: '0 10px 20px rgba(0, 255, 170, 0.2)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              Save & Start Progress
+            </button>
+
+            <button
+              onClick={() => setShowSetup(false)}
+              style={{ width: '100%', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer' }}
+            >
+              Maybe Later
+            </button>
+          </div>
+        </div>,
+        document.getElementById('scanner-root')!
+      )}
+      
       <style>{`
         @keyframes slide-up {
           from { transform: translateY(40px) scale(0.96); opacity: 0; }

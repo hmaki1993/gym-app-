@@ -65,6 +65,18 @@ export interface GymSettings {
   defaultRestSeconds: number;
   soundEnabled: boolean;
   dailyCalorieGoal: number;
+  nutritionProfile?: {
+    weight: number;
+    height: number;
+    age: number;
+    gender: 'male' | 'female';
+    activityLevel: number;
+    goal: 'lose' | 'maintain' | 'gain';
+    goalRate: number; // kg per week
+    proteinRatio: number;
+    carbsRatio: number;
+    fatsRatio: number;
+  };
 }
 
 export interface GymState {
