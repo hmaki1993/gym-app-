@@ -25,6 +25,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
   const recentLog = tracker.logs[0];
   const totalVolume = recentLog ? tracker.getTotalVolume(recentLog) : 0;
 
+
   // Entrance animation removed to prevent 'refresh' feeling on tab switch
   /*
   useEffect(() => {
@@ -147,6 +148,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
           </div>
         </div>
       </div>
+
 
       {/* 2. MIDDLE: Start Workout CTA */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '20px 0', perspective: '1000px' }}>

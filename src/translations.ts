@@ -85,6 +85,10 @@ export const translations = {
     remaining: 'Remaining',
     identifyFood: 'Identify Food',
     scanning: 'Scanning...',
+    consumed: 'Consumed',
+    goal: 'Goal',
+    dailyNutrition: 'Daily Nutrition',
+    todayMeals: "Today's Meals",
   },
   ar: {
     appName: 'باور جريد',
@@ -172,6 +176,10 @@ export const translations = {
     remaining: 'المتبقي',
     identifyFood: 'تحليل الوجبة',
     scanning: 'جاري التحليل...',
+    consumed: 'المستهلك',
+    goal: 'الهدف',
+    dailyNutrition: 'التغذية اليومية',
+    todayMeals: 'وجبات اليوم',
   },
 };
 

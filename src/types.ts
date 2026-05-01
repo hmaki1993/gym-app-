@@ -39,6 +39,17 @@ export interface PersonalRecord {
 export type WeightUnit = 'kg' | 'lbs' | 'balata';
 export type Language = 'ar' | 'en';
 
+export interface MealLog {
+  id: string;
+  date: string; // ISO
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  portion: number;
+}
+
 export interface ThemeColor {
   name: string;
   hex: string;
@@ -53,6 +64,7 @@ export interface GymSettings {
   themeMode: 'dark' | 'light';
   defaultRestSeconds: number;
   soundEnabled: boolean;
+  dailyCalorieGoal: number;
 }
 
 export interface GymState {
@@ -61,4 +73,5 @@ export interface GymState {
   settings: GymSettings;
   customExercises: Record<MuscleGroup, string[]>;
   hiddenExercises: Record<MuscleGroup, string[]>;
+  nutritionLogs: MealLog[];
 }

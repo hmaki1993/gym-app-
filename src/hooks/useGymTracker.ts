@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog } from '../types';
+import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog } from '../types';
 import { THEME_COLORS } from '../data/exercises';
 
 const STORAGE_KEY = 'gymlog_state_v1';
@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS: GymSettings = {
   themeMode: 'dark',
   defaultRestSeconds: 90,
   soundEnabled: true,
+  dailyCalorieGoal: 2500,
 };
 
 const DEFAULT_STATE: GymState = {
@@ -26,6 +27,18 @@ const DEFAULT_STATE: GymState = {
     chest: [], back: [], legs: [], shoulders: [],
     arms: [], abs: [], cardio: [],
   },
+  nutritionLogs: [
+    {
+      id: 'mock-1',
+      name: 'Grilled Chicken & Rice',
+      calories: 550,
+      protein: 45,
+      carbs: 60,
+      fats: 12,
+      date: new Date().toISOString(),
+      portion: 350
+    }
+  ],
 };
 
 function loadState(): GymState {
@@ -222,6 +235,26 @@ export function useGymTracker() {
     sessionStartRef.current = Date.now();
   }, []);
 
+  const addMealLog = useCallback((meal: Omit<MealLog, 'id' | 'date'>) => {
+    const newMeal: MealLog = {
+      ...meal,
+      id: `ml_${Date.now()}`,
+      date: new Date().toISOString(),
+    };
+    setState(prev => ({
+      ...prev,
+      nutritionLogs: [newMeal, ...(prev.nutritionLogs || [])],
+    }));
+    return newMeal;
+  }, []);
+
+  const deleteMealLog = useCallback((id: string) => {
+    setState(prev => ({
+      ...prev,
+      nutritionLogs: (prev.nutritionLogs || []).filter(m => m.id !== id),
+    }));
+  }, []);
+
   // Stats
   const getWeeklyCount = useCallback(() => {
     const weekAgo = new Date();
@@ -253,5 +286,8 @@ export function useGymTracker() {
     resetSessionTimer,
     getWeeklyCount,
     getTotalVolume,
+    addMealLog,
+    deleteMealLog,
+    nutritionLogs: state.nutritionLogs || [],
   };
 }
