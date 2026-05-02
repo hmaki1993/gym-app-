@@ -235,11 +235,11 @@ export function useGymTracker() {
     sessionStartRef.current = Date.now();
   }, []);
 
-  const addMealLog = useCallback((meal: Omit<MealLog, 'id' | 'date'>) => {
+  const addMealLog = useCallback((meal: Omit<MealLog, 'id' | 'date'> & { date?: string }) => {
     const newMeal: MealLog = {
       ...meal,
       id: `ml_${Date.now()}`,
-      date: new Date().toISOString(),
+      date: meal.date || new Date().toISOString(),
     };
     setState(prev => ({
       ...prev,

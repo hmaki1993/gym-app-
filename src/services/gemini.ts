@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = import.meta.env.VITE_GEMINI_KEY as string || '';
+const API_KEY = (import.meta.env.VITE_GEMINI_KEY || import.meta.env.VITE_GEMINI_API_KEY) as string || '';
+
+console.log('Gemini API Key loaded:', API_KEY ? 'YES (Starts with ' + API_KEY.substring(0, 4) + ')' : 'NO');
 
 export const GeminiService = {
   analyzeMeal: async (base64Image: string, mimeType: string = 'image/jpeg'): Promise<{
@@ -50,6 +52,18 @@ export const GeminiService = {
       if (err.message?.includes('429') || err.message?.includes('404')) {
          throw new Error('الـ API مشغول حالياً، جرب كمان دقيقة');
       }
+      throw err;
+    }
+  },
+  generateText: async (prompt: string): Promise<string> => {
+    if (!API_KEY) throw new Error('API Key missing');
+    try {
+      const genAI = new GoogleGenerativeAI(API_KEY);
+      const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (err: any) {
+      console.error('Gemini Text Error:', err);
       throw err;
     }
   }

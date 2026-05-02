@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
 import { THEME_COLORS } from '../../data/exercises';
-import { Volume2, VolumeX } from 'lucide-react';
+
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -176,7 +176,7 @@ export function SettingsPage({ tracker }: Props) {
                     } as any 
                   })}
                   style={{
-                    flex: 1, padding: '12px 0', borderRadius: '14px', fontSize: '11px', fontWeight: '950', border: 'none', cursor: 'pointer', transition: 'all 0.3s ease',
+                    flex: 1, padding: '12px 0', borderRadius: '14px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s ease',
                     background: tracker.settings.nutritionProfile?.goal === g ? 'rgba(0, 255, 170, 0.1)' : 'transparent',
                     border: tracker.settings.nutritionProfile?.goal === g ? '1px solid var(--accent-color)' : '1px solid rgba(255,255,255,0.05)',
                     color: tracker.settings.nutritionProfile?.goal === g ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',

@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 import { Trash2, Scan, RefreshCw } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { GeminiService } from '../../services/gemini';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Search, Barcode } from 'lucide-react';
+import { FatSecretService } from '../../services/fatsecret';
+import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 
 function EliteSelect({ id, defaultValue, options }: { id: string, defaultValue: string, options: { value: string, label: string }[] }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,10 +65,15 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const [scanResult, setScanResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
+  const [targetCategory, setTargetCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   const nutritionLogs = tracker.nutritionLogs || [];
-  const today = new Date().toISOString().split('T')[0];
-  const todayMeals = nutritionLogs.filter((m: any) => m.date.split('T')[0] === today);
+  const today = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD in local time
+  const todayMeals = nutritionLogs.filter((m: any) => new Date(m.date).toLocaleDateString('en-CA') === today);
 
   const consumedCal = todayMeals.reduce((sum: number, m: any) => sum + m.calories, 0);
   const consumedPro = todayMeals.reduce((sum: number, m: any) => sum + m.protein, 0);
@@ -102,7 +109,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const remainingCal = Math.max(0, calorieGoal - consumedCal);
 
   // ── SCAN: Open native camera → analyze → show result card ──
-  const handleScan = async () => {
+  const handleScan = async (category?: string) => {
+    if (category) setTargetCategory(category);
     try {
       setScanning(true);
       const image = await Camera.getPhoto({
@@ -125,25 +133,94 @@ export function NutritionPage({ tracker }: { tracker: any }) {
     } catch (err: any) {
       const msg = err?.message || '';
       if (!msg.includes('cancelled') && !msg.includes('User cancelled')) {
-        alert('Analysis failed: ' + (err?.message || 'Unknown error'));
+        console.error('Analysis failed:', err);
       }
     } finally {
       setScanning(false);
     }
   };
 
-  const handleAddLog = () => {
-    if (scanResult) {
+  const handleAddLog = (mealData?: any) => {
+    const data = mealData || scanResult;
+    if (data) {
+      let mealDate = new Date();
+      if (targetCategory === 'Breakfast') mealDate.setHours(8, 0, 0);
+      else if (targetCategory === 'Lunch') mealDate.setHours(13, 0, 0);
+      else if (targetCategory === 'Dinner') mealDate.setHours(19, 0, 0);
+      else if (targetCategory === 'Snacks') mealDate.setHours(23, 0, 0);
+
       tracker.addMealLog({
-        name: scanResult.name,
-        calories: scanResult.calories,
-        protein: scanResult.protein,
-        carbs: scanResult.carbs,
-        fats: scanResult.fats,
-        portion: scanResult.portion ?? 300
+        name: data.name,
+        calories: data.calories,
+        protein: data.protein,
+        carbs: data.carbs,
+        fats: data.fats,
+        portion: data.portion ?? 300,
+        date: mealDate.toISOString()
       });
       setScanResult(null);
       setShowResult(false);
+      setShowSearchModal(false);
+    }
+  };
+
+  const handleManualSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setShowSearchModal(true);
+    
+    try {
+      const results = await FatSecretService.searchFood(searchQuery);
+      setSearchResults(results);
+    } catch (err: any) {
+      console.error('Search failed:', err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleBarcodeScan = async () => {
+    try {
+      const isSupported = await BarcodeScanner.isSupported();
+      if (!isSupported.supported) {
+        alert('Barcode scanning is not supported on this device');
+        return;
+      }
+
+      const permission = await BarcodeScanner.requestPermissions();
+      if (permission.camera !== 'granted') {
+        alert('Camera permission is required to scan barcodes');
+        return;
+      }
+      
+      const { barcodes } = await BarcodeScanner.scan({
+        formats: [BarcodeFormat.UpcA, BarcodeFormat.UpcE, BarcodeFormat.Ean8, BarcodeFormat.Ean13]
+      });
+
+      if (barcodes.length > 0 && barcodes[0].rawValue) {
+        setScanning(true);
+        const food = await FatSecretService.findByBarcode(barcodes[0].rawValue);
+        if (food) {
+          setScanResult(food);
+          setShowResult(true);
+        } else {
+          alert('AI couldn\'t identify this barcode yet. Try searching for it by name!');
+        }
+      }
+    } catch (err: any) {
+      console.error('Barcode Scan Error:', err);
+      // If it still fails with module error, it might need one last sync
+      if (err.message?.includes('Module')) {
+         alert('جاري تهيئة السكنر لأول مرة، جرب كمان ثانية');
+         await BarcodeScanner.installGoogleBarcodeScannerModule();
+      } else {
+         alert('Scanner Error: ' + (err.message || 'Unknown error'));
+      }
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -322,6 +399,37 @@ export function NutritionPage({ tracker }: { tracker: any }) {
 
       {/* ── Main Page Content ── */}
       <div className="hide-scrollbar" style={{ padding: '0 20px 100px', width: '100%', boxSizing: 'border-box', overflowY: 'auto', height: '100%' }}>
+        
+        {/* SEARCH BAR */}
+        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+          <form onSubmit={handleManualSearch} style={{ flex: 1, position: 'relative' }}>
+            <input 
+              type="text"
+              placeholder="Search food..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%', padding: '14px 20px', paddingLeft: '44px',
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px', color: '#fff', fontSize: '14px', fontWeight: '600',
+                outline: 'none', transition: 'all 0.3s ease', fontFamily: 'Outfit'
+              }}
+            />
+            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }}>
+              <Search size={18} />
+            </div>
+          </form>
+          <button 
+            onClick={handleBarcodeScan}
+            style={{
+              width: '50px', height: '50px', borderRadius: '16px',
+              background: 'rgba(0,255,170,0.05)', border: '1px solid rgba(0,255,170,0.1)',
+              color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >
+            <Barcode size={22} />
+          </button>
+        </div>
 
         {/* CALORIE HEADER */}
         <div style={{ padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' }}>
@@ -419,7 +527,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 ))}
 
                 <button
-                  onClick={handleScan}
+                  onClick={() => handleScan(category)}
                   disabled={scanning}
                   style={{ 
                     width: '100%', 
@@ -455,7 +563,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
 
       {/* FLOATING SCAN BUTTON */}
       <button
-        onClick={handleScan}
+        onClick={() => handleScan()}
         disabled={scanning}
         style={{
           position: 'fixed', bottom: '90px', right: '20px',
@@ -583,6 +691,56 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             >
               Maybe Later
             </button>
+          </div>
+        </div>,
+        document.getElementById('scanner-root')!
+      )}
+
+      {/* ── Search Results Modal ── */}
+      {showSearchModal && createPortal(
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(20px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '440px', maxHeight: '80vh',
+            background: 'rgba(255,255,255,0.05)', borderRadius: '32px',
+            border: '1px solid rgba(255,255,255,0.1)', padding: '24px',
+            display: 'flex', flexDirection: 'column'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '950', color: '#fff', letterSpacing: '-0.5px', fontFamily: 'Outfit' }}>Search Results</h2>
+              <button onClick={() => setShowSearchModal(false)} style={{ background: 'none', border: 'none', color: '#fff', opacity: 0.5 }}>✕</button>
+            </div>
+
+            {isSearching ? (
+              <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                <div style={{ width: '30px', height: '30px', border: '2px solid rgba(0,255,170,0.1)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+                <div style={{ fontSize: '12px', fontWeight: '800', color: 'var(--accent-color)', opacity: 0.6 }}>SEARCHING...</div>
+              </div>
+            ) : (
+              <div className="hide-scrollbar" style={{ overflowY: 'auto', flex: 1 }}>
+                {searchResults.length === 0 ? (
+                   <div style={{ textAlign: 'center', padding: '40px 0', opacity: 0.4, fontSize: '14px' }}>No results found</div>
+                ) : searchResults.map((item, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => handleAddLog(item)}
+                    style={{
+                      padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px',
+                      cursor: 'pointer', transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ fontWeight: '800', fontSize: '15px', color: '#fff', marginBottom: '4px', fontFamily: 'Outfit' }}>{item.name}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '800' }}>
+                      {item.calories} KCAL <span style={{ opacity: 0.3, fontWeight: '400', margin: '0 6px' }}>|</span> {item.portion}G
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>,
         document.getElementById('scanner-root')!
