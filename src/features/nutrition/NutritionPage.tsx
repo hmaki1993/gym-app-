@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Trash2, Scan, RefreshCw } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -65,20 +65,135 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const [scanResult, setScanResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
-  const [targetCategory, setTargetCategory] = useState<string | null>(null);
+  const [targetCategory, setTargetCategory] = useState<string>('Breakfast');
+  const [servingSize, setServingSize] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
 
+  const searchCache = useRef<Record<string, any[]>>({});
   const nutritionLogs = tracker.nutritionLogs || [];
-  const today = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD in local time
-  const todayMeals = nutritionLogs.filter((m: any) => new Date(m.date).toLocaleDateString('en-CA') === today);
+  const todayDateStr = new Date().toLocaleDateString('en-CA');
 
-  const consumedCal = todayMeals.reduce((sum: number, m: any) => sum + m.calories, 0);
-  const consumedPro = todayMeals.reduce((sum: number, m: any) => sum + m.protein, 0);
-  const consumedCarb = todayMeals.reduce((sum: number, m: any) => sum + m.carbs, 0);
-  const consumedFat = todayMeals.reduce((sum: number, m: any) => sum + m.fats, 0);
+  // Unique recent meals for instant suggestions
+  const COMMON_FOODS = [
+    { name: 'Boiled Egg', nameAr: 'بيض مسلوق', calories: 78, protein: 6, carbs: 0.6, fats: 5, portion: 50 },
+    { name: 'Fried Egg', nameAr: 'بيض مقلي', calories: 90, protein: 6, carbs: 0.6, fats: 7, portion: 46 },
+    { name: 'Grilled Chicken Breast', nameAr: 'صدور دجاج مشوية', calories: 165, protein: 31, carbs: 0, fats: 3.6, portion: 100 },
+    { name: 'White Rice (Cooked)', nameAr: 'أرز أبيض مطهو', calories: 130, protein: 2.7, carbs: 28, fats: 0.3, portion: 100 },
+    { name: 'Banana', nameAr: 'موز', calories: 89, protein: 1.1, carbs: 23, fats: 0.3, portion: 100 },
+    { name: 'Apple', nameAr: 'تفاح', calories: 52, protein: 0.3, carbs: 14, fats: 0.2, portion: 100 },
+    { name: 'Oats (Cooked)', nameAr: 'شوفان مطهو', calories: 68, protein: 2.4, carbs: 12, fats: 1.4, portion: 100 },
+    { name: 'Milk (Full Fat)', nameAr: 'لبن كامل الدسم', calories: 61, protein: 3.2, carbs: 4.8, fats: 3.3, portion: 100 },
+    { name: 'Greek Yogurt', nameAr: 'زبادي يوناني', calories: 59, protein: 10, carbs: 3.6, fats: 0.4, portion: 100 },
+    { name: 'Protein Shake (Whey)', nameAr: 'بروتين شيك', calories: 120, protein: 24, carbs: 3, fats: 1.5, portion: 30 },
+    { name: 'Tuna (Canned in Water)', nameAr: 'تونا في محلول ملحي', calories: 116, protein: 26, carbs: 0, fats: 0.8, portion: 100 },
+    { name: 'Potato (Boiled)', nameAr: 'بطاطس مسلوقة', calories: 87, protein: 1.9, carbs: 20, fats: 0.1, portion: 100 },
+    { name: 'Peanut Butter', nameAr: 'زبدة فول سوداني', calories: 588, protein: 25, carbs: 20, fats: 50, portion: 100 },
+    { name: 'Dates', nameAr: 'بلح / تمر', calories: 282, protein: 2.5, carbs: 75, fats: 0.4, portion: 100 }
+  ];
+
+  const recentMeals = Array.from(new Set(nutritionLogs.map((l: any) => l.name)))
+    .map(name => nutritionLogs.find((l: any) => l.name === name));
+
+  const suggestedResults = searchQuery.trim().length > 0
+    ? [...recentMeals, ...COMMON_FOODS]
+        .filter(Boolean)
+        .filter((m: any) => {
+          const n = m.name || m.food_name || '';
+          const na = m.nameAr || m.name_ar || '';
+          return n.toLowerCase().includes(searchQuery.toLowerCase()) || na.includes(searchQuery);
+        })
+        .map(m => ({
+          ...m,
+          name: m.name || m.food_name || 'Unknown Food',
+          nameAr: m.nameAr || m.name_ar || '',
+          calories: Number(m.calories || m.kcal || 0),
+          protein: Number(m.protein || 0),
+          carbs: Number(m.carbs || 0),
+          fats: Number(m.fats || 0),
+          portion: Number(m.portion || 100)
+        }))
+        .slice(0, 5)
+    : recentMeals.slice(0, 5).map(m => ({
+        ...m,
+        name: m.name || 'Recent Meal',
+        nameAr: m.nameAr || '',
+        calories: Number(m.calories || 0),
+        protein: Number(m.protein || 0),
+        carbs: Number(m.carbs || 0),
+        fats: Number(m.fats || 0),
+        portion: Number(m.portion || 300)
+      }));
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      const q = searchQuery.trim().toLowerCase();
+      if (q.length >= 3) {
+        // Check cache and RE-NORMALIZE to be safe
+        if (searchCache.current[q]) {
+          console.log('Using cached results for:', q);
+          const cached = searchCache.current[q];
+          const renorm = cached.map((m: any) => ({
+            ...m,
+            name: m.name || m.food_name || m.title || 'AI Food Result',
+            calories: Number(m.calories || m.kcal || 0)
+          }));
+          setSearchResults(renorm);
+          setShowDropdown(true);
+          setIsSearching(false);
+          return;
+        }
+
+        setIsSearching(true);
+        setShowDropdown(true);
+        try {
+          const results = await FatSecretService.searchFood(searchQuery);
+          searchCache.current[q] = results;
+          setSearchResults(results);
+        } catch (error: any) {
+          console.error('AI Search Error:', error);
+          if (error.message?.includes('429')) {
+            alert('Google API Limit Reached. Please wait 60 seconds.');
+          }
+          setSearchResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setIsSearching(false);
+        setSearchResults([]);
+        if (suggestedResults.length === 0) setShowDropdown(false);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+
+  const today = todayDateStr;
+  const todayMeals = nutritionLogs.filter((m: any) => {
+    const logDate = new Date(m.date).toLocaleDateString('en-CA');
+    return logDate === today;
+  });
+
+  const consumedCal = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.calories) || 0), 0);
+  const consumedPro = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.protein) || 0), 0);
+  const consumedCarb = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.carbs) || 0), 0);
+  const consumedFat = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.fats) || 0), 0);
 
   const settings = tracker.settings;
   const profile = settings.nutritionProfile;
@@ -109,8 +224,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const remainingCal = Math.max(0, calorieGoal - consumedCal);
 
   // ── SCAN: Open native camera → analyze → show result card ──
-  const handleScan = async (category?: string) => {
-    if (category) setTargetCategory(category);
+  const handleScan = async (category: string = 'Breakfast') => {
+    setTargetCategory(category);
     try {
       setScanning(true);
       const image = await Camera.getPhoto({
@@ -143,50 +258,69 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const handleAddLog = (mealData?: any) => {
     const data = mealData || scanResult;
     if (data) {
-      let mealDate = new Date();
-      if (targetCategory === 'Breakfast') mealDate.setHours(8, 0, 0);
-      else if (targetCategory === 'Lunch') mealDate.setHours(13, 0, 0);
-      else if (targetCategory === 'Dinner') mealDate.setHours(19, 0, 0);
-      else if (targetCategory === 'Snacks') mealDate.setHours(23, 0, 0);
+      const name = data.name || data.food_name || data.title || data.item_name || 'AI Food Result';
+      const nameAr = data.nameAr || data.name_ar || data.arabic_name || '';
+      
+      // Original values (per 1 unit/serving)
+      const unitCal = Number(data.unitCalories || data.calories || data.kcal || 0);
+      const unitPro = Number(data.unitProtein || data.protein || 0);
+      const unitCarb = Number(data.unitCarbs || data.carbs || 0);
+      const unitFat = Number(data.unitFats || data.fats || 0);
+      const unitPortion = Number(data.unitPortion || data.portion || 100);
+      const mType = targetCategory || 'Breakfast';
 
       tracker.addMealLog({
-        name: data.name,
-        calories: data.calories,
-        protein: data.protein,
-        carbs: data.carbs,
-        fats: data.fats,
-        portion: data.portion ?? 300,
-        date: mealDate.toISOString()
+        name, nameAr, 
+        servingSize: servingSize,
+        unitCalories: unitCal,
+        unitProtein: unitPro,
+        unitCarbs: unitCarb,
+        unitFats: unitFat,
+        unitPortion: unitPortion,
+        // Final calculated values for the log
+        calories: Math.round(unitCal * servingSize),
+        protein: Number((unitPro * servingSize).toFixed(1)),
+        carbs: Number((unitCarb * servingSize).toFixed(1)),
+        fats: Number((unitFat * servingSize).toFixed(1)),
+        portion: Math.round(unitPortion * servingSize),
+        mealType: mType,
+        date: new Date().toISOString()
       });
+
       setScanResult(null);
       setShowResult(false);
-      setShowSearchModal(false);
+      setServingSize(1);
     }
   };
 
-  const handleManualSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    
-    setIsSearching(true);
-    setShowSearchModal(true);
-    
-    try {
-      const results = await FatSecretService.searchFood(searchQuery);
-      setSearchResults(results);
-    } catch (err: any) {
-      console.error('Search failed:', err);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+  const updateLogQuantity = (logId: string, delta: number) => {
+    const log = nutritionLogs.find((l: any) => l.id === logId);
+    if (!log) return;
+
+    const newSize = Math.max(1, (log.servingSize || 1) + delta);
+    // CRITICAL: Always calculate from BASE UNIT values
+    const unitCal = log.unitCalories || (log.calories / (log.servingSize || 1));
+    const unitPro = log.unitProtein || (log.protein / (log.servingSize || 1));
+    const unitCarb = log.unitCarbs || (log.carbs / (log.servingSize || 1));
+    const unitFat = log.unitFats || (log.fats / (log.servingSize || 1));
+    const unitPortion = log.unitPortion || (log.portion / (log.servingSize || 1));
+
+    tracker.updateMealLog(logId, {
+      servingSize: newSize,
+      calories: Math.round(unitCal * newSize),
+      protein: Number((unitPro * newSize).toFixed(1)),
+      carbs: Number((unitCarb * newSize).toFixed(1)),
+      fats: Number((unitFat * newSize).toFixed(1)),
+      portion: Math.round(unitPortion * newSize)
+    });
   };
+
 
   const handleBarcodeScan = async () => {
     try {
       const isSupported = await BarcodeScanner.isSupported();
       if (!isSupported.supported) {
-        alert('Barcode scanning is not supported on this device');
+        alert('Scanner requires a mobile device. This feature uses native ML Kit which only works on Android/iOS app builds. Once you build the APK, you can scan any food barcode! 📱');
         return;
       }
 
@@ -228,154 +362,136 @@ export function NutritionPage({ tracker }: { tracker: any }) {
     <>
       {/* ── Result Overlay (only after scan) ── */}
       {showResult && scanResult && createPortal(
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(10px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
-        }}>
           <div style={{
-            width: '100%', maxWidth: '420px',
-            background: 'rgba(255,255,255,0.07)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '32px', padding: '32px',
-            textAlign: 'center',
-            animation: 'slide-up 0.4s cubic-bezier(0.34,1.56,0.64,1)'
+            position: 'fixed', inset: 0, zIndex: 10000,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
           }}>
-            {/* Status Label */}
             <div style={{
-              color: 'var(--accent-color)',
-              fontSize: '11px',
-              fontWeight: '900',
-              letterSpacing: '3px',
-              marginBottom: '20px',
-              textTransform: 'uppercase',
-              opacity: 0.9
+              width: '100%', maxWidth: '340px', background: 'rgba(20,20,20,0.95)',
+              borderRadius: '32px', border: '1px solid rgba(255,255,255,0.08)',
+              padding: '32px 24px', textAlign: 'center', animation: 'slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}>
-              ANALYZED ✓
-            </div>
-
-            {/* Meal Name */}
-            <div style={{ 
-              display: 'inline-block',
-              padding: '12px 24px',
-              borderRadius: '16px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              marginBottom: '24px',
-              width: 'auto'
-            }}>
-              <div style={{ fontSize: '20px', fontWeight: '950', color: '#fff', lineHeight: 1.2, fontFamily: 'Outfit' }}>
-                {scanResult.name}
-              </div>
-            </div>
-
-            {/* Calories */}
-            <div style={{ 
-              fontSize: '56px', 
-              fontWeight: '950', 
-              color: 'var(--accent-color)', 
-              lineHeight: 1, 
-              fontFamily: 'Outfit',
-              letterSpacing: '-2px', 
-              marginBottom: '4px' 
-            }}>
-              {scanResult.calories}
-            </div>
-            <div style={{ 
-              fontSize: '9px', 
-              fontWeight: '800', 
-              color: 'var(--accent-color)', 
-              opacity: 0.5, 
-              letterSpacing: '2px', 
-              marginBottom: '28px',
-              textTransform: 'uppercase'
-            }}>
-              TOTAL KCAL
-            </div>
-
-            {/* Macros Grid */}
-            <div style={{ 
-              display: 'flex', 
-              background: 'rgba(255,255,255,0.03)', 
-              borderRadius: '24px', 
-              padding: '20px 10px',
-              border: '1px solid rgba(255,255,255,0.12)',
-              marginBottom: '32px',
-              width: '100%',
-              justifyContent: 'space-between'
-            }}>
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ color: '#ffcc00', fontSize: '22px', fontWeight: '950', fontFamily: 'Outfit' }}>{scanResult.fats}<span style={{fontSize:'12px'}}>g</span></div>
-                <div style={{ color: '#fff', opacity: 0.4, fontSize: '10px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>Fats</div>
-              </div>
-              
-              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', height: '30px', alignSelf: 'center' }} />
-
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ color: '#4da6ff', fontSize: '22px', fontWeight: '950', fontFamily: 'Outfit' }}>{scanResult.carbs}<span style={{fontSize:'12px'}}>g</span></div>
-                <div style={{ color: '#fff', opacity: 0.4, fontSize: '10px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>Carbs</div>
+              {/* Meal Name */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: '#fff', fontFamily: 'Outfit' }}>
+                  {scanResult.name}
+                </div>
+                {scanResult.nameAr && (
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                    {scanResult.nameAr}
+                  </div>
+                )}
               </div>
 
-              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', height: '30px', alignSelf: 'center' }} />
-
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ color: '#ff4d4d', fontSize: '22px', fontWeight: '950', fontFamily: 'Outfit' }}>{scanResult.protein}<span style={{fontSize:'12px'}}>g</span></div>
-                <div style={{ color: '#fff', opacity: 0.4, fontSize: '10px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>Protein</div>
+              {/* Calories */}
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '42px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: 1, fontFamily: 'Outfit' }}>
+                  {scanResult.calories}
+                </div>
+                <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', opacity: 0.5, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '4px' }}>
+                  Total KCAL
+                </div>
               </div>
-            </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px' }}>
+              {/* Simple Macros Row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 10px', marginBottom: '24px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ color: '#ffcc00', fontSize: '18px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.fats * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>Fats</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ color: '#4da6ff', fontSize: '18px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.carbs * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>Carbs</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ color: '#ff4d4d', fontSize: '18px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.protein * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>Protein</div>
+                </div>
+              </div>
+
+              {/* Quantity Selector */}
+              <div style={{ 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', 
+                marginBottom: '28px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '12px'
+              }}>
+                <button 
+                  onClick={() => setServingSize(Math.max(0.5, servingSize - 0.5))}
+                  style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '18px', fontWeight: '900' }}
+                >
+                  -
+                </button>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '950', color: '#fff', fontFamily: 'Outfit' }}>x{servingSize}</div>
+                  <div style={{ fontSize: '8px', fontWeight: '800', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>Servings</div>
+                </div>
+                <button 
+                  onClick={() => setServingSize(servingSize + 0.5)}
+                  style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '18px', fontWeight: '900' }}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Mini Category Selector */}
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '32px' }}>
+                {['Breakfast', 'Lunch', 'Dinner', 'Snacks'].map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setTargetCategory(cat)}
+                    style={{
+                      flex: 1, padding: '8px 4px', borderRadius: '10px', fontSize: '10px', fontWeight: '800',
+                      background: 'transparent',
+                      color: targetCategory === cat ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
+                      border: targetCategory === cat ? '1px dashed var(--accent-color)' : '1px dashed rgba(255,255,255,0.15)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {cat.substring(0, 3)}
+                  </button>
+                ))}
+              </div>
+              {/* Action Buttons Row */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                <button
+                  onClick={() => { setScanResult(null); setShowResult(false); handleScan(); }}
+                  style={{ 
+                    flex: 1, height: '48px', borderRadius: '16px', 
+                    background: 'transparent', 
+                    border: '1px solid rgba(255,255,255,0.15)', 
+                    color: '#fff', fontWeight: '800', fontSize: '13px'
+                  }}
+                >
+                  Scan New
+                </button>
+                <button
+                  onClick={() => handleAddLog()}
+                  style={{ 
+                    flex: 1, height: '48px', borderRadius: '16px', 
+                    background: 'transparent', 
+                    border: '1px solid var(--accent-color)', 
+                    color: 'var(--accent-color)', fontWeight: '950', fontSize: '13px',
+                    textTransform: 'uppercase', letterSpacing: '0.5px'
+                  }}
+                >
+                  Log Meal
+                </button>
+              </div>
+
+              {/* Cancel Link */}
               <button
-                onClick={() => { setScanResult(null); setShowResult(false); handleScan(); }}
+                onClick={() => { setScanResult(null); setShowResult(false); }}
                 style={{ 
-                  flex: 1, padding: '16px', borderRadius: '20px', 
-                  background: 'rgba(255,255,255,0.03)', 
-                  border: '1px solid rgba(255,255,255,0.2)', 
-                  color: '#fff', fontWeight: '800', 
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  backdropFilter: 'blur(10px)',
-                  transition: 'all 0.2s ease'
+                  background: 'none', border: 'none', 
+                  color: '#ff4d4d', 
+                  fontSize: '11px', fontWeight: '800',
+                  textTransform: 'uppercase', letterSpacing: '1px'
                 }}
               >
-                <RefreshCw size={18} /> RETRY
-              </button>
-              <button
-                onClick={handleAddLog}
-                style={{ 
-                  flex: 1, padding: '16px', borderRadius: '20px', 
-                  background: 'rgba(0, 255, 170, 0.05)', 
-                  border: '1.5px solid var(--accent-color)', 
-                  color: 'var(--accent-color)', fontWeight: '950', 
-                  textTransform: 'uppercase', letterSpacing: '1px', fontSize: '13px',
-                  backdropFilter: 'blur(10px)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                ADD TO LOG
+                Cancel
               </button>
             </div>
-
-            {/* Cancel */}
-            <button
-              onClick={() => { setScanResult(null); setShowResult(false); }}
-              style={{ 
-                marginTop: '24px', 
-                background: 'none', 
-                border: 'none', 
-                color: '#ff4d4d', 
-                opacity: 0.8, 
-                fontSize: '13px', 
-                fontWeight: '800',
-                letterSpacing: '1px',
-                textTransform: 'uppercase'
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>,
+          </div>,
         document.getElementById('scanner-root')!
       )}
 
@@ -401,13 +517,19 @@ export function NutritionPage({ tracker }: { tracker: any }) {
       <div className="hide-scrollbar" style={{ padding: '0 20px 100px', width: '100%', boxSizing: 'border-box', overflowY: 'auto', height: '100%' }}>
         
         {/* SEARCH BAR */}
-        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-          <form onSubmit={handleManualSearch} style={{ flex: 1, position: 'relative' }}>
+        <div ref={searchRef} style={{ marginTop: '20px', display: 'flex', gap: '10px', position: 'relative', zIndex: 1000 }}>
+          <div style={{ flex: 1, position: 'relative' }}>
             <input 
               type="text"
               placeholder="Search food..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                if (suggestedResults.length > 0) setShowDropdown(true);
+              }}
+              onClick={() => {
+                if (suggestedResults.length > 0) setShowDropdown(!showDropdown);
+              }}
               style={{
                 width: '100%', padding: '14px 20px', paddingLeft: '44px',
                 background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
@@ -418,7 +540,117 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }}>
               <Search size={18} />
             </div>
-          </form>
+
+            {/* LIVE SEARCH DROPDOWN */}
+            {showDropdown && (
+              <div className="hide-scrollbar" style={{
+                position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
+                background: 'rgba(20,20,20,0.92)', backdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px',
+                boxShadow: '0 25px 50px rgba(0,0,0,0.6)', padding: '10px',
+                maxHeight: '350px', overflowY: 'auto', animation: 'slide-up 0.2s ease-out'
+              }}>
+                {/* Instant Suggestions from History */}
+                {suggestedResults.length > 0 && (
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>Recent & Frequent</div>
+                    <div style={{ 
+                      overflow: 'hidden'
+                    }}>
+                      {suggestedResults.map((item: any, idx: number) => (
+                        <div 
+                          key={`rec-${idx}`}
+                          onClick={() => { setScanResult(item); setTargetCategory('Breakfast'); setShowResult(true); setShowDropdown(false); setSearchQuery(''); }}
+                          style={{
+                            padding: '16px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            borderBottom: idx === suggestedResults.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.04)'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <div style={{ fontWeight: '800', fontSize: '15px', color: '#fff', marginBottom: '2px', fontFamily: 'Outfit' }}>{item.name}</div>
+                          {item.nameAr && <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>{item.nameAr}</div>}
+                          <div style={{ fontSize: '11px', color: 'var(--accent-color)', fontWeight: '900', marginTop: '4px' }}>{item.calories} KCAL</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {isSearching ? (
+                  <div style={{ padding: '24px', textAlign: 'center' }}>
+                    <div style={{ width: '22px', height: '22px', border: '2.5px solid rgba(0,255,170,0.1)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto' }} />
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginTop: '12px', letterSpacing: '2px', opacity: 0.6 }}>SEARCHING...</div>
+                  </div>
+                ) : (
+                  <>
+                    {/* AI Results Section with Colored Divider */}
+                    {searchResults.length > 0 && (
+                      <div style={{ marginTop: '8px' }}>
+                        <div style={{ 
+                          height: '2px', 
+                          background: 'linear-gradient(90deg, transparent, var(--accent-color), transparent)', 
+                          opacity: 0.3,
+                          margin: '20px 12px' 
+                        }} />
+                        
+                        <div style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>AI Results</div>
+                        <div style={{ overflow: 'hidden' }}>
+                          {searchResults.map((item, idx) => {
+                            const normalizedItem = {
+                              ...item,
+                              name: item.name || item.food_name || item.title || 'Unknown Food',
+                              calories: Number(item.calories || item.kcal || 0),
+                              protein: Number(item.protein || 0),
+                              carbs: Number(item.carbs || 0),
+                              fats: Number(item.fats || 0)
+                            };
+                            return (
+                              <div 
+                                key={`res-${idx}`}
+                                onClick={() => { 
+                                  console.log('AI Result Selected:', normalizedItem);
+                                  setScanResult(normalizedItem); 
+                                  setTargetCategory('Breakfast'); 
+                                  setShowResult(true); 
+                                  setShowDropdown(false); 
+                                  setSearchQuery(''); 
+                                }}
+                                style={{
+                                  padding: '16px 16px', borderRadius: '16px',
+                                  cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                  borderBottom: idx === searchResults.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                                  position: 'relative', overflow: 'hidden'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                                  e.currentTarget.style.transform = 'translateX(4px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent';
+                                  e.currentTarget.style.transform = 'translateX(0)';
+                                }}
+                              >
+                                <div style={{ fontWeight: '900', fontSize: '15px', color: '#fff', marginBottom: '2px', fontFamily: 'Outfit', letterSpacing: '-0.3px' }}>{normalizedItem.name}</div>
+                                {normalizedItem.nameAr && <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', fontWeight: '600' }}>{normalizedItem.nameAr}</div>}
+                                <div style={{ fontSize: '10px', color: 'var(--accent-color)', fontWeight: '900', letterSpacing: '0.5px' }}>
+                                  {normalizedItem.calories} <span style={{opacity: 0.5}}>KCAL</span> 
+                                  <span style={{ opacity: 0.2, margin: '0 8px' }}>•</span> 
+                                  {normalizedItem.portion || 100}<span style={{opacity: 0.5}}>G</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           <button 
             onClick={handleBarcodeScan}
             style={{
@@ -431,52 +663,98 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           </button>
         </div>
 
-        {/* CALORIE HEADER */}
-        <div style={{ padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-             <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px' }}>AI DAILY TARGET</div>
+        {/* PREMIUM CIRCULAR CALORIE HEADER */}
+        <div style={{ 
+          padding: '24px 0 32px', 
+          borderBottom: '1px solid rgba(255,255,255,0.05)', 
+          marginBottom: '24px',
+          position: 'relative'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+             <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', opacity: 0.6 }}>AI SMART TRACKER</div>
              <button 
               onClick={() => setShowSetup(true)}
-              style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(0,255,170,0.1)', border: '1px solid rgba(0,255,170,0.2)', color: 'var(--accent-color)', fontSize: '9px', fontWeight: '800' }}
+              style={{ 
+                padding: '6px 12px', 
+                borderRadius: '10px', 
+                background: 'rgba(0,255,170,0.08)', 
+                border: '1px solid rgba(0,255,170,0.15)', 
+                color: 'var(--accent-color)', 
+                fontSize: '9px', 
+                fontWeight: '900',
+                letterSpacing: '0.5px'
+              }}
              >
-               {profile ? 'UPDATE PROFILE' : 'START SMART SETUP'}
+               {profile ? 'UPDATE PROFILE' : 'START SETUP'}
              </button>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)' }}>{calorieGoal}</div>
-              <div style={{ fontSize: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6 }}>Base</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 5px' }}>
+            {/* Donut Circle on the Left */}
+            <div style={{ position: 'relative', width: '140px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="140" height="140" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="44" fill="transparent" stroke="rgba(255,255,255,0.02)" strokeWidth="7" />
+                {(() => {
+                  const circumference = 2 * Math.PI * 44;
+                  const pCal = consumedPro * 4;
+                  const cCal = consumedCarb * 4;
+                  const fCal = consumedFat * 9;
+                  const pLen = (pCal / calorieGoal) * circumference;
+                  const cLen = (cCal / calorieGoal) * circumference;
+                  const fLen = (fCal / calorieGoal) * circumference;
+                  return (
+                    <>
+                      <circle cx="50" cy="50" r="44" fill="transparent" stroke="#ffcc00" strokeWidth="7" strokeDasharray={`${fLen} ${circumference}`} strokeDashoffset={0} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
+                      <circle cx="50" cy="50" r="44" fill="transparent" stroke="#4da6ff" strokeWidth="7" strokeDasharray={`${cLen} ${circumference}`} strokeDashoffset={-fLen} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
+                      <circle cx="50" cy="50" r="44" fill="transparent" stroke="#ff4d4d" strokeWidth="7" strokeDasharray={`${pLen} ${circumference}`} strokeDashoffset={-(fLen + cLen)} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
+                    </>
+                  );
+                })()}
+              </svg>
+              <div style={{ position: 'absolute', textAlign: 'center' }}>
+                <div style={{ fontSize: '34px', fontWeight: '950', color: '#fff', fontFamily: 'Outfit', lineHeight: 1, letterSpacing: '-1.5px' }}>{remainingCal}</div>
+                <div style={{ fontSize: '8px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px', marginTop: '3px', opacity: 0.5 }}>LEFT</div>
+              </div>
             </div>
-            <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.15)', fontWeight: '900' }}>-</div>
-            <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)' }}>{consumedCal}</div>
-              <div style={{ fontSize: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6 }}>Consumed</div>
-            </div>
-            <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.15)', fontWeight: '900' }}>=</div>
-            <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ fontSize: '28px', fontWeight: '950', color: 'var(--accent-color)' }}>{remainingCal}</div>
-              <div style={{ fontSize: '8px', color: 'var(--accent-color)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Left</div>
+
+            {/* Subtle Vertical Divider */}
+            <div style={{ width: '1px', height: '60px', background: 'rgba(255,255,255,0.05)', alignSelf: 'center' }} />
+
+            {/* Stats on the Right */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', paddingRight: '15px', textAlign: 'right' }}>
+              <div>
+                <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.2)', fontWeight: '900', letterSpacing: '2px', marginBottom: '2px' }}>DAILY GOAL</div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: '#fff', fontFamily: 'Outfit' }}>{calorieGoal}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.2)', fontWeight: '900', letterSpacing: '2px', marginBottom: '2px' }}>CONSUMED</div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--accent-color)', fontFamily: 'Outfit' }}>{consumedCal}</div>
+              </div>
             </div>
           </div>
 
-          {/* Macro Progress */}
-          <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', display: 'flex', marginBottom: '16px' }}>
-            <div style={{ width: `${Math.min(100, (consumedPro / targets.protein) * 100)}%`, background: '#ff4d4d', transition: 'width 0.6s ease' }} />
-            <div style={{ width: `${Math.min(100, (consumedCarb / targets.carbs) * 100)}%`, background: '#4da6ff', transition: 'width 0.6s ease' }} />
-            <div style={{ width: `${Math.min(100, (consumedFat / targets.fats) * 100)}%`, background: '#ffcc00', transition: 'width 0.6s ease' }} />
-          </div>
-
-          {/* Macro labels with targets */}
-          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+          {/* Spread Macro Row */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '28px',
+            padding: '0 5px'
+          }}>
             {[
-              { label: 'Protein', val: consumedPro, target: targets.protein, color: '#ff4d4d' },
-              { label: 'Carbs', val: consumedCarb, target: targets.carbs, color: '#4da6ff' },
-              { label: 'Fats', val: consumedFat, target: targets.fats, color: '#ffcc00' }
-            ].map(m => (
-              <div key={m.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '14px', fontWeight: '800', color: m.color }}>{m.val}<span style={{fontSize:'10px', opacity: 0.5}}>/{m.target}g</span></div>
-                <div style={{ fontSize: '8px', opacity: 0.4, letterSpacing: '1px' }}>{m.label.toUpperCase()}</div>
+              { label: 'PROTEIN', val: consumedPro, color: '#ff4d4d' },
+              { label: 'CARBS', val: consumedCarb, color: '#4da6ff' },
+              { label: 'FATS', val: consumedFat, color: '#ffcc00' }
+            ].map((m, idx) => (
+              <div key={m.label} style={{ 
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: idx === 0 ? 'flex-start' : (idx === 2 ? 'flex-end' : 'center'),
+                position: 'relative'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: m.color, fontFamily: 'Outfit' }}>{m.val.toFixed(1)}<span style={{fontSize: '10px', opacity: 0.3, fontWeight: '700', marginLeft: '2px'}}>g</span></div>
+                <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.2)', fontWeight: '900', letterSpacing: '1px' }}>{m.label}</div>
               </div>
             ))}
           </div>
@@ -485,6 +763,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
         {/* DIARY SECTIONS */}
         {(['Breakfast', 'Lunch', 'Dinner', 'Snacks'] as const).map((category) => {
           const catMeals = todayMeals.filter((m: any) => {
+            if (m.mealType) return m.mealType === category;
             const hour = new Date(m.date).getHours();
             if (category === 'Breakfast') return hour >= 4 && hour < 11;
             if (category === 'Lunch') return hour >= 11 && hour < 16;
@@ -501,59 +780,152 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               </div>
 
               <div>
-                {catMeals.map((meal: any, i: number) => (
-                  <div key={meal.id} style={{
-                    padding: '14px 16px',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    borderBottom: i < catMeals.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '3px' }}>{meal.name}</div>
-                      <div style={{ fontSize: '10px', opacity: 0.4 }}>
-                        <span style={{ color: '#ff4d4d' }}>{meal.protein}P</span>
-                        {' · '}
-                        <span style={{ color: '#4da6ff' }}>{meal.carbs}C</span>
-                        {' · '}
-                        <span style={{ color: '#ffcc00' }}>{meal.fats}F</span>
+                {catMeals.map((meal: any, i: number) => {
+                  const isExpanded = expandedMealId === meal.id;
+                  return (
+                    <div key={meal.id} style={{
+                      borderBottom: i < catMeals.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                      overflow: 'hidden'
+                    }}>
+                      <div 
+                        onClick={() => setExpandedMealId(isExpanded ? null : meal.id)}
+                        style={{
+                          padding: '16px',
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          cursor: 'pointer', transition: 'all 0.2s ease',
+                          background: isExpanded ? 'rgba(255,255,255,0.02)' : 'transparent'
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: 'Outfit' }}>{meal.name}</div>
+                          {meal.nameAr && <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', marginBottom: '8px' }}>{meal.nameAr}</div>}
+                          
+                          {/* Quick Quantity Toggle - Now below name for better width */}
+                          <div style={{ 
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            marginTop: meal.nameAr ? '0' : '6px'
+                          }}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); updateLogQuantity(meal.id, -1); }}
+                              style={{ 
+                                background: 'none', border: 'none', color: '#fff', 
+                                fontSize: '18px', fontWeight: '900', padding: '0 4px',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5
+                              }}
+                            >
+                              -
+                            </button>
+                            <span style={{ fontSize: '12px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit', minWidth: '24px', textAlign: 'center' }}>x{meal.servingSize || 1}</span>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); updateLogQuantity(meal.id, 1); }}
+                              style={{ 
+                                background: 'none', border: 'none', color: '#fff', 
+                                fontSize: '18px', fontWeight: '900', padding: '0 4px',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {!isExpanded && (
+                            <div style={{ textAlign: 'right', minWidth: '50px' }}>
+                              <div style={{ fontSize: '15px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.9 }}>{meal.calories}</div>
+                              <div style={{ fontSize: '7px', fontWeight: '900', opacity: 0.3 }}>KCAL</div>
+                            </div>
+                          )}
+                          <ChevronDown size={14} style={{ opacity: 0.3, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
+                        </div>
+                      </div>
+
+                      {/* Expandable Details Area (The Curtain) */}
+                      <div style={{
+                        maxHeight: isExpanded ? '120px' : '0',
+                        opacity: isExpanded ? 1 : 0,
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        background: 'rgba(255, 255, 255, 0.01)',
+                        padding: isExpanded ? '0 20px 24px' : '0 20px'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit', lineHeight: 1 }}>{meal.calories}</div>
+                              <div style={{ fontSize: '8px', fontWeight: '900', opacity: 0.3, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '4px' }}>Kcal</div>
+                            </div>
+                            
+                            <div style={{ width: '1px', background: 'rgba(255,255,255,0.06)', height: '24px' }} />
+                            
+                            <div style={{ display: 'flex', gap: '24px' }}>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ color: '#ff4d4d', fontSize: '15px', fontWeight: '900', fontFamily: 'Outfit' }}>{meal.protein}g</div>
+                                <div style={{ fontSize: '7px', opacity: 0.3, fontWeight: '900', letterSpacing: '0.5px' }}>PRO</div>
+                              </div>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ color: '#4da6ff', fontSize: '15px', fontWeight: '900', fontFamily: 'Outfit' }}>{meal.carbs}g</div>
+                                <div style={{ fontSize: '7px', opacity: 0.3, fontWeight: '900', letterSpacing: '0.5px' }}>CARB</div>
+                              </div>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ color: '#ffcc00', fontSize: '15px', fontWeight: '900', fontFamily: 'Outfit' }}>{meal.fats}g</div>
+                                <div style={{ fontSize: '7px', opacity: 0.3, fontWeight: '900', letterSpacing: '0.5px' }}>FAT</div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); tracker.deleteMealLog(meal.id); }}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              padding: '8px',
+                              color: '#ff4d4d',
+                              opacity: 0.4,
+                              marginRight: '-8px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--accent-color)' }}>{meal.calories}</div>
-                      <button onClick={() => tracker.deleteMealLog(meal.id)} style={{ background: 'rgba(255,77,77,0.08)', border: 'none', borderRadius: '8px', padding: '6px', color: '#ff4d4d', opacity: 0.5 }}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
+
+                {/* Subtle Divider before Add Button */}
+                {catMeals.length > 0 && (
+                  <div style={{ 
+                    height: '1px', 
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)', 
+                    margin: '20px 0 10px' 
+                  }} />
+                )}
 
                 <button
                   onClick={() => handleScan(category)}
                   disabled={scanning}
                   style={{ 
-                    width: '100%', 
-                    padding: '16px', 
-                    background: 'rgba(255,255,255,0.01)', 
-                    border: '1.5px dashed rgba(0, 255, 170, 0.2)', 
-                    borderRadius: '0px',
-                    color: 'var(--accent-color)', 
-                    fontSize: '11px', 
-                    fontWeight: '900', 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '2px', 
-                    opacity: scanning ? 0.4 : 0.8,
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px'
+                    width: '60px', 
+                    height: '60px',
+                    margin: '25px auto 10px',
+                    background: 'transparent', 
+                    border: '1.5px dashed #ff4d4d', 
+                    borderRadius: '50%',
+                    color: '#ff4d4d', 
+                    fontSize: '32px', 
+                    fontWeight: '200', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    opacity: scanning ? 0.3 : 0.7,
+                    cursor: 'pointer',
+                    boxShadow: '0 0 15px rgba(255, 77, 77, 0.05)'
                   }}
+                  onMouseEnter={(e) => { if(!scanning) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.1)'; } }}
+                  onMouseLeave={(e) => { if(!scanning) { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.transform = 'scale(1)'; } }}
                 >
-                  {scanning ? 'ANALYZING...' : (
-                    <>
-                      <div style={{ fontSize: '20px', fontWeight: '400', marginTop: '-2px' }}>+</div>
-                      ADD FOOD
-                    </>
-                  )}
+                  {scanning ? <div style={{ width: '20px', height: '20px', border: '2px solid transparent', borderTopColor: '#ff4d4d', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} /> : '+'}
                 </button>
               </div>
             </div>
@@ -696,55 +1068,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
         document.getElementById('scanner-root')!
       )}
 
-      {/* ── Search Results Modal ── */}
-      {showSearchModal && createPortal(
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 10000,
-          background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(20px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
-        }}>
-          <div style={{
-            width: '100%', maxWidth: '440px', maxHeight: '80vh',
-            background: 'rgba(255,255,255,0.05)', borderRadius: '32px',
-            border: '1px solid rgba(255,255,255,0.1)', padding: '24px',
-            display: 'flex', flexDirection: 'column'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '950', color: '#fff', letterSpacing: '-0.5px', fontFamily: 'Outfit' }}>Search Results</h2>
-              <button onClick={() => setShowSearchModal(false)} style={{ background: 'none', border: 'none', color: '#fff', opacity: 0.5 }}>✕</button>
-            </div>
 
-            {isSearching ? (
-              <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                <div style={{ width: '30px', height: '30px', border: '2px solid rgba(0,255,170,0.1)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
-                <div style={{ fontSize: '12px', fontWeight: '800', color: 'var(--accent-color)', opacity: 0.6 }}>SEARCHING...</div>
-              </div>
-            ) : (
-              <div className="hide-scrollbar" style={{ overflowY: 'auto', flex: 1 }}>
-                {searchResults.length === 0 ? (
-                   <div style={{ textAlign: 'center', padding: '40px 0', opacity: 0.4, fontSize: '14px' }}>No results found</div>
-                ) : searchResults.map((item, idx) => (
-                  <div 
-                    key={idx}
-                    onClick={() => handleAddLog(item)}
-                    style={{
-                      padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px',
-                      cursor: 'pointer', transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <div style={{ fontWeight: '800', fontSize: '15px', color: '#fff', marginBottom: '4px', fontFamily: 'Outfit' }}>{item.name}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '800' }}>
-                      {item.calories} KCAL <span style={{ opacity: 0.3, fontWeight: '400', margin: '0 6px' }}>|</span> {item.portion}G
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>,
-        document.getElementById('scanner-root')!
-      )}
       
       <style>{`
         @keyframes slide-up {

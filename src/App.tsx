@@ -196,7 +196,7 @@ export default function App() {
         </>
       )}
 
-      {/* Onboarding */}
+      {/* Onboarding - Only if no profile exists */}
       {!tracker.settings.userName && (
         <OnboardingModal tracker={tracker} onComplete={() => { }} />
       )}

@@ -12,13 +12,14 @@ interface Props {
   tracker: ReturnType<typeof useGymTracker>;
   initialSets?: SetLog[];
   onDone: (sets: SetLog[]) => void;
+  onChange?: (sets: any[]) => void;
   onClose: () => void;
   inline?: boolean;
   fullPage?: boolean;
   elapsedSeconds?: number;
 }
 
-export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClose, inline, fullPage, elapsedSeconds }: Props) {
+export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onChange, onClose, inline, fullPage, elapsedSeconds }: Props) {
   const lang = tracker.settings.language;
   const t = (k: string) => (translations[lang] as any)[k] ?? k;
   const unit = tracker.settings.weightUnit;
@@ -30,6 +31,15 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onClo
     if (initialSets && initialSets.length > 0) return initialSets.map(s => ({ ...s }));
     return [{ weight: '', reps: '' }];
   });
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (onChange) onChange(sets);
+  }, [sets, onChange]);
 
   const [hasAddedSet, setHasAddedSet] = useState(false);
   const [activeUnit, setActiveUnit] = useState(unit || 'kg');

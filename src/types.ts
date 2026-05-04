@@ -85,5 +85,6 @@ export interface GymState {
   settings: GymSettings;
   customExercises: Record<MuscleGroup, string[]>;
   hiddenExercises: Record<MuscleGroup, string[]>;
+  exerciseOrder: Record<MuscleGroup, string[]>;
   nutritionLogs: MealLog[];
 }

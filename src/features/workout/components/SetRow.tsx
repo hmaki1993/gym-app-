@@ -67,19 +67,28 @@ export const SetRow: React.FC<Props> = ({
         <div
           onClick={onCycleUnit}
           style={{
-            fontSize: '12px',
-            fontWeight: '900',
-            color: 'var(--text-secondary)',
+            fontSize: '11px',
+            fontWeight: '950',
+            color: 'var(--accent-color)',
             textTransform: 'uppercase',
-            opacity: 0.9,
-            letterSpacing: '0.5px',
+            letterSpacing: '1px',
             cursor: 'pointer',
             minWidth: '40px',
-            textAlign: 'center',
-            fontFamily: 'Outfit, sans-serif'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'Outfit, sans-serif',
+            filter: 'drop-shadow(0 0 8px var(--accent-color-alpha))',
+            lineHeight: '1',
+            transition: 'transform 0.2s ease'
           }}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           {t(activeUnit)}
+          <div style={{ width: '12px', height: '2px', background: 'var(--accent-color)', marginTop: '3px', borderRadius: '1px', boxShadow: `0 0 5px var(--accent-color)` }} />
         </div>
       </div>
 

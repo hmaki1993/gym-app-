@@ -27,6 +27,10 @@ const DEFAULT_STATE: GymState = {
     chest: [], back: [], legs: [], shoulders: [],
     arms: [], abs: [], cardio: [],
   },
+  exerciseOrder: {
+    chest: [], back: [], legs: [], shoulders: [],
+    arms: [], abs: [], cardio: [],
+  },
   nutritionLogs: [
     {
       id: 'mock-1',
@@ -52,6 +56,7 @@ function loadState(): GymState {
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
       customExercises: { ...DEFAULT_STATE.customExercises, ...parsed.customExercises },
       hiddenExercises: { ...DEFAULT_STATE.hiddenExercises, ...parsed.hiddenExercises },
+      exerciseOrder: { ...DEFAULT_STATE.exerciseOrder, ...parsed.exerciseOrder },
     };
   } catch {
     return DEFAULT_STATE;
@@ -147,6 +152,16 @@ export function useGymTracker() {
       hiddenExercises: {
         ...prev.hiddenExercises,
         [muscle]: [...(prev.hiddenExercises[muscle] || []), name],
+      },
+    }));
+  }, []);
+
+  const reorderExercises = useCallback((muscle: MuscleGroup, newOrder: string[]) => {
+    setState(prev => ({
+      ...prev,
+      exerciseOrder: {
+        ...prev.exerciseOrder,
+        [muscle]: newOrder,
       },
     }));
   }, []);
@@ -248,6 +263,13 @@ export function useGymTracker() {
     return newMeal;
   }, []);
 
+  const updateMealLog = useCallback((id: string, updates: Partial<MealLog>) => {
+    setState(prev => ({
+      ...prev,
+      nutritionLogs: (prev.nutritionLogs || []).map(m => m.id === id ? { ...m, ...updates } : m),
+    }));
+  }, []);
+
   const deleteMealLog = useCallback((id: string) => {
     setState(prev => ({
       ...prev,
@@ -275,10 +297,12 @@ export function useGymTracker() {
     prs: state.prs,
     customExercises: state.customExercises,
     hiddenExercises: state.hiddenExercises,
+    exerciseOrder: state.exerciseOrder,
     setSettings,
     addCustomExercise,
     removeCustomExercise,
     hideDefaultExercise,
+    reorderExercises,
     getLastSession,
     getExercisePR,
     saveWorkout,
@@ -287,6 +311,7 @@ export function useGymTracker() {
     getWeeklyCount,
     getTotalVolume,
     addMealLog,
+    updateMealLog,
     deleteMealLog,
     nutritionLogs: state.nutritionLogs || [],
   };

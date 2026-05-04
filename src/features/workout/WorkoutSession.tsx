@@ -28,6 +28,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>(tracker.logs[0]?.muscleGroup || 'chest');
   const [activeExercises, setActiveExercises] = useState<string[]>([]);
   const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>({});
+  const [draftData, setDraftData] = useState<Record<string, any[]>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,6 +66,26 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     return parts.join(':');
   };
 
+  // Auto-load today's exercises for the selected muscle
+  useEffect(() => {
+    if (selectedMuscle && activeExercises.length === 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayLog = tracker.logs.find(l => 
+        l.date.startsWith(today) && 
+        l.muscleGroup === selectedMuscle
+      );
+      
+      if (todayLog) {
+        setActiveExercises(todayLog.exercises.map(e => e.name));
+        const initialLogged: Record<string, SetLog[]> = {};
+        todayLog.exercises.forEach(e => {
+          initialLogged[e.name] = e.sets;
+        });
+        setLoggedData(initialLogged);
+      }
+    }
+  }, [selectedMuscle, tracker.logs]);
+
   useEffect(() => {
     if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
@@ -95,9 +116,19 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const hiddenExercises = tracker.hiddenExercises?.[selectedMuscle] || [];
   const defaultExercises = (DEFAULT_EXERCISES[selectedMuscle] || []).filter(e => !hiddenExercises.includes(e));
 
-  const allExercises = selectedMuscle
+  const allExercisesRaw = selectedMuscle
     ? [...defaultExercises, ...customExercises]
     : [];
+
+  const savedOrder = tracker.exerciseOrder?.[selectedMuscle];
+  const allExercises = [...allExercisesRaw].sort((a, b) => {
+    const idxA = savedOrder?.indexOf(a) ?? -1;
+    const idxB = savedOrder?.indexOf(b) ?? -1;
+    if (idxA === -1 && idxB === -1) return 0;
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
 
   const filtered = allExercises.filter(e => e.toLowerCase().includes(search.toLowerCase()));
 
@@ -109,8 +140,20 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   const handleSetsDone = (exerciseName: string, sets: SetLog[]) => {
     setLoggedData(prev => ({ ...prev, [exerciseName]: sets }));
+    setDraftData(prev => {
+      const next = { ...prev };
+      delete next[exerciseName];
+      return next;
+    });
     setOpenExercise(null);
   };
+
+  const handleDraftChange = React.useCallback((exerciseName: string, sets: any[]) => {
+    setDraftData(prev => {
+      if (JSON.stringify(prev[exerciseName]) === JSON.stringify(sets)) return prev;
+      return { ...prev, [exerciseName]: sets };
+    });
+  }, []);
 
   const handleSave = () => {
     if (!selectedMuscle) return;
@@ -347,9 +390,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               }}>
                 <ExerciseCard
                   key={openExercise} exerciseName={openExercise} muscleGroup={selectedMuscle!}
-                  tracker={tracker} initialSets={loggedData[openExercise]}
+                  tracker={tracker} 
+                  initialSets={draftData[openExercise] || loggedData[openExercise]}
                   elapsedSeconds={elapsedSeconds}
                   onDone={(sets) => handleSetsDone(openExercise, sets)}
+                  onChange={(sets) => handleDraftChange(openExercise, sets)}
                   onClose={() => setOpenExercise(null)} fullPage={true}
                 />
               </div>
@@ -483,6 +528,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               weightUnit={tracker.settings.weightUnit}
               getLastSession={(name) => tracker.getLastSession(name)}
               customExercises={tracker.customExercises[selectedMuscle]}
+              onReorder={(newOrder) => tracker.reorderExercises(selectedMuscle, newOrder)}
             />
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', marginTop: '4px' }}>
               <button 

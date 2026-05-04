@@ -41,6 +41,49 @@ export const DEFAULT_EXERCISES: Record<MuscleGroup, string[]> = {
   ],
 };
 
+export const EXERCISE_DETAILS: Record<string, { en: string; ar: string }> = {
+  'Bench Press': {
+    en: 'Lower the bar to mid-chest with controlled motion, then drive it up locking your elbows.',
+    ar: 'انزل بالبار لمنتصف الصدر ببطء، ثم ادفعه للأعلى بقوة حتى استقامة الذراعين.'
+  },
+  'Incline Bench Press': {
+    en: 'Targeting the upper chest. Maintain a 45-degree angle on the bench.',
+    ar: 'يستهدف عضلات الصدر العلوية. حافظ على زاوية 45 درجة للدكة.'
+  },
+  'Dumbbell Fly': {
+    en: 'Keep a slight bend in your elbows. Feel the stretch in your chest at the bottom.',
+    ar: 'حافظ على ثنية بسيطة في الكوع. اشعر بتمدد عضلات الصدر في الأسفل.'
+  },
+  'Squat': {
+    en: 'Keep your back straight and lower your hips until thighs are parallel to the floor.',
+    ar: 'حافظ على استقامة ظهرك وانزل بوسطك حتى تصبح الأفخاذ موازية للأرض.'
+  },
+  'Deadlift': {
+    en: 'Lift the bar from the ground to hip height while keeping your back flat.',
+    ar: 'ارفع البار من الأرض حتى مستوى الحوض مع الحفاظ على استقامة الظهر تماماً.'
+  },
+  'Pull Up': {
+    en: 'Pull yourself up until your chin is over the bar. Control the descent.',
+    ar: 'اسحب جسمك للأعلى حتى يتجاوز ذقنك البار، وانزل ببطء وتحكم.'
+  },
+  'Lat Pulldown': {
+    en: 'Pull the bar down to your upper chest while leaning back slightly.',
+    ar: 'اسحب البار لأسفل باتجاه أعلى الصدر مع ميل بسيط للخلف.'
+  },
+  'Overhead Press': {
+    en: 'Press the bar from shoulder height to full extension above your head.',
+    ar: 'ادفع البار من مستوى الكتف حتى استقامة الذراعين فوق الرأس.'
+  },
+  'Barbell Curl': {
+    en: 'Curl the bar toward your shoulders while keeping your elbows tucked.',
+    ar: 'ارفع البار باتجاه كتفك مع الحفاظ على ثبات الكوع بجانب الجسم.'
+  },
+  'Tricep Pushdown': {
+    en: 'Push the bar down until arms are straight. Squeeze the triceps.',
+    ar: 'ادفع البار لأسفل حتى استقامة الذراعين، وركز على قبض عضلة التراي.'
+  }
+};
+
 export const THEME_COLORS = [
   { name: 'Emerald',  hex: '#00e5a0', secondary: '#00b37d' },
   { name: 'Purple',   hex: '#a855f7', secondary: '#7c3aed' },

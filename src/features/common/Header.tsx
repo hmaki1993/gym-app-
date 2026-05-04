@@ -30,7 +30,7 @@ export function Header({ tab, t }: Props) {
             }}>
               <Dumbbell size={22} strokeWidth={3} className="pulse-elite" />
             </div>
-            <span style={{ color: 'var(--accent-color)' }}>GRID</span>
+            <span style={{ color: 'var(--accent-color)', opacity: 0.6 }}>GRID</span>
           </h1>
           <div className="subtitle-text" style={{ letterSpacing: '4px', opacity: 0.5 }}>{t('premiumSystem')}</div>
         </div>
