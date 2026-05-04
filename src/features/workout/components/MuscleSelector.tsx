@@ -41,8 +41,8 @@ export function MuscleSelector({ selectedMuscle, onSelect, lang }: Props) {
             <div style={{
               width: '60px', height: '60px', borderRadius: '18px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
-              border: `1.5px solid ${isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)'}`,
+              background: isSelected ? 'rgba(var(--theme-rgb), 0.08)' : 'rgba(var(--theme-rgb), 0.03)',
+              border: `1.5px solid ${isSelected ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.05)'}`,
               boxShadow: isSelected ? '0 10px 25px -5px var(--accent-color-alpha)' : 'none',
               transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
               transform: isSelected ? 'translateY(-2px)' : 'none'

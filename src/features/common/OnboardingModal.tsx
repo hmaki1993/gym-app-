@@ -23,8 +23,8 @@ function EliteSelect({ id, defaultValue, options, onChange }: { id: string, defa
       <div 
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '12px', padding: '10px 14px', color: '#fff', fontWeight: '900', fontSize: '13px',
+          width: '100%', background: 'rgba(var(--theme-rgb), 0.03)', border: '1px solid rgba(var(--theme-rgb), 0.08)',
+          borderRadius: '12px', padding: '10px 14px', color: 'var(--text-primary)', fontWeight: '900', fontSize: '13px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
           transition: 'all 0.3s ease', fontFamily: 'Outfit'
         }}
@@ -39,7 +39,7 @@ function EliteSelect({ id, defaultValue, options, onChange }: { id: string, defa
           <div style={{
             position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 2000,
             background: 'rgba(20,20,20,0.95)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
+            border: '1px solid rgba(var(--theme-rgb), 0.1)', borderRadius: '12px',
             padding: '4px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
             animation: 'slide-up 0.2s ease-out'
           }}>
@@ -52,7 +52,7 @@ function EliteSelect({ id, defaultValue, options, onChange }: { id: string, defa
                   if (onChange) onChange(opt.value);
                 }}
                 style={{
-                  padding: '8px 12px', borderRadius: '8px', color: '#fff', fontSize: '12px',
+                  padding: '8px 12px', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '12px',
                   fontWeight: selected.value === opt.value ? '900' : '600',
                   background: selected.value === opt.value ? 'rgba(0,255,170,0.1)' : 'transparent',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -169,7 +169,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
           }}>
             GYMLOG
           </h1>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', fontWeight: '900', letterSpacing: '4px', marginTop: '8px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.2)', fontWeight: '900', letterSpacing: '4px', marginTop: '8px', textTransform: 'uppercase' }}>
             {language === 'ar' ? 'الإعداد الذكي' : 'SMART SETUP'}
           </div>
         </div>
@@ -184,7 +184,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
                 <button key={lg} onClick={() => setLanguage(lg)}
                   style={{
                     background: 'none', border: 'none', padding: '0', fontSize: '14px', fontWeight: '950', transition: 'all 0.3s ease',
-                    color: language === lg ? 'var(--accent-color)' : 'rgba(255,255,255,0.15)',
+                    color: language === lg ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.15)',
                     cursor: 'pointer'
                   }}>
                   {lg === 'ar' ? 'عربي' : 'ENGLISH'}
@@ -195,12 +195,12 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
 
           {/* Name Input */}
           <div>
-            <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '14px', letterSpacing: '2px' }}>NAME</label>
+            <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '14px', letterSpacing: '2px' }}>NAME</label>
             <input
               placeholder="..."
               value={name}
               onChange={e => setName(e.target.value)}
-              style={{ width: '100%', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 0', color: '#fff', fontWeight: '800', fontSize: '32px', outline: 'none', fontFamily: 'Outfit' }}
+              style={{ width: '100%', background: 'none', border: 'none', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '32px', outline: 'none', fontFamily: 'Outfit' }}
             />
           </div>
 
@@ -208,34 +208,34 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
               <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>WEIGHT</label>
-                <div style={{ position: 'relative', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>WEIGHT</label>
+                <div style={{ position: 'relative', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)' }}>
                   <input type="number" value={weight} placeholder="..." onChange={e => setWeight(e.target.value)}
-                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: '#fff', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
+                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
                   />
-                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: '#fff' }}>kg</span>
+                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: 'var(--text-primary)' }}>kg</span>
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>HEIGHT</label>
-                <div style={{ position: 'relative', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>HEIGHT</label>
+                <div style={{ position: 'relative', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)' }}>
                   <input type="number" value={height} placeholder="..." onChange={e => setHeight(e.target.value)}
-                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: '#fff', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
+                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
                   />
-                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: '#fff' }}>cm</span>
+                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: 'var(--text-primary)' }}>cm</span>
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>AGE</label>
-                <div style={{ position: 'relative', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>AGE</label>
+                <div style={{ position: 'relative', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)' }}>
                   <input type="number" value={age} placeholder="..." onChange={e => setAge(e.target.value)}
-                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: '#fff', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
+                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
                   />
-                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: '#fff' }}>yr</span>
+                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: 'var(--text-primary)' }}>yr</span>
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>GENDER</label>
+                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>GENDER</label>
                 <div>
                   <EliteSelect 
                     id="setup-gender" 
@@ -249,7 +249,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
 
             <div style={{ display: 'grid', gridTemplateColumns: goal === 'maintain' ? '1fr' : '1.2fr 0.8fr', gap: '20px' }}>
               <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>GOAL</label>
+                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>GOAL</label>
                 <EliteSelect 
                   id="setup-goal" 
                   defaultValue={goal} 
@@ -263,7 +263,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
               </div>
               {goal !== 'maintain' && (
                 <div>
-                  <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>RATE (kg/wk)</label>
+                  <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>RATE (kg/wk)</label>
                   <EliteSelect 
                     id="setup-rate" 
                     defaultValue={goalRate.toString()} 
@@ -285,12 +285,12 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
             <div style={{ 
               marginTop: '-20px', 
               padding: '24px 0', 
-              borderTop: '1px solid rgba(255,255,255,0.03)',
+              borderTop: '1px solid rgba(var(--theme-rgb), 0.03)',
               display: 'flex', flexDirection: 'column', gap: '20px'
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
                 <div style={{ fontSize: '32px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: 1, fontFamily: 'Outfit' }}>{targets.calories}</div>
-                <div style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(255,255,255,0.3)', marginBottom: '4px', letterSpacing: '1px' }}>DAILY KCAL TARGET</div>
+                <div style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.3)', marginBottom: '4px', letterSpacing: '1px' }}>DAILY KCAL TARGET</div>
               </div>
               
               <div style={{ display: 'flex', gap: '20px' }}>
@@ -300,8 +300,8 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
                   { label: 'FATS', val: targets.fats, unit: 'g' }
                 ].map(macro => (
                   <div key={macro.label}>
-                    <div style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(255,255,255,0.3)', marginBottom: '4px' }}>{macro.label}</div>
-                    <div style={{ fontSize: '14px', fontWeight: '800', color: '#fff' }}>{macro.val}<span style={{ fontSize: '8px', opacity: 0.3, marginLeft: '2px' }}>{macro.unit}</span></div>
+                    <div style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.3)', marginBottom: '4px' }}>{macro.label}</div>
+                    <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>{macro.val}<span style={{ fontSize: '8px', opacity: 0.3, marginLeft: '2px' }}>{macro.unit}</span></div>
                   </div>
                 ))}
               </div>

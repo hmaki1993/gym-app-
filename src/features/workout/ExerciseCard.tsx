@@ -11,15 +11,17 @@ interface Props {
   muscleGroup: string;
   tracker: ReturnType<typeof useGymTracker>;
   initialSets?: SetLog[];
+  isCompleted?: boolean;
   onDone: (sets: SetLog[]) => void;
   onChange?: (sets: any[]) => void;
   onClose: () => void;
   inline?: boolean;
   fullPage?: boolean;
   elapsedSeconds?: number;
+  isDirty?: boolean;
 }
 
-export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onChange, onClose, inline, fullPage, elapsedSeconds }: Props) {
+export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, onDone, onChange, onClose, inline, fullPage, elapsedSeconds, isDirty: isDirtyProp }: Props) {
   const lang = tracker.settings.language;
   const t = (k: string) => (translations[lang] as any)[k] ?? k;
   const unit = tracker.settings.weightUnit;
@@ -32,14 +34,17 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
     return [{ weight: '', reps: '' }];
   });
 
-  const isFirstRender = useRef(true);
+  const isDirty = !!isDirtyProp;
+
+  const handleManualChange = (newSets: typeof sets) => {
+    setSets(newSets);
+    if (onChange) onChange(newSets, true);
+  };
+
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    if (onChange) onChange(sets);
-  }, [sets, onChange]);
+    // Initial sync without marking as dirty
+    if (onChange) onChange(sets, false);
+  }, []); // Run only ONCE on mount
 
   const [hasAddedSet, setHasAddedSet] = useState(false);
   const [activeUnit, setActiveUnit] = useState(unit || 'kg');
@@ -126,16 +131,17 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
   };
 
   const updateSet = (index: number, field: 'weight' | 'reps' | 'restTime', value: string | number) => {
-    setSets(prev => {
-      const newSets = [...prev];
-      newSets[index] = { ...newSets[index], [field]: value };
-      return newSets;
-    });
+    const newSets = [...sets];
+    newSets[index] = { ...newSets[index], [field]: value };
+    handleManualChange(newSets);
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const handleDone = () => {
+    if (isSubmitting) return;
     const validSets = sets.filter(s => Number(s.reps) > 0).map(s => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0, restTime: s.restTime }));
     if (validSets.length === 0) { onClose(); return; }
+    setIsSubmitting(true);
     onDone(validSets);
   };
 
@@ -158,64 +164,98 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
 
       <div style={{ flexShrink: 0, transformStyle: 'preserve-3d' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '14px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', transform: 'translateZ(20px)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '14px', flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', transform: 'translateZ(20px)', flex: 1, minWidth: 0 }}>
               <h2 className="heading-font" style={{ 
                 margin: 0, 
-                fontSize: '22px', 
+                fontSize: 'min(20px, 5vw)', 
                 fontWeight: '800',
                 background: 'linear-gradient(to bottom, var(--text-primary) 30%, var(--accent-color) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 letterSpacing: '-0.5px',
                 textTransform: 'uppercase',
-                lineHeight: '1',
-                textShadow: '0 5px 15px rgba(0,0,0,0.3)'
+                lineHeight: '1.15',
+                textShadow: '0 5px 15px rgba(0,0,0,0.3)',
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                paddingRight: '8px'
               }}>{exerciseName}</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
                 {pr && <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', fontFamily: 'Syne, sans-serif' }}>🏆 PR: {pr.weight}{t(unit)} × {pr.reps}</div>}
-                {elapsedSeconds !== undefined && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.8 }}>
-                    <Clock size={12} color="var(--accent-color)" strokeWidth={2.5} />
-                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{formatElapsed(elapsedSeconds)}</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            onPointerDown={(e) => e.stopPropagation()} 
-            className="close-btn-premium" 
-            style={{ 
-              background: 'rgba(255, 51, 102, 0.08)', 
-              border: '1px solid rgba(255, 51, 102, 0.15)', 
-              padding: '0', 
-              width: '36px', 
-              height: '36px', 
-              borderRadius: '12px', 
-              color: '#ff3366', 
-              cursor: 'pointer', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
-              flexShrink: 0, 
-              zIndex: 100, 
-              position: 'relative', 
-              pointerEvents: 'auto', 
-              transform: 'translateZ(10px)',
-              boxShadow: '0 0 15px rgba(255, 51, 102, 0.1)'
-            }}
-          >
-            <X size={22} strokeWidth={3} />
-          </button>
+          
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px', 
+            flexShrink: 0,
+            background: 'rgba(var(--theme-rgb), 0.03)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '20px',
+            padding: '4px 8px', // Matched outer
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            transform: 'translateZ(10px)',
+            marginTop: '-4px'
+          }}>
+            {elapsedSeconds !== undefined && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px', // Matched outer
+                padding: '0 8px',
+                minWidth: '75px', // Matched outer
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} /> {/* Matched outer */}
+                <span style={{ 
+                  fontFamily: 'Outfit, sans-serif', 
+                  fontSize: '17px', // Matched outer
+                  fontWeight: '900', 
+                  color: 'var(--text-primary)',
+                  fontVariantNumeric: 'tabular-nums'
+                }}>
+                  {formatElapsed(elapsedSeconds)}
+                </span>
+              </div>
+            )}
+            
+            <button 
+              onClick={onClose} 
+              onPointerDown={(e) => e.stopPropagation()} 
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                padding: '0', 
+                width: '32px', // Matched outer
+                height: '32px', // Matched outer
+                borderRadius: '50%', 
+                color: '#ff3366', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
+                flexShrink: 0, 
+                zIndex: 100, 
+                pointerEvents: 'auto'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 51, 102, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+            >
+              <X size={20} strokeWidth={3} /> {/* Matched outer */}
+            </button>
+          </div>
         </div>
 
         {last && (
           <div style={{ margin: '0 20px 12px', padding: '12px 16px', background: 'var(--glass-bg)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--glass-border)', transform: 'translateZ(10px)' }}>
             <div>
-              <div className="section-label" style={{ marginBottom: '4px', color: 'var(--text-secondary)', opacity: 0.4, fontSize: '10px', fontFamily: 'Syne, sans-serif' }}>{t('lastSession').toUpperCase()}</div>
+              <div className="section-label" style={{ marginBottom: '4px', color: 'var(--text-secondary)', opacity: 0.6, fontSize: '11px', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession').toUpperCase()}</div>
               <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>
                 {last.sets.map((s, i) => <span key={i}>{i > 0 ? ' · ' : ''}{s.weight}{t(unit)}×{s.reps}</span>)}
               </div>
@@ -241,12 +281,12 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
               onUpdate={(field, val) => updateSet(i, field, val)}
               onCycleUnit={cycleUnit}
               onStartRest={() => startRest(i)}
-              onRemove={() => setSets(prev => prev.filter((_, idx) => idx !== i))}
+              onRemove={() => { handleManualChange(sets.filter((_, idx) => idx !== i)); }}
             />
           ))}
         </div>
 
-        <button onClick={() => { setHasAddedSet(true); setSets(prev => [...prev, { weight: '', reps: '' }]); }} style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px dashed var(--glass-border)', borderRadius: '16px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginTop: '12px', fontFamily: 'Outfit, sans-serif' }}>
+        <button onClick={() => { setHasAddedSet(true); handleManualChange([...sets, { weight: '', reps: '' }]); }} style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px dashed var(--glass-border)', borderRadius: '16px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginTop: '12px', fontFamily: 'Outfit, sans-serif' }}>
           <Plus size={16} color="var(--accent-color)" /> {t('addSet')}
         </button>
 
@@ -283,8 +323,23 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
           </div>
         </div>
 
-        <button onClick={handleDone} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: '16px', fontWeight: '800', padding: '4px 8px', width: 'fit-content', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '12px', outline: 'none', animation: 'pulse-glow 2.5s ease-in-out infinite', fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation' }}>
-          {t('done')}
+        <button 
+          onClick={handleDone} 
+          disabled={isSubmitting || !isDirty || sets.every(s => !Number(s.reps))}
+          style={{ 
+            background: 'transparent', border: 'none', 
+            color: 'var(--accent-color)', fontSize: '16px', fontWeight: '800', 
+            padding: '4px 8px', width: 'fit-content', 
+            cursor: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'default' : 'pointer', 
+            pointerEvents: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'none' : 'auto',
+            textTransform: 'uppercase', letterSpacing: isSubmitting ? '4px' : '12px', outline: 'none', 
+            animation: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'none' : 'pulse-glow 2.5s ease-in-out infinite', 
+            opacity: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 0.3 : 1,
+            fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {isSubmitting ? (lang === 'ar' ? 'جاري الحفظ...' : 'SAVING...') : t('done')}
         </button>
       </div>
     </div>

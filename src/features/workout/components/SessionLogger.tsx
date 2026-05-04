@@ -24,7 +24,7 @@ export function SessionLogger({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0 }}>
-      <div style={{ padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{ padding: '14px 0', borderBottom: '1px solid rgba(var(--theme-rgb), 0.1)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <div>
             <div className="section-label">{t('todaySummary')}</div>
@@ -64,7 +64,7 @@ export function SessionLogger({
                 onTouchMove={handleTouchMove} 
                 onTouchEnd={handleTouchEnd} 
                 style={{ 
-                  color: isDragging ? 'var(--accent-color)' : 'rgba(255,255,255,0.25)', 
+                  color: isDragging ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.25)', 
                   padding: '10px',
                   cursor: 'grab'
                 }}
@@ -77,7 +77,7 @@ export function SessionLogger({
                 style={{ 
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
                   padding: '14px 0', background: 'none', border: 'none', 
-                  borderBottom: !isDragging ? `1px solid ${loggedData[name] ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)'}` : 'none', 
+                  borderBottom: !isDragging ? `1px solid ${loggedData[name] ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.05)'}` : 'none', 
                   flex: 1, textAlign: 'left',
                   pointerEvents: isDragging ? 'none' : 'auto'
                 }}
@@ -94,7 +94,7 @@ export function SessionLogger({
         })}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-        <button onClick={onSave} style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px' }}>
+        <button onClick={onSave} style={{ background: 'rgba(var(--theme-rgb), 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px' }}>
           <Trophy size={16} /> {t('finishSession')}
         </button>
       </div>

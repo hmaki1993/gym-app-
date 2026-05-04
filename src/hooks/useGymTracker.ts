@@ -98,7 +98,17 @@ export function playSetDoneSound() {
 
 export function useGymTracker() {
   const [state, setState] = useState<GymState>(loadState);
-  const sessionStartRef = useRef<number>(Date.now());
+  
+  // Use state for sessionStartTime to ensure reactivity
+  const [sessionStartTime, setSessionStartTimeState] = useState<number>(() => {
+    const initialState = loadState();
+    const today = new Date().toISOString().split('T')[0];
+    const todayLogs = initialState.logs.filter(l => l.date.startsWith(today));
+    if (todayLogs.length > 0) {
+      return Math.min(...todayLogs.map(l => new Date(l.startTime || l.date).getTime()));
+    }
+    return Date.now();
+  });
 
   useEffect(() => {
     saveState(state);
@@ -210,7 +220,7 @@ export function useGymTracker() {
 
   const saveWorkout = useCallback((log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'>) => {
     const now = Date.now();
-    const start = sessionStartRef.current;
+    const start = sessionStartTime; // Use state
     const durationMinutes = Math.round((now - start) / 60000);
     const newLog: WorkoutLog = {
       ...log,
@@ -221,7 +231,52 @@ export function useGymTracker() {
     };
 
     setState(prev => {
-      const updatedLogs = [newLog, ...prev.logs];
+      const today = new Date().toISOString().split('T')[0];
+      const existingLogIndex = prev.logs.findIndex(l => 
+        l.date.startsWith(today) && l.muscleGroup === log.muscleGroup
+      );
+
+      let updatedLogs;
+      if (existingLogIndex !== -1) {
+        // MERGE: Update existing log
+        updatedLogs = [...prev.logs];
+        const oldLog = updatedLogs[existingLogIndex];
+        
+        // Merge exercises: if same exercise exists, replace sets; otherwise add new exercise
+        const mergedExercises = [...oldLog.exercises];
+        log.exercises.forEach(newEx => {
+          const exIdx = mergedExercises.findIndex(e => e.name === newEx.name);
+          if (exIdx !== -1) {
+            mergedExercises[exIdx] = newEx; // Use latest sets
+          } else {
+            mergedExercises.push(newEx);
+          }
+        });
+
+        // Calculate current session duration in seconds
+        const currentSessionSeconds = Math.floor((now - sessionStartTime) / 1000);
+        
+        updatedLogs[existingLogIndex] = {
+          ...oldLog,
+          exercises: mergedExercises,
+          endTime: new Date(now).toISOString(),
+          durationMinutes: Math.round(((oldLog.durationSeconds || (oldLog.durationMinutes * 60)) + currentSessionSeconds) / 60),
+          durationSeconds: (oldLog.durationSeconds || (oldLog.durationMinutes * 60)) + currentSessionSeconds,
+        };
+      } else {
+        // CREATE: Prepend new log
+        const currentSessionSeconds = Math.floor((now - sessionStartTime) / 1000);
+        const newLog: WorkoutLog = {
+          ...log,
+          id: `wl_${now}`,
+          startTime: new Date(sessionStartTime).toISOString(),
+          endTime: new Date(now).toISOString(),
+          durationMinutes: Math.round(currentSessionSeconds / 60),
+          durationSeconds: currentSessionSeconds,
+        };
+        updatedLogs = [newLog, ...prev.logs];
+      }
+
       const updatedPRs = syncPRsFromLogs(updatedLogs);
       return {
         ...prev,
@@ -230,9 +285,9 @@ export function useGymTracker() {
       };
     });
 
-    sessionStartRef.current = Date.now();
+    setSessionStartTimeState(Date.now()); // Update state
     return newLog;
-  }, [syncPRsFromLogs]);
+  }, [syncPRsFromLogs, sessionStartTime]);
 
   const deleteWorkout = useCallback((id: string) => {
     setState(prev => {
@@ -247,7 +302,7 @@ export function useGymTracker() {
   }, [syncPRsFromLogs]);
 
   const resetSessionTimer = useCallback(() => {
-    sessionStartRef.current = Date.now();
+    setSessionStartTimeState(Date.now());
   }, []);
 
   const addMealLog = useCallback((meal: Omit<MealLog, 'id' | 'date'> & { date?: string }) => {
@@ -308,6 +363,8 @@ export function useGymTracker() {
     saveWorkout,
     deleteWorkout,
     resetSessionTimer,
+    setSessionStartTime: setSessionStartTimeState,
+    sessionStartTime,
     getWeeklyCount,
     getTotalVolume,
     addMealLog,

@@ -32,7 +32,7 @@ export function Header({ tab, t }: Props) {
             </div>
             <span style={{ color: 'var(--accent-color)', opacity: 0.6 }}>GRID</span>
           </h1>
-          <div className="subtitle-text" style={{ letterSpacing: '4px', opacity: 0.5 }}>{t('premiumSystem')}</div>
+          <div className="subtitle-text" style={{ letterSpacing: '4px', opacity: 0.8 }}>{t('premiumSystem')}</div>
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: '4px', transform: 'translateZ(30px)' }}>

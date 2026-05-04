@@ -189,7 +189,7 @@ export function ProgressPage({ tracker }: Props) {
             {lang === 'ar' ? 'عرض الكل ✕' : 'SHOW ALL ✕'}
           </button>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '24px', borderBottom: '1px solid rgba(var(--theme-rgb), 0.06)' }}>
           {[
             { label: selectedDay ? (lang === 'ar' ? 'تمارين اليوم' : 'DAY LOGS') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: '📅' },
             { label: selectedDay ? (lang === 'ar' ? 'تاريخ اليوم' : 'LOG DATE') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: '🏆' },
@@ -294,7 +294,7 @@ export function ProgressPage({ tracker }: Props) {
 
       {/* Personal Records */}
       {tracker.prs.length > 0 && (
-        <div style={{ padding: '24px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding: '24px 0', borderBottom: '1px solid rgba(var(--theme-rgb), 0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <Award size={16} color="#ffd700" />
             <span className="section-label" style={{ color: '#ffd700', letterSpacing: '1px' }}>{t('personalRecord')}</span>
@@ -341,7 +341,7 @@ export function ProgressPage({ tracker }: Props) {
                     {mg === 'other' 
                       ? (lang === 'ar' ? 'تمارين أخرى' : 'OTHER EXERCISES') 
                       : (lang === 'ar' ? mgInfo?.ar : mgInfo?.en)}
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.03)' }} />
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(var(--theme-rgb), 0.03)' }} />
                   </div>
                   {prs.map((pr) => (
                     <div key={pr.exerciseName} style={{
@@ -388,7 +388,7 @@ export function ProgressPage({ tracker }: Props) {
                     borderRadius: '6px',
                     background: 'transparent',
                     border: '1px solid',
-                    borderColor: isActive ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)',
+                    borderColor: isActive ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.05)',
                     color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)',
                     fontWeight: '800',
                     fontSize: '13px',

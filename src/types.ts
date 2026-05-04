@@ -26,6 +26,7 @@ export interface WorkoutLog {
   muscleGroup: MuscleGroup;
   exercises: ExerciseLog[];
   durationMinutes: number;
+  durationSeconds?: number;
   notes?: string;
 }
 

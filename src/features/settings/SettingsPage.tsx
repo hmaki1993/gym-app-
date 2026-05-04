@@ -34,8 +34,8 @@ export function SettingsPage({ tracker }: Props) {
       display: 'flex', 
       flexDirection: 'column', 
       padding: '40px 16px',
+      gap: '40px',
       minHeight: '80vh',
-      justifyContent: 'space-between',
       alignItems: 'center'
     }}>
 
@@ -44,7 +44,7 @@ export function SettingsPage({ tracker }: Props) {
         
         {/* Name Frame */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.4, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('userName')}</span>
+          <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.85, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('userName')}</span>
           <div style={{ 
             background: 'none', 
             padding: '14px 20px', 
@@ -80,32 +80,24 @@ export function SettingsPage({ tracker }: Props) {
 
         {/* Language Frame */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.4, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('language')}</span>
+          <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.85, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('language')}</span>
           <div style={{ 
             display: 'flex', 
-            gap: '1px', 
-            background: 'var(--glass-bg)', 
-            border: '1px solid var(--glass-border)', 
-            padding: '4px', 
-            borderRadius: '8px',
+            gap: '12px', 
+            padding: '4px 0', 
             width: '240px',
-            justifyContent: 'space-between'
+            justifyContent: 'center'
           }}>
             {(['ar', 'en'] as const).map((lg) => (
               <button
                 key={lg}
                 onClick={() => tracker.setSettings({ language: lg })}
                 style={{
-                  background: tracker.settings.language === lg ? 'var(--accent-color)' : 'none',
-                  border: 'none', cursor: 'pointer',
-                  fontSize: '11px', fontWeight: '950',
-                  color: tracker.settings.language === lg ? '#000' : 'var(--text-secondary)',
-                  transition: 'all 0.3s ease', 
-                  flex: 1,
-                  padding: '10px 0',
-                  borderRadius: '6px',
-                  letterSpacing: '1px',
-                  fontFamily: 'Outfit, sans-serif'
+                  flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s ease',
+                  background: tracker.settings.language === lg ? 'rgba(0,255,170,0.08)' : 'transparent',
+                  border: tracker.settings.language === lg ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
+                  color: tracker.settings.language === lg ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  letterSpacing: '1px', fontFamily: 'Outfit, sans-serif'
                 }}
               >
                 {lg === 'ar' ? 'عربي' : 'ENGLISH'}
@@ -129,30 +121,30 @@ export function SettingsPage({ tracker }: Props) {
               { label: 'Age', unit: '', key: 'age', def: 25 }
             ].map(field => (
               <div key={field.key}>
-                 <label style={{ fontSize: '10px', fontWeight: '900', opacity: 0.4, display: 'block', marginBottom: '8px', letterSpacing: '1px', color: 'var(--text-secondary)' }}>{field.label.toUpperCase()} {field.unit && `(${field.unit})`}</label>
+                 <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '8px', letterSpacing: '1px', color: 'var(--text-secondary)' }}>{field.label.toUpperCase()} {field.unit && `(${field.unit})`}</label>
                  <input 
                    type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[field.key] || field.def}
                    onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [field.key]: Number(e.target.value) } as any })}
                    style={{ 
-                     width: '100%', background: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)', 
+                     width: '100%', background: 'none', borderBottom: '1px solid var(--glass-border)', 
                      borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-                     borderRadius: '0', padding: '12px 0', color: '#fff', fontSize: '18px', fontWeight: '950', outline: 'none', fontFamily: 'Outfit' 
+                     borderRadius: '0', padding: '12px 0', color: 'var(--text-primary)', fontSize: '18px', fontWeight: '950', outline: 'none', fontFamily: 'Outfit' 
                    }}
                  />
               </div>
             ))}
             <div>
-               <label style={{ fontSize: '10px', fontWeight: '900', opacity: 0.4, display: 'block', marginBottom: '8px', letterSpacing: '1px', color: 'var(--text-secondary)' }}>GENDER</label>
-               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+               <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '8px', letterSpacing: '1px', color: 'var(--text-secondary)' }}>GENDER</label>
+               <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                  {(['male', 'female'] as const).map(g => (
                     <button 
                       key={g}
                       onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })}
                       style={{
-                        padding: '8px 14px', borderRadius: '12px', fontSize: '10px', fontWeight: '950', border: 'none', cursor: 'pointer', transition: 'all 0.3s ease',
-                        background: tracker.settings.nutritionProfile?.gender === g ? 'var(--accent-color)' : 'rgba(255,255,255,0.03)',
-                        color: tracker.settings.nutritionProfile?.gender === g ? '#000' : 'rgba(255,255,255,0.3)',
-                        boxShadow: tracker.settings.nutritionProfile?.gender === g ? '0 5px 15px rgba(0,255,170,0.2)' : 'none'
+                        flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '10px', fontWeight: '950', border: 'none', cursor: 'pointer', transition: 'all 0.3s ease',
+                        background: tracker.settings.nutritionProfile?.gender === g ? 'rgba(0, 255, 170, 0.1)' : 'transparent',
+                        border: tracker.settings.nutritionProfile?.gender === g ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
+                        color: tracker.settings.nutritionProfile?.gender === g ? 'var(--accent-color)' : 'var(--text-secondary)',
                       }}
                     >
                       {g.toUpperCase()}
@@ -162,8 +154,8 @@ export function SettingsPage({ tracker }: Props) {
             </div>
           </div>
 
-          <div style={{ width: '100%', padding: '24px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <label style={{ fontSize: '10px', fontWeight: '900', opacity: 0.4, display: 'block', marginBottom: '16px', letterSpacing: '1px', textAlign: 'center' }}>FITNESS GOAL</label>
+          <div style={{ width: '100%', padding: '24px 0', borderTop: '1px solid rgba(0,255,170,0.15)', borderBottom: '1px solid rgba(0,255,170,0.15)' }}>
+            <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '16px', letterSpacing: '1px', textAlign: 'center' }}>FITNESS GOAL</label>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
               {(['lose', 'maintain', 'gain'] as const).map(g => (
                 <button 
@@ -178,8 +170,8 @@ export function SettingsPage({ tracker }: Props) {
                   style={{
                     flex: 1, padding: '12px 0', borderRadius: '14px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s ease',
                     background: tracker.settings.nutritionProfile?.goal === g ? 'rgba(0, 255, 170, 0.1)' : 'transparent',
-                    border: tracker.settings.nutritionProfile?.goal === g ? '1px solid var(--accent-color)' : '1px solid rgba(255,255,255,0.05)',
-                    color: tracker.settings.nutritionProfile?.goal === g ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
+                    border: tracker.settings.nutritionProfile?.goal === g ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
+                    color: tracker.settings.nutritionProfile?.goal === g ? 'var(--accent-color)' : 'var(--text-secondary)',
                   }}
                 >
                   {g.toUpperCase()}
@@ -191,7 +183,7 @@ export function SettingsPage({ tracker }: Props) {
           {tracker.settings.nutritionProfile?.goal !== 'maintain' && (
             <div style={{ width: '100%', animation: 'slide-up 0.3s ease' }}>
               <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                <label style={{ fontSize: '10px', fontWeight: '900', opacity: 0.4, display: 'block', marginBottom: '4px', letterSpacing: '1px' }}>
+                <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '4px', letterSpacing: '1px' }}>
                   {tracker.settings.nutritionProfile?.goal === 'lose' ? 'WEIGHT LOSS RATE' : 'WEIGHT GAIN RATE'}
                 </label>
                 <div style={{ fontSize: '12px', fontWeight: '950', color: 'var(--accent-color)' }}>
@@ -204,9 +196,10 @@ export function SettingsPage({ tracker }: Props) {
                     key={r}
                     onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goalRate: r } as any })}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '10px', fontWeight: '950', border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
-                      background: tracker.settings.nutritionProfile?.goalRate === r ? 'var(--accent-color)' : 'rgba(255,255,255,0.03)',
-                      color: tracker.settings.nutritionProfile?.goalRate === r ? '#000' : 'rgba(255,255,255,0.3)',
+                      flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.2s ease',
+                      background: tracker.settings.nutritionProfile?.goalRate === r ? 'rgba(0,255,170,0.08)' : 'transparent',
+                      border: tracker.settings.nutritionProfile?.goalRate === r ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
+                      color: tracker.settings.nutritionProfile?.goalRate === r ? 'var(--accent-color)' : 'var(--text-secondary)',
                       transform: tracker.settings.nutritionProfile?.goalRate === r ? 'scale(1.05)' : 'scale(1)'
                     }}
                   >
@@ -222,8 +215,8 @@ export function SettingsPage({ tracker }: Props) {
             width: '100%', padding: '32px 0', textAlign: 'center',
             position: 'relative'
           }}>
-            <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', opacity: 0.5, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '12px' }}>Daily Target</div>
-            <div style={{ fontSize: '48px', fontWeight: '950', color: '#fff', fontFamily: 'Outfit', letterSpacing: '-1px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', opacity: 0.8, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '12px' }}>Daily Target</div>
+            <div style={{ fontSize: '48px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit', letterSpacing: '-1px' }}>
               {(() => {
                 const p = tracker.settings.nutritionProfile;
                 if (!p?.weight || !p?.height || !p?.age) return '0';
@@ -236,39 +229,31 @@ export function SettingsPage({ tracker }: Props) {
                 const target = p.goal === 'lose' ? tdee - deficit : p.goal === 'gain' ? tdee + deficit : tdee;
                 return Math.round(target);
               })()}
-              <span style={{ fontSize: '14px', opacity: 0.3, marginLeft: '8px', fontWeight: '800' }}>KCAL</span>
+              <span style={{ fontSize: '14px', opacity: 0.85, marginLeft: '8px', fontWeight: '800' }}>KCAL</span>
             </div>
           </div>
         </div>
 
         {/* Theme Frame */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.4, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('themeMode')}</span>
+          <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.85, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('themeMode')}</span>
           <div style={{ 
             display: 'flex', 
-            gap: '1px', 
-            background: 'var(--glass-bg)', 
-            border: '1px solid var(--glass-border)', 
-            padding: '4px', 
-            borderRadius: '8px',
+            gap: '12px', 
+            padding: '4px 0', 
             width: '240px',
-            justifyContent: 'space-between'
+            justifyContent: 'center'
           }}>
             {(['dark', 'light'] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => tracker.setSettings({ themeMode: mode })}
                 style={{
-                  background: tracker.settings.themeMode === mode ? 'var(--accent-color)' : 'none',
-                  border: 'none', cursor: 'pointer',
-                  fontSize: '11px', fontWeight: '950',
-                  color: tracker.settings.themeMode === mode ? '#000' : 'var(--text-secondary)',
-                  transition: 'all 0.3s ease', 
-                  flex: 1,
-                  padding: '10px 0',
-                  borderRadius: '6px',
-                  letterSpacing: '1px',
-                  fontFamily: 'Outfit, sans-serif'
+                  flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s ease',
+                  background: tracker.settings.themeMode === mode ? 'rgba(0,255,170,0.08)' : 'transparent',
+                  border: tracker.settings.themeMode === mode ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
+                  color: tracker.settings.themeMode === mode ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  letterSpacing: '1px', fontFamily: 'Outfit, sans-serif'
                 }}
               >
                 {t(mode as any)}
@@ -286,7 +271,7 @@ export function SettingsPage({ tracker }: Props) {
           fontSize: '11px', 
           fontWeight: '900', 
           color: 'var(--text-secondary)', 
-          opacity: 0.4,
+          opacity: 0.7,
           marginBottom: '24px', 
           letterSpacing: '3px', 
           fontFamily: 'Outfit, sans-serif',
@@ -312,6 +297,9 @@ export function SettingsPage({ tracker }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Bottom Spacer */}
+      <div style={{ height: '20px', width: '100%', flexShrink: 0 }} />
 
       <style>{`
         .name-box-elite:focus-within {

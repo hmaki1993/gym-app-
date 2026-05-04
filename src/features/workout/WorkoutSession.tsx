@@ -5,7 +5,7 @@ import { DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
 import { ExerciseCard } from './ExerciseCard';
 import {
-  Clock, Activity, X
+  Clock, Activity, X, ArrowLeft
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -29,6 +29,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [activeExercises, setActiveExercises] = useState<string[]>([]);
   const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>({});
   const [draftData, setDraftData] = useState<Record<string, any[]>>({});
+  const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,21 +37,31 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const timerRef = useRef<HTMLDivElement>(null);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const workoutStartTime = useRef<number | null>(null);
+  const sessionStartTimeRef = useRef<number>(Date.now());
+  const baseSecondsRef = useRef<number>(0);
+
+  // Initialize base time from logged exercises today for this muscle group
+  useEffect(() => {
+    if (phase === 'logging' && selectedMuscle) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayMuscleLogs = tracker.logs.filter(l => l.date.startsWith(today) && l.muscleGroup === selectedMuscle);
+      const totalSeconds = todayMuscleLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
+      
+      baseSecondsRef.current = totalSeconds;
+      sessionStartTimeRef.current = Date.now();
+    }
+  }, [phase, selectedMuscle, tracker.logs]);
 
   useEffect(() => {
     if (phase === 'logging') {
-      if (!workoutStartTime.current) {
-        workoutStartTime.current = Date.now();
-      }
-      const interval = setInterval(() => {
+      const updateTimer = () => {
         const now = Date.now();
-        setElapsedSeconds(Math.floor((now - workoutStartTime.current!) / 1000));
-      }, 1000);
+        const currentSessionSeconds = Math.floor((now - sessionStartTimeRef.current) / 1000);
+        setElapsedSeconds(baseSecondsRef.current + currentSessionSeconds);
+      };
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
       return () => clearInterval(interval);
-    } else {
-      workoutStartTime.current = null;
-      setElapsedSeconds(0);
     }
   }, [phase]);
 
@@ -82,6 +93,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           initialLogged[e.name] = e.sets;
         });
         setLoggedData(initialLogged);
+        
+        // Auto-resume phase
+        setPhase('logging');
       }
     }
   }, [selectedMuscle, tracker.logs]);
@@ -140,6 +154,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   const handleSetsDone = (exerciseName: string, sets: SetLog[]) => {
     setLoggedData(prev => ({ ...prev, [exerciseName]: sets }));
+    setDirtyExercises(prev => {
+      const { [exerciseName]: removed, ...rest } = prev;
+      return rest;
+    });
     setDraftData(prev => {
       const next = { ...prev };
       delete next[exerciseName];
@@ -148,11 +166,14 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     setOpenExercise(null);
   };
 
-  const handleDraftChange = React.useCallback((exerciseName: string, sets: any[]) => {
+  const handleDraftChange = React.useCallback((exerciseName: string, sets: any[], isManualChange: boolean) => {
     setDraftData(prev => {
       if (JSON.stringify(prev[exerciseName]) === JSON.stringify(sets)) return prev;
       return { ...prev, [exerciseName]: sets };
     });
+    if (isManualChange) {
+      setDirtyExercises(prev => ({ ...prev, [exerciseName]: true }));
+    }
   }, []);
 
   const handleSave = () => {
@@ -172,6 +193,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       exercises,
     };
     tracker.saveWorkout(log);
+    setDirtyExercises({}); // Clear all dirty flags
     onSaved();
   };
 
@@ -392,10 +414,12 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   key={openExercise} exerciseName={openExercise} muscleGroup={selectedMuscle!}
                   tracker={tracker} 
                   initialSets={draftData[openExercise] || loggedData[openExercise]}
+                  isCompleted={!!loggedData[openExercise]}
                   elapsedSeconds={elapsedSeconds}
                   onDone={(sets) => handleSetsDone(openExercise, sets)}
-                  onChange={(sets) => handleDraftChange(openExercise, sets)}
+                  onChange={(sets, isDirty) => handleDraftChange(openExercise, sets, isDirty)}
                   onClose={() => setOpenExercise(null)} fullPage={true}
+                  isDirty={dirtyExercises[openExercise]}
                 />
               </div>
             </div>
@@ -417,10 +441,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '12px', 
+          gap: '10px', 
           transform: 'translateZ(20px)',
           flex: 1,
-          minWidth: 0 // Allows shrinking
+          minWidth: 0
         }}>
           <div style={{ 
             width: '4px', 
@@ -432,13 +456,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           }} />
           <h1 className="heading-font" style={{ 
             margin: 0, 
-            fontSize: 'min(20px, 5.5vw)', // Slightly smaller for better fit
+            fontSize: 'min(18px, 4.5vw)', 
             background: 'linear-gradient(to bottom, var(--text-primary) 50%, var(--accent-color) 150%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             letterSpacing: '-0.5px',
             textTransform: 'uppercase',
-            whiteSpace: 'normal', // Allow wrapping
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
             lineHeight: 1.1,
             flex: 1
           }}>
@@ -446,61 +472,74 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           </h1>
         </div>
 
-        {/* Live Timer Badge */}
-        {phase === 'logging' && (
-          <div ref={timerRef} style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
-            animation: 'pulse-glow 2s infinite ease-in-out',
-            background: 'rgba(255,255,255,0.03)',
-            padding: '6px 12px',
-            borderRadius: '12px',
-            border: '1px solid var(--glass-border)',
-            marginRight: '12px', // Spacing between timer and X
-            flexShrink: 0
-          }}>
-            <Clock size={16} color="var(--accent-color)" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }} />
-            <span style={{ 
-              fontFamily: 'Outfit, sans-serif', 
-              fontSize: '20px', 
-              fontWeight: '900', 
-              color: 'var(--text-primary)',
-              textShadow: '0 0 10px var(--accent-color-alpha)'
+        {/* Right Side Unified Capsule: Timer & Buttons */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '4px', 
+          flexShrink: 0,
+          background: 'rgba(var(--theme-rgb), 0.03)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '20px',
+          padding: '4px 8px',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)'
+        }}>
+          {phase === 'logging' && (
+            <div ref={timerRef} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              padding: '0 8px',
+              minWidth: '75px',
+              justifyContent: 'center',
+              flexShrink: 0
             }}>
-              {formatElapsed(elapsedSeconds)}
-            </span>
-          </div>
-        )}
+              <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} />
+              <span style={{ 
+                fontFamily: 'Outfit, sans-serif', 
+                fontSize: '17px', 
+                fontWeight: '900', 
+                color: 'var(--text-primary)',
+                fontVariantNumeric: 'tabular-nums'
+              }}>
+                {formatElapsed(elapsedSeconds)}
+              </span>
+            </div>
+          )}
 
-        {/* Close Button */}
-        <button 
-          onClick={onClose} 
-          className="nav-btn"
-          style={{ 
-            width: '38px', 
-            height: '38px', 
-            minWidth: '38px',
-            minHeight: '38px',
-            padding: 0, 
-            borderRadius: '50%', 
-            background: 'rgba(255, 51, 102, 0.08)', 
-            border: '1px solid rgba(255, 51, 102, 0.15)', 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ff3366', 
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 0 15px rgba(255, 51, 102, 0.05)',
-            flexShrink: 0,
-            flex: 'none', // Override global nav-btn flex: 1
-            touchAction: 'manipulation',
-            maxWidth: '38px'
-          }}
-        >
-          <X size={22} strokeWidth={3} />
-        </button>
+          {phase === 'logging' && (
+            <button 
+              onClick={() => setPhase('exercises')} 
+              style={{ 
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: 'none', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 255, 170, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+            >
+              <ArrowLeft size={18} strokeWidth={2.5} />
+            </button>
+          )}
+          
+          <button 
+            onClick={onClose} 
+            style={{ 
+              width: '32px', height: '32px', borderRadius: '50%', 
+              background: 'none', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#ff3366', cursor: 'pointer', flexShrink: 0,
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 51, 102, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          >
+            <X size={20} strokeWidth={3} />
+          </button>
+        </div>
       </div>
 
       <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
@@ -553,7 +592,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   touchAction: 'manipulation'
                 }}
               >
-                <Activity size={16} strokeWidth={3} /> {t('startWorkout').toUpperCase()}
+                <Activity size={16} strokeWidth={3} /> {Object.keys(loggedData).length > 0 ? (lang === 'ar' ? 'استكمال التمرين' : 'RESUME WORKOUT') : t('startWorkout').toUpperCase()}
               </button>
             </div>
           </>

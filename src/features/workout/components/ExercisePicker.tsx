@@ -118,7 +118,7 @@ export function ExercisePicker({
               }}
               style={{
                 width: '44px', height: '44px', borderRadius: '12px',
-                background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-secondary)',
+                background: 'rgba(var(--theme-rgb), 0.05)', border: 'none', color: 'var(--text-secondary)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
               }}
             >
@@ -163,9 +163,9 @@ export function ExercisePicker({
                   position: 'relative',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '18px 12px', 
-                  background: isSelected ? 'rgba(255,255,255,0.03)' : 'transparent',
+                  background: isSelected ? 'rgba(var(--theme-rgb), 0.03)' : 'transparent',
                   border: 'none',
-                  borderBottom: `1px solid ${isSelected ? 'var(--accent-color-alpha)' : 'rgba(255,255,255,0.03)'}`,
+                  borderBottom: `1px solid ${isSelected ? 'var(--accent-color-alpha)' : 'rgba(var(--theme-rgb), 0.03)'}`,
                   width: '100%', cursor: 'pointer',
                   borderRadius: isSelected && detail ? '16px 16px 0 0' : '16px',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -197,7 +197,7 @@ export function ExercisePicker({
                       transition: 'color 0.3s ease',
                       fontFamily: 'Outfit, sans-serif'
                     }}>{name}</div>
-                    {detail && <Info size={13} style={{ opacity: isSelected ? 0.8 : 0.2, color: isSelected ? 'var(--accent-color)' : '#fff' }} />}
+                    {detail && <Info size={13} style={{ opacity: isSelected ? 0.8 : 0.2, color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)' }} />}
                   </div>
                   {lastData && (
                     <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '800', opacity: 0.5, letterSpacing: '0.5px' }}>
@@ -228,7 +228,7 @@ export function ExercisePicker({
               {isSelected && detail && (
                 <div style={{
                   padding: '12px 16px 20px',
-                  background: 'rgba(255,255,255,0.02)',
+                  background: 'rgba(var(--theme-rgb), 0.02)',
                   borderBottom: '1px solid var(--accent-color-alpha)',
                   borderRadius: '0 0 16px 16px',
                   animation: 'slideDown 0.3s ease-out',
@@ -238,7 +238,7 @@ export function ExercisePicker({
                     margin: 0, 
                     fontSize: '12px', 
                     lineHeight: '1.6', 
-                    color: 'rgba(255,255,255,0.6)', 
+                    color: 'rgba(var(--theme-rgb), 0.6)', 
                     fontFamily: 'Outfit, sans-serif',
                     textAlign: isRtl ? 'right' : 'left'
                   }}>

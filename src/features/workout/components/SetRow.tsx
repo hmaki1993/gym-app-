@@ -51,8 +51,7 @@ export const SetRow: React.FC<Props> = ({
           onChange={(e) => onUpdate('weight', e.target.value)}
           style={{
             background: 'var(--glass-bg)',
-            border: 'none',
-            borderBottom: '1px solid var(--glass-border)',
+            border: '1.5px solid var(--glass-border)',
             outline: 'none',
             color: 'var(--text-primary)',
             fontSize: '24px',
@@ -60,8 +59,9 @@ export const SetRow: React.FC<Props> = ({
             textAlign: 'center',
             width: '65px',
             padding: '4px 0',
-            borderRadius: '4px',
-            fontFamily: 'Outfit, sans-serif'
+            borderRadius: '8px',
+            fontFamily: 'Outfit, sans-serif',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
           }}
         />
         <div
@@ -103,8 +103,7 @@ export const SetRow: React.FC<Props> = ({
           onChange={(e) => onUpdate('reps', e.target.value)}
           style={{
             background: 'var(--glass-bg)',
-            border: 'none',
-            borderBottom: '1px solid var(--glass-border)',
+            border: '1.5px solid var(--glass-border)',
             outline: 'none',
             color: 'var(--text-primary)',
             fontSize: '24px',
@@ -112,8 +111,9 @@ export const SetRow: React.FC<Props> = ({
             textAlign: 'center',
             width: '65px',
             padding: '4px 0',
-            borderRadius: '4px',
-            fontFamily: 'Outfit, sans-serif'
+            borderRadius: '8px',
+            fontFamily: 'Outfit, sans-serif',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
           }}
         />
         <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif' }}>

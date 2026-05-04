@@ -62,7 +62,13 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
     });
   };
 
-  const workoutWords = t('startWorkout').toUpperCase().split(' ');
+  const todayStr = new Date().toISOString().split('T')[0];
+  const hasWorkoutToday = tracker.logs.some(log => log.date.startsWith(todayStr));
+  
+  const workoutWords = (hasWorkoutToday 
+    ? (lang === 'ar' ? 'تكملة التمرين' : 'RESUME WORKOUT') 
+    : t('startWorkout').toUpperCase()
+  ).split(' ');
 
   return (
     <div ref={containerRef} className="hide-scrollbar" style={{
@@ -125,7 +131,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
 
                 <div style={{ color: s.color, filter: `drop-shadow(0 0 10px ${s.color}60)`, marginBottom: '4px' }}>{s.icon}</div>
                 <div style={{ fontSize: '32px', fontWeight: '950', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif', letterSpacing: '-1.5px' }}>{s.val}</div>
-                <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{s.label}</div>
+                <div style={{ fontSize: '11px', color: 'rgba(var(--theme-rgb), 0.6)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{s.label}</div>
                 
                 {/* Bottom Neon Indicator */}
                 <div style={{ 
@@ -154,7 +160,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
           role="button"
           style={{
             background: 'none', border: 'none',
-            color: '#fff', cursor: 'pointer',
+            color: 'var(--text-primary)', cursor: 'pointer',
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', gap: '24px',
             width: '100%',
@@ -178,11 +184,11 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
           </div>
           
           <span style={{ 
-            fontSize: '11px', 
-            fontWeight: '900', 
+            fontSize: '12px', 
+            fontWeight: '950', 
             color: 'var(--accent-color)', 
             letterSpacing: '5px', 
-            opacity: 0.5,
+            opacity: 0.8,
             textTransform: 'uppercase',
             fontFamily: 'Outfit, sans-serif',
             transform: 'translateZ(20px)'
@@ -198,15 +204,15 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
             className="antigravity-card" 
             role="button"
             style={{ 
-              borderTop: '1px solid rgba(255,255,255,0.05)', 
+              borderTop: '1px solid rgba(var(--theme-rgb), 0.05)', 
               paddingTop: '20px',
               cursor: 'pointer',
               touchAction: 'manipulation'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', opacity: 0.4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', opacity: 0.7 }}>
               <Flame size={12} color="var(--accent-color)" />
-              <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession')}</span>
+              <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession')}</span>
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -214,12 +220,12 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                 <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
                   {MUSCLE_GROUPS.find(m => m.key === recentLog.muscleGroup)?.[lang] ?? recentLog.muscleGroup}
                 </div>
-                <div style={{ width: '1px', height: '15px', background: 'rgba(255,255,255,0.08)' }} />
+                <div style={{ width: '1px', height: '15px', background: 'rgba(var(--theme-rgb), 0.08)' }} />
                 <div style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: '800', fontFamily: 'Outfit, sans-serif' }}>
                   <span style={{ color: 'var(--accent-color)' }}>{totalVolume.toFixed(0)}</span> {unit}
                 </div>
               </div>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', fontWeight: '800', fontFamily: 'Outfit, sans-serif' }}>
+              <div style={{ fontSize: '11px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>
                 {formatDate(recentLog.date, lang)}
               </div>
             </div>

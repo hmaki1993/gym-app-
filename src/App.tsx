@@ -169,7 +169,7 @@ export default function App() {
             flexDirection: 'column',
             overflowY: 'auto',
             overflowX: 'hidden',
-            paddingBottom: '65px',
+            paddingBottom: '100px',
             touchAction: 'pan-y'
           }}>
             {tab === 'home' && (

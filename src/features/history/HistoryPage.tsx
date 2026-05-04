@@ -1,8 +1,52 @@
 import React, { useRef, useState } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import type { WorkoutLog } from '../../types';
-import { MUSCLE_GROUPS } from '../../data/exercises';
+import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
+import { Dumbbell, Calendar, Trash2, Clock, ChevronDown } from 'lucide-react';
+
+interface Props {
+  tracker: ReturnType<typeof useGymTracker>;
+  onDeleteWorkout: (id: string) => void;
+}
+
+function formatDate(iso: string, lang: 'ar' | 'en') {
+  const d = new Date(iso);
+  return d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatTime(iso: string, lang: 'ar' | 'en') {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function formatDuration(mins: number, t: (k: any) => string) {
+  if (mins < 60) return `${mins} ${t('minutes')}`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
+export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
+  const lang = tracker.settings.language;
+  const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
+  const unit = tracker.settings.weightUnit;
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+
+  const [viewDate, setViewDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const currentYear = viewDate.getFullYear();
+  const currentMonth = viewDate.getMonth();
+  const totalDays = daysInMonth(currentYear, currentMonth);
+  const startOffset = firstDayOfMonth(currentYear, currentMonth);
+
+  const monthName = viewDate.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { month: 'long', year: 'numeric' });
+
   const hasWorkout = (day: number) => {
     return tracker.logs.some(l => {
       const d = new Date(l.date);
@@ -53,7 +97,7 @@ import { translations } from '../../translations';
             textTransform: 'uppercase', 
             letterSpacing: '2px',
             fontFamily: 'Outfit, sans-serif',
-            background: 'linear-gradient(to bottom, #fff, var(--accent-color))',
+            background: 'linear-gradient(to bottom, var(--text-primary), var(--accent-color))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
@@ -72,7 +116,7 @@ import { translations } from '../../translations';
         }}>
           {/* Day Headers - More Visible */}
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
-            <div key={`${d}-${idx}`} style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', opacity: 0.4, letterSpacing: '1px' }}>{d}</div>
+            <div key={`${d}-${idx}`} style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', opacity: 0.7, letterSpacing: '1px' }}>{d}</div>
           ))}
 
           {/* Empty spaces for offset */}
@@ -98,7 +142,7 @@ import { translations } from '../../translations';
                   justifyContent: 'center',
                   fontSize: '13px',
                   fontWeight: active ? '950' : '800',
-                  color: active ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : 'rgba(255,255,255,0.4)'),
+                  color: active ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : 'rgba(var(--theme-rgb), 0.4)'),
                   cursor: 'pointer',
                   position: 'relative',
                   borderRadius: '50%',
@@ -128,7 +172,8 @@ import { translations } from '../../translations';
       </div>
 
       {/* Selected Day Logs */}
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        
         {filteredLogs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', opacity: 0.1 }}>
             <Dumbbell size={40} style={{ marginBottom: '16px' }} />
@@ -136,7 +181,26 @@ import { translations } from '../../translations';
           </div>
         ) : (
           filteredLogs.map((log: WorkoutLog) => {
-            const mg = MUSCLE_GROUPS.find(m => m.key === log.muscleGroup);
+            // Derive muscle groups from exercises
+            const exerciseToMuscle: Record<string, string> = {};
+            Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+              exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+            });
+
+            const involvedGroups = new Set<string>();
+            log.exercises.forEach(ex => {
+              const group = exerciseToMuscle[ex.name];
+              if (group) involvedGroups.add(group);
+              else involvedGroups.add(log.muscleGroup); // Fallback to primary
+            });
+
+            const sortedGroups = Array.from(involvedGroups).sort();
+            const displayTitle = sortedGroups.map(g => {
+              const mg = MUSCLE_GROUPS.find(m => m.key === g);
+              return mg?.[lang] ?? g;
+            }).join(' & ');
+
+            const primaryMg = MUSCLE_GROUPS.find(m => m.key === (sortedGroups[0] || log.muscleGroup));
             const volume = tracker.getTotalVolume(log);
             const totalSets = log.exercises.reduce((s, ex) => s + ex.sets.length, 0);
 
@@ -160,15 +224,15 @@ import { translations } from '../../translations';
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {mg?.icon ? (
-                        <img src={mg.icon} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
+                      {primaryMg?.icon ? (
+                        <img src={primaryMg.icon} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
                       ) : (
                         <span style={{ fontSize: '28px' }}>💪</span>
                       )}
                     </div>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-                        {mg?.[lang] ?? log.muscleGroup}
+                        {displayTitle}
                       </h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -248,14 +312,14 @@ import { translations } from '../../translations';
                             {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'var(--glass-border)' }} />}
                             <div style={{ flex: 1, textAlign: 'center' }}>
                               <div style={{ 
-                                fontSize: '13px', 
-                                fontWeight: '800', 
+                                fontSize: '15px', 
+                                fontWeight: '950', 
                                 color: 'var(--text-primary)', 
                                 whiteSpace: 'nowrap',
                                 fontFamily: 'Inter, sans-serif',
                                 letterSpacing: '0.5px'
                               }}>{stat.value}</div>
-                              <div style={{ fontSize: '8px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px', opacity: 0.5 }}>{stat.label}</div>
+                              <div style={{ fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.45)', fontWeight: '900', letterSpacing: '3px', marginTop: '8px', textTransform: 'uppercase' }}>{stat.label}</div>
                             </div>
                           </React.Fragment>
                         ))}
@@ -292,7 +356,7 @@ import { translations } from '../../translations';
                               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '110px', justifyContent: 'flex-end' }}>
                                 <div style={{ textAlign: 'right' }}>
                                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>{ex.sets.length}</span>
-                                  <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', marginLeft: '3px', opacity: 0.5 }}>SETS</span>
+                                  <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', marginLeft: '4px', opacity: 0.7, letterSpacing: '1px' }}>SETS</span>
                                 </div>
                                 <div style={{ width: '1px', height: '10px', background: 'var(--glass-border)' }} />
                                 <div style={{ textAlign: 'right', minWidth: '45px' }}>
@@ -304,6 +368,94 @@ import { translations } from '../../translations';
                           );
                         })}
                       </div>
+
+                      {/* ── STANDARDIZED NUTRITION (Same as Workout Style) ── */}
+                      {(() => {
+                        const logDate = new Date(log.date);
+                        const dayNutrition = tracker.nutritionLogs.filter((l: any) => {
+                          const d = new Date(l.date);
+                          return d.getFullYear() === logDate.getFullYear() &&
+                                 d.getMonth() === logDate.getMonth() &&
+                                 d.getDate() === logDate.getDate();
+                        });
+                        
+                        if (dayNutrition.length === 0) return null;
+
+                        const totalCal = dayNutrition.reduce((sum: number, l: any) => sum + l.calories, 0);
+                        const totalPro = dayNutrition.reduce((sum: number, l: any) => sum + l.protein, 0);
+                        const totalCarb = dayNutrition.reduce((sum: number, l: any) => sum + l.carbs, 0);
+                        const totalFat = dayNutrition.reduce((sum: number, l: any) => sum + l.fats, 0);
+
+                        return (
+                          <div style={{ 
+                            marginTop: '24px',
+                            paddingTop: '20px',
+                            borderTop: '1px solid var(--glass-border)',
+                            opacity: expandedLogId === log.id ? 1 : 0,
+                            transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(10px)',
+                            transition: 'all 0.4s ease 0.2s'
+                          }}>
+                            {/* Premium Centered Title */}
+                            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                              <div style={{ 
+                                fontSize: '11px', 
+                                fontWeight: '950', 
+                                color: 'var(--accent-color)', 
+                                letterSpacing: '4px', 
+                                textTransform: 'uppercase', 
+                                opacity: 0.8,
+                                marginBottom: '8px'
+                              }}>Daily Nutrition Log</div>
+                              <div style={{ width: '30px', height: '2px', background: 'var(--accent-color)', margin: '0 auto', opacity: 0.3, borderRadius: '2px' }} />
+                            </div>
+
+                            {/* Stats Row (Same as Workout Stats) */}
+                            <div style={{ 
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              marginBottom: '24px', gap: '4px'
+                            }}>
+                              {[
+                                { label: 'KCAL', value: totalCal },
+                                { label: 'PROTEIN', value: `${totalPro.toFixed(0)}g` },
+                                { label: 'CARBS', value: `${totalCarb.toFixed(0)}g` },
+                                { label: 'FATS', value: `${totalFat.toFixed(0)}g` },
+                              ].map((stat, idx) => (
+                                <React.Fragment key={stat.label}>
+                                  {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'var(--glass-border)' }} />}
+                                  <div style={{ flex: 1, textAlign: 'center' }}>
+                                    <div style={{ 
+                                      fontSize: '15px', 
+                                      fontWeight: '950', 
+                                      color: idx === 0 ? 'var(--accent-color)' : 'var(--text-primary)', 
+                                      fontFamily: 'Inter, sans-serif'
+                                    }}>{stat.value}</div>
+                                    <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.45)', fontWeight: '900', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                                  </div>
+                                </React.Fragment>
+                              ))}
+                            </div>
+
+                            {/* Food List (Same as Exercise List) */}
+                            <div style={{ 
+                              display: 'flex', flexDirection: 'column', gap: '14px', 
+                              padding: '4px 0 10px 12px', borderLeft: '2px solid rgba(0, 255, 170, 0.2)' 
+                            }}>
+                              {dayNutrition.map((food: any, fIdx: number) => (
+                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', opacity: 0.9 }}>{food.nameAr || food.name}</span>
+                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.3)' }}>x{food.servingSize}</span>}
+                                  </div>
+                                  <div style={{ textAlign: 'right', minWidth: '60px' }}>
+                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{food.calories}</span>
+                                    <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginLeft: '2px', opacity: 0.6 }}>KCAL</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
