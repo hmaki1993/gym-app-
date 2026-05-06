@@ -33,7 +33,7 @@ export function SessionLogger({
           <div style={{ textAlign: 'right' }}>
             <div className="section-label">{t('totalVolume')}</div>
             <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-color)' }}>
-              {totalVolume.toFixed(0)}{weightUnit}
+              {totalVolume.toFixed(0)} {t(weightUnit as any)}
             </div>
           </div>
         </div>

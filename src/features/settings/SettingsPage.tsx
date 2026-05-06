@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
 import { THEME_COLORS } from '../../data/exercises';
+import { User, Scale, Target, Palette } from 'lucide-react';
 
 
 interface Props {
@@ -15,299 +16,321 @@ export function SettingsPage({ tracker }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [localName, setLocalName] = React.useState(tracker.settings.userName);
+  const [localName, setLocalName] = useState(tracker.settings.userName);
+  const [localEmail, setLocalEmail] = useState(tracker.settings.userEmail || '');
+  const [localPassword, setLocalPassword] = useState(tracker.settings.userPassword || '');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Entrance animation removed to ensure instant feel
-  /*
-  useEffect(() => {
-    if (containerRef.current) {
-      gsap.fromTo(containerRef.current.children,
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: 'power2.out' }
-      );
+  // Lock scroll and fix positioning when modal is open
+  React.useEffect(() => {
+    const parent = containerRef.current?.parentElement;
+    if (showResetConfirm) {
+      document.body.style.overflow = 'hidden';
+      if (parent) {
+        parent.style.transform = 'none';
+        parent.style.perspective = 'none';
+      }
+    } else {
+      document.body.style.overflow = 'unset';
     }
-  }, []);
-  */
+    return () => { 
+      document.body.style.overflow = 'unset';
+    };
+  }, [showResetConfirm]);
+
+  const cardStyle: React.CSSProperties = {
+    width: '100%',
+    maxWidth: '400px',
+    background: 'transparent',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    marginBottom: '24px'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '11px',
+    fontWeight: '900',
+    color: '#ff3d00',
+    letterSpacing: '2.5px',
+    textTransform: 'uppercase',
+    marginBottom: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '0 8px'
+  };
+
+  const inputRowStyle: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.02)',
+    borderRadius: '12px',
+    padding: '14px 16px',
+    borderBottom: '1px solid rgba(255, 61, 0, 0.1)',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  };
 
   return (
-    <div ref={containerRef} style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      padding: '40px 16px',
-      gap: '40px',
-      minHeight: '80vh',
-      alignItems: 'center'
-    }}>
+    <>
+      {/* Premium Reset Confirmation Overlay */}
+      {showResetConfirm && (
+        <div 
+          onClick={() => setShowResetConfirm(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            zIndex: 999999, background: 'transparent',
+            backdropFilter: 'blur(16px)', display: 'grid',
+            placeItems: 'center', padding: '20px',
+            WebkitBackdropFilter: 'blur(16px)',
+            animation: 'fadeIn 0.3s ease'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="antigravity-card" 
+            style={{
+              maxWidth: '320px', width: '100%', padding: '40px 24px',
+              textAlign: 'center', border: 'none',
+              boxShadow: '0 0 80px rgba(255,0,0,0.3)',
+              background: 'rgba(10, 0, 0, 0.98)', position: 'relative',
+              animation: 'elite-expand 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+              borderRadius: '28px',
+              margin: '0'
+            }}
+          >
+            <div style={{ color: '#ff0000', marginBottom: '20px' }}>
+              <Target size={52} style={{ filter: 'drop-shadow(0 0 15px #ff0000)' }} />
+            </div>
+            
+            <h2 className="heading-font logo-underline" style={{ color: '#fff', fontSize: '26px', marginBottom: '16px' }}>
+              {lang === 'ar' ? 'تصفير المصنع؟' : 'FACTORY RESET?'}
+            </h2>
+            
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
+              {lang === 'ar' ? '⚠️ سيتم مسح كل بياناتك نهائياً!' : '⚠️ This will permanently delete all your data!'}
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <button 
+                onClick={() => tracker.resetAllData()}
+                style={{
+                  background: '#ff0000', color: '#fff', border: 'none',
+                  padding: '16px', borderRadius: '18px', fontWeight: '950',
+                  fontSize: '13px', letterSpacing: '2px', cursor: 'pointer',
+                  boxShadow: '0 15px 30px rgba(255,0,0,0.4)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                {lang === 'ar' ? 'تأكيد المسح' : 'CONFIRM RESET'}
+              </button>
+              
+              <button 
+                onClick={() => setShowResetConfirm(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: 'none',
+                  padding: '14px', borderRadius: '18px', fontWeight: '800',
+                  fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+              >
+                {lang === 'ar' ? 'إلغاء' : 'CANCEL'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Group 1: Identity & Language */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', alignItems: 'center' }}>
-        
-        {/* Name Frame */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.85, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('userName')}</span>
-          <div style={{ 
-            background: 'none', 
-            padding: '14px 20px', 
-            borderRadius: '8px', 
-            border: '1px solid var(--glass-border)',
-            display: 'flex',
-            alignItems: 'center',
-            width: '240px',
-            transition: 'all 0.3s ease'
-          }} className="name-box-elite">
+      <div ref={containerRef} style={{ 
+        display: 'flex', flexDirection: 'column', 
+        padding: '20px 20px 100px', gap: '20px',
+        alignItems: 'center', width: '100%', boxSizing: 'border-box'
+      }}>
+
+      {/* SECTION 1: ACCOUNT PROFILE */}
+      <div style={cardStyle}>
+        <div style={labelStyle}>
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+          <span>{t('accountProfile')}</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={inputRowStyle} className="elite-input-wrapper">
+            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px' }}>NICKNAME</div>
             <input
-              style={{
-                background: 'none', 
-                border: 'none', 
-                fontSize: '18px', 
-                fontWeight: '950', 
-                color: 'var(--text-primary)',
-                outline: 'none', 
-                width: '100%', 
-                textAlign: 'center',
-                fontFamily: 'Outfit, sans-serif'
-              }}
-              value={localName}
-              onChange={e => setLocalName(e.target.value)}
-              onBlur={() => tracker.setSettings({ userName: localName })}
-              onKeyDown={e => {
-                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-              }}
-              placeholder="..."
+              style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+              value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })}
             />
           </div>
-        </div>
-
-        {/* Language Frame */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.85, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('language')}</span>
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px', 
-            padding: '4px 0', 
-            width: '240px',
-            justifyContent: 'center'
-          }}>
-            {(['ar', 'en'] as const).map((lg) => (
-              <button
-                key={lg}
-                onClick={() => tracker.setSettings({ language: lg })}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s ease',
-                  background: tracker.settings.language === lg ? 'rgba(0,255,170,0.08)' : 'transparent',
-                  border: tracker.settings.language === lg ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
-                  color: tracker.settings.language === lg ? 'var(--accent-color)' : 'var(--text-secondary)',
-                  letterSpacing: '1px', fontFamily: 'Outfit, sans-serif'
-                }}
-              >
-                {lg === 'ar' ? 'عربي' : 'ENGLISH'}
-              </button>
-            ))}
+          <div style={inputRowStyle} className="elite-input-wrapper">
+            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px' }}>EMAIL</div>
+            <input
+              type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+              value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })}
+            />
           </div>
-        </div>
-
-
-        {/* Personal Metrics Frame - Minimalist Rewrite */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', alignItems: 'center', width: '100%', maxWidth: '340px', marginTop: '40px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '3px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>Personal Metrics</span>
-            <div style={{ width: '30px', height: '2px', background: 'var(--accent-color)', margin: '8px auto', opacity: 0.3 }} />
-          </div>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', width: '100%' }}>
-            {[
-              { label: 'Weight', unit: 'KG', key: 'weight', def: 80 },
-              { label: 'Height', unit: 'CM', key: 'height', def: 180 },
-              { label: 'Age', unit: '', key: 'age', def: 25 }
-            ].map(field => (
-              <div key={field.key}>
-                 <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '8px', letterSpacing: '1px', color: 'var(--text-secondary)' }}>{field.label.toUpperCase()} {field.unit && `(${field.unit})`}</label>
-                 <input 
-                   type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[field.key] || field.def}
-                   onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [field.key]: Number(e.target.value) } as any })}
-                   style={{ 
-                     width: '100%', background: 'none', borderBottom: '1px solid var(--glass-border)', 
-                     borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-                     borderRadius: '0', padding: '12px 0', color: 'var(--text-primary)', fontSize: '18px', fontWeight: '950', outline: 'none', fontFamily: 'Outfit' 
-                   }}
-                 />
-              </div>
-            ))}
-            <div>
-               <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '8px', letterSpacing: '1px', color: 'var(--text-secondary)' }}>GENDER</label>
-               <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                 {(['male', 'female'] as const).map(g => (
-                    <button 
-                      key={g}
-                      onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })}
-                      style={{
-                        flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '10px', fontWeight: '950', border: 'none', cursor: 'pointer', transition: 'all 0.3s ease',
-                        background: tracker.settings.nutritionProfile?.gender === g ? 'rgba(0, 255, 170, 0.1)' : 'transparent',
-                        border: tracker.settings.nutritionProfile?.gender === g ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
-                        color: tracker.settings.nutritionProfile?.gender === g ? 'var(--accent-color)' : 'var(--text-secondary)',
-                      }}
-                    >
-                      {g.toUpperCase()}
-                    </button>
-                 ))}
-               </div>
-            </div>
-          </div>
-
-          <div style={{ width: '100%', padding: '24px 0', borderTop: '1px solid rgba(0,255,170,0.15)', borderBottom: '1px solid rgba(0,255,170,0.15)' }}>
-            <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '16px', letterSpacing: '1px', textAlign: 'center' }}>FITNESS GOAL</label>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-              {(['lose', 'maintain', 'gain'] as const).map(g => (
-                <button 
-                  key={g}
-                  onClick={() => tracker.setSettings({ 
-                    nutritionProfile: { 
-                      ...tracker.settings.nutritionProfile, 
-                      goal: g,
-                      goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5)
-                    } as any 
-                  })}
-                  style={{
-                    flex: 1, padding: '12px 0', borderRadius: '14px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s ease',
-                    background: tracker.settings.nutritionProfile?.goal === g ? 'rgba(0, 255, 170, 0.1)' : 'transparent',
-                    border: tracker.settings.nutritionProfile?.goal === g ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
-                    color: tracker.settings.nutritionProfile?.goal === g ? 'var(--accent-color)' : 'var(--text-secondary)',
-                  }}
-                >
-                  {g.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {tracker.settings.nutritionProfile?.goal !== 'maintain' && (
-            <div style={{ width: '100%', animation: 'slide-up 0.3s ease' }}>
-              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                <label style={{ fontSize: '11px', fontWeight: '900', opacity: 0.85, display: 'block', marginBottom: '4px', letterSpacing: '1px' }}>
-                  {tracker.settings.nutritionProfile?.goal === 'lose' ? 'WEIGHT LOSS RATE' : 'WEIGHT GAIN RATE'}
-                </label>
-                <div style={{ fontSize: '12px', fontWeight: '950', color: 'var(--accent-color)' }}>
-                  {tracker.settings.nutritionProfile?.goalRate || 0.5} KG / WEEK
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                {([0.25, 0.5, 0.75, 1.0] as const).map(r => (
-                  <button 
-                    key={r}
-                    onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goalRate: r } as any })}
-                    style={{
-                      flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.2s ease',
-                      background: tracker.settings.nutritionProfile?.goalRate === r ? 'rgba(0,255,170,0.08)' : 'transparent',
-                      border: tracker.settings.nutritionProfile?.goalRate === r ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
-                      color: tracker.settings.nutritionProfile?.goalRate === r ? 'var(--accent-color)' : 'var(--text-secondary)',
-                      transform: tracker.settings.nutritionProfile?.goalRate === r ? 'scale(1.05)' : 'scale(1)'
-                    }}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Real-time Calories Display - Ultra Minimal */}
-          <div style={{ 
-            width: '100%', padding: '32px 0', textAlign: 'center',
-            position: 'relative'
-          }}>
-            <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', opacity: 0.8, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '12px' }}>Daily Target</div>
-            <div style={{ fontSize: '48px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit', letterSpacing: '-1px' }}>
-              {(() => {
-                const p = tracker.settings.nutritionProfile;
-                if (!p?.weight || !p?.height || !p?.age) return '0';
-                const bmr = p.gender === 'male' 
-                  ? (10 * p.weight) + (6.25 * p.height) - (5 * p.age) + 5
-                  : (10 * p.weight) + (6.25 * p.height) - (5 * p.age) - 161;
-                const tdee = Math.round(bmr * 1.375);
-                const rate = p.goalRate || 0.5;
-                const deficit = rate * 1100; // ~7700 kcal per kg / 7 days
-                const target = p.goal === 'lose' ? tdee - deficit : p.goal === 'gain' ? tdee + deficit : tdee;
-                return Math.round(target);
-              })()}
-              <span style={{ fontSize: '14px', opacity: 0.85, marginLeft: '8px', fontWeight: '800' }}>KCAL</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Theme Frame */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.85, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'Outfit, sans-serif' }}>{t('themeMode')}</span>
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px', 
-            padding: '4px 0', 
-            width: '240px',
-            justifyContent: 'center'
-          }}>
-            {(['dark', 'light'] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => tracker.setSettings({ themeMode: mode })}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s ease',
-                  background: tracker.settings.themeMode === mode ? 'rgba(0,255,170,0.08)' : 'transparent',
-                  border: tracker.settings.themeMode === mode ? '1px solid var(--accent-color)' : '1px solid var(--glass-border)',
-                  color: tracker.settings.themeMode === mode ? 'var(--accent-color)' : 'var(--text-secondary)',
-                  letterSpacing: '1px', fontFamily: 'Outfit, sans-serif'
-                }}
-              >
-                {t(mode as any)}
-              </button>
-            ))}
+          <div style={inputRowStyle} className="elite-input-wrapper">
+            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px' }}>{t('password').toUpperCase()}</div>
+            <input
+              type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+              value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })}
+            />
           </div>
         </div>
       </div>
 
-
-
-      {/* Group 3: Visuals (Bottom) */}
-      <div style={{ marginTop: '20px', padding: '24px 0', width: '100%' }}>
-        <div style={{ 
-          fontSize: '11px', 
-          fontWeight: '900', 
-          color: 'var(--text-secondary)', 
-          opacity: 0.7,
-          marginBottom: '24px', 
-          letterSpacing: '3px', 
-          fontFamily: 'Outfit, sans-serif',
-          textTransform: 'uppercase',
-          textAlign: 'center'
-        }}>Appearance</div>
-        <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {THEME_COLORS.map(theme => (
-            <button
-              key={theme.name}
-              onClick={() => tracker.setSettings({ accentColor: theme.hex })}
-              style={{
-                width: '36px', height: '36px',
-                borderRadius: '50%',
-                background: theme.hex,
-                border: tracker.settings.accentColor === theme.hex ? '3px solid var(--text-primary)' : '3px solid transparent',
-                cursor: 'pointer',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: tracker.settings.accentColor === theme.hex ? `0 0 20px ${theme.hex}` : 'none',
-                transform: tracker.settings.accentColor === theme.hex ? 'scale(1.2)' : 'scale(1)'
-              }}
-            />
+      {/* SECTION 2: BODY METRICS */}
+      <div style={cardStyle}>
+        <div style={labelStyle}>
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+          <span>Body Composition</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+          {[
+            { label: 'Weight', key: 'weight', unit: 'kg' },
+            { label: 'Height', key: 'height', unit: 'cm' },
+            { label: 'Age', key: 'age', unit: '' }
+          ].map(f => (
+            <div key={f.key} style={{ ...inputRowStyle, padding: '10px 12px' }} className="elite-input-wrapper">
+              <div style={{ fontSize: '8px', fontWeight: '900', opacity: 0.4 }}>{f.label.toUpperCase()}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+                <input 
+                  type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[f.key] || 0}
+                  onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [f.key]: Number(e.target.value) } as any })}
+                  style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+                />
+                <span style={{ fontSize: '8px', fontWeight: '900', opacity: 0.3 }}>{f.unit}</span>
+              </div>
+            </div>
           ))}
         </div>
+
+        <div style={{ marginTop: '4px' }}>
+          <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px', marginBottom: '8px', paddingLeft: '8px' }}>BIOLOGICAL GENDER</div>
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            {(['male', 'female'] as const).map(g => (
+              <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })} style={{
+                flex: 1, padding: '10px 0', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '900', cursor: 'pointer',
+                background: tracker.settings.nutritionProfile?.gender === g ? '#ff3d00' : 'transparent',
+                color: tracker.settings.nutritionProfile?.gender === g ? '#000' : 'rgba(255,255,255,0.4)',
+                transition: 'all 0.3s ease'
+              }}>{g.toUpperCase()}</button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Bottom Spacer */}
-      <div style={{ height: '20px', width: '100%', flexShrink: 0 }} />
+      {/* SECTION 3: FITNESS GOAL */}
+      <div style={cardStyle}>
+        <div style={labelStyle}>
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+          <span>Fitness Strategy</span>
+        </div>
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          {(['lose', 'maintain', 'gain'] as const).map(g => (
+            <button key={g} onClick={() => tracker.setSettings({ 
+              nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any 
+            })} style={{
+              flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '900', cursor: 'pointer',
+              background: tracker.settings.nutritionProfile?.goal === g ? '#ff3d00' : 'transparent',
+              color: tracker.settings.nutritionProfile?.goal === g ? '#000' : 'rgba(255,255,255,0.4)',
+              transition: 'all 0.3s ease'
+            }}>{g.toUpperCase()}</button>
+          ))}
+        </div>
+
+        {/* CALORIE TARGET DISPLAY */}
+        <div style={{ 
+          marginTop: '8px', padding: '24px', background: 'transparent', 
+          borderBottom: '2px solid #ff3d00',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          boxShadow: '0 10px 20px -10px rgba(255, 61, 0, 0.2)'
+        }}>
+          <div style={{ fontSize: '9px', fontWeight: '900', color: '#ff3d00', letterSpacing: '3px', marginBottom: '4px', opacity: 0.6 }}>DAILY TARGET</div>
+          <div style={{ fontSize: '48px', fontWeight: '900', color: '#fff', fontFamily: 'Outfit', letterSpacing: '-2px' }}>
+            {(() => {
+              const p = tracker.settings.nutritionProfile;
+              if (!p?.weight || !p?.height || !p?.age) return '0';
+              const bmr = p.gender === 'male' ? (10 * p.weight) + (6.25 * p.height) - (5 * p.age) + 5 : (10 * p.weight) + (6.25 * p.height) - (5 * p.age) - 161;
+              const tdee = Math.round(bmr * 1.375);
+              const deficit = (p.goalRate || 0.5) * 1100;
+              const target = p.goal === 'lose' ? tdee - deficit : p.goal === 'gain' ? tdee + deficit : tdee;
+              return Math.round(target);
+            })()}
+            <span style={{ fontSize: '14px', fontWeight: '800', opacity: 0.3, marginLeft: '6px', letterSpacing: '1px' }}>KCAL</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ ...cardStyle, gap: '15px' }}>
+         <div style={labelStyle}>
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <span>Appearance</span>
+          </div>
+         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '4px', width: '100%', border: '1px solid rgba(255,255,255,0.05)' }}>
+            {(['dark', 'light'] as const).map(mode => (
+              <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{
+                flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '900', cursor: 'pointer',
+                background: tracker.settings.themeMode === mode ? '#ff3d00' : 'transparent', 
+                color: tracker.settings.themeMode === mode ? '#000' : 'rgba(255,255,255,0.4)',
+                transition: 'all 0.3s ease'
+              }}>{mode.toUpperCase()}</button>
+            ))}
+         </div>
+
+         <div style={{ marginTop: '12px' }}>
+            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px', marginBottom: '8px', paddingLeft: '8px' }}>WEIGHT UNIT</div>
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '4px', width: '100%', border: '1px solid rgba(255,255,255,0.05)' }}>
+              {(['kg', 'lbs', 'balata'] as const).map(u => (
+                <button key={u} onClick={() => tracker.setSettings({ weightUnit: u })} style={{
+                  flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '900', cursor: 'pointer',
+                  background: tracker.settings.weightUnit === u ? '#ff3d00' : 'transparent', 
+                  color: tracker.settings.weightUnit === u ? '#000' : 'rgba(255,255,255,0.4)',
+                  transition: 'all 0.3s ease'
+                }}>{t(u as any).toUpperCase()}</button>
+              ))}
+            </div>
+         </div>
+         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
+            {THEME_COLORS.map(theme => (
+              <button key={theme.name} onClick={() => tracker.setSettings({ accentColor: theme.hex, accentSecondary: theme.secondary })} style={{
+                width: '32px', height: '32px', borderRadius: '50%', background: theme.name === 'Fusion' ? `linear-gradient(135deg, ${theme.hex}, ${theme.secondary})` : theme.hex, cursor: 'pointer',
+                border: tracker.settings.accentColor === theme.hex ? '2.5px solid #fff' : '2.5px solid transparent', transition: 'all 0.3s ease',
+                boxShadow: tracker.settings.accentColor === theme.hex ? `0 0 15px ${theme.hex}66` : 'none'
+              }} />
+            ))}
+         </div>
+
+         <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+            <button 
+              onClick={() => {
+                console.log('Reset Clicked');
+                setShowResetConfirm(true);
+              }}
+              style={{
+                background: 'rgba(255, 0, 0, 0.05)', border: '1.5px solid #ff0000', color: '#ff0000',
+                padding: '8px 20px', borderRadius: '12px', fontSize: '10px', fontWeight: '950',
+                textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer',
+                boxShadow: '0 0 15px rgba(255, 0, 0, 0.1)', transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#ff0000'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 0, 0, 0.05)'; e.currentTarget.style.color = '#ff0000'; }}
+            >
+              {lang === 'ar' ? 'تصفير المصنع' : 'FACTORY RESET'}
+            </button>
+         </div>
+      </div>
 
       <style>{`
-        .name-box-elite:focus-within {
+        .elite-input-wrapper:focus-within {
           border-color: var(--accent-color) !important;
-          box-shadow: 0 0 15px rgba(0,229,160,0.1), inset 0 0 10px rgba(0,0,0,0.2) !important;
-          transform: translateY(-1px);
+          background: rgba(var(--theme-rgb), 0.06) !important;
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }

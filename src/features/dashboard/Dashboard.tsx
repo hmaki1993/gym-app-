@@ -1,14 +1,24 @@
 import React, { useRef } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
-import { MUSCLE_GROUPS } from '../../data/exercises';
-import { Flame, Activity, Award, History } from 'lucide-react';
+import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
+import { Flame, Activity, Award, History as HistoryIcon, ChevronRight, Calendar, Clock } from 'lucide-react'; 
 import gsap from 'gsap';
+import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
   onStartWorkout: () => void;
   onTabSwitch: (tab: 'home' | 'history' | 'progress' | 'settings') => void;
+}
+
+function formatTime(timeStr: string, lang: 'ar' | 'en') {
+  if (!timeStr) return '';
+  const [hours, minutes] = timeStr.split(':');
+  const h = parseInt(hours);
+  const ampm = h >= 12 ? (lang === 'ar' ? 'م' : 'pm') : (lang === 'ar' ? 'ص' : 'am');
+  const displayH = h % 12 || 12;
+  return `${displayH}:${minutes} ${ampm}`;
 }
 
 function formatDate(iso: string, lang: 'ar' | 'en') {
@@ -18,27 +28,39 @@ function formatDate(iso: string, lang: 'ar' | 'en') {
 export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
-  const unit = tracker.settings.weightUnit;
   const containerRef = useRef<HTMLDivElement>(null);
-
   const weeklyCount = tracker.getWeeklyCount();
   const recentLog = tracker.logs[0];
-  const totalVolume = recentLog ? tracker.getTotalVolume(recentLog) : 0;
 
+  const { totalVolume, unit } = React.useMemo(() => {
+    if (!recentLog) return { totalVolume: 0, unit: '' };
+    const vol = recentLog.exercises.reduce((acc, ex) => 
+      acc + ex.sets.reduce((setAcc, set) => setAcc + (Number(set.weight || 0) * Number(set.reps || 0)), 0), 0
+    );
+    return { totalVolume: vol, unit: tracker.settings.weightUnit || 'kg' };
+  }, [recentLog, tracker.settings.weightUnit]);
 
-  // Entrance animation removed to prevent 'refresh' feeling on tab switch
-  /*
-  useEffect(() => {
-    if (containerRef.current) {
-      gsap.fromTo(containerRef.current.children,
-        { opacity: 0, y: 20, rotateX: 10, translateZ: -50 },
-        { opacity: 1, y: 0, rotateX: 0, translateZ: 0, stagger: 0.1, duration: 0.8, ease: 'power4.out' }
-      );
-    }
-  }, []);
-  */
+  const recentDisplayTitle = React.useMemo(() => {
+    if (!recentLog) return '';
+    const exerciseToMuscle: Record<string, string> = {};
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+    });
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const involvedGroups = new Set<string>();
+    recentLog.exercises.forEach(ex => {
+      const group = exerciseToMuscle[ex.name];
+      if (group) involvedGroups.add(group);
+      else involvedGroups.add(recentLog.muscleGroup);
+    });
+
+    return Array.from(involvedGroups).sort().map(g => {
+      const mg = MUSCLE_GROUPS.find(m => m.key === g);
+      return mg?.[lang] ?? g;
+    }).join(' & ');
+  }, [recentLog, lang]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const btn = e.currentTarget;
     const rect = btn.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
@@ -46,13 +68,13 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
     gsap.to(btn, {
       rotateY: x * 15,
       rotateX: -y * 15,
-      translateZ: 20,
+      translateZ: 30,
       duration: 0.5,
       ease: 'power2.out'
     });
   };
 
-  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     gsap.to(e.currentTarget, {
       rotateY: 0,
       rotateX: 0,
@@ -62,181 +84,194 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
     });
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const hasWorkoutToday = tracker.logs.some(log => log.date.startsWith(todayStr));
+  const todayStr = (() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  })();
+  
+  const hasWorkoutToday = tracker.logs.some(log => {
+    // Check both ISO format (UTC) and local date format
+    const logDate = new Date(log.date);
+    const logLocalDate = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
+    return logLocalDate === todayStr || log.date.startsWith(todayStr);
+  });
   
   const workoutWords = (hasWorkoutToday 
     ? (lang === 'ar' ? 'تكملة التمرين' : 'RESUME WORKOUT') 
-    : t('startWorkout').toUpperCase()
+    : (lang === 'ar' ? 'بدء التمرين' : 'START WORKOUT')
   ).split(' ');
 
   return (
-    <div ref={containerRef} className="hide-scrollbar" style={{
+    <div ref={containerRef} style={{
       display: 'flex', flexDirection: 'column',
       width: '100%',
       flex: 1,
-      padding: '20px 16px 100px',
+      padding: '0 16px 20px', 
       transformStyle: 'preserve-3d',
-      justifyContent: 'space-between'
+      justifyContent: 'space-between', 
+      height: '100%',
+      overflow: 'hidden'
     }}>
 
-      {/* 1. TOP: Stats */}
-      <div style={{ transformStyle: 'preserve-3d' }}>
-        <div style={{ 
-          padding: '10px 0',
-          marginBottom: '10px',
-          transformStyle: 'preserve-3d'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0' }}>
-            {[
-              { label: t('thisWeek'), val: weeklyCount, target: 'history' as const, icon: <Activity size={24} />, color: '#4da6ff' },
-              { label: 'PRs', val: tracker.prs.length, target: 'progress' as const, icon: <Award size={24} />, color: '#ffcc00' },
-              { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <History size={24} />, color: '#ff4d4d' }
-            ].map((s, i) => (
-              <button 
-                key={i}
-                onClick={() => onTabSwitch(s.target)}
-                onMouseDown={(e) => gsap.to(e.currentTarget, { y: 2, scale: 0.98, duration: 0.1 })}
-                onMouseUp={(e) => gsap.to(e.currentTarget, { y: 0, scale: 1, duration: 0.4, ease: 'back.out(2)' })}
-                onMouseLeave={(e) => gsap.to(e.currentTarget, { y: 0, scale: 1, duration: 0.4 })}
-                role="button"
-                style={{ 
-                  textAlign: 'center', 
-                  cursor: 'pointer', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  gap: '6px',
-                  flex: 1,
-                  padding: '20px 0',
-                  background: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  position: 'relative',
-                  transformStyle: 'preserve-3d',
-                  touchAction: 'manipulation'
-                }}
-              >
-                {/* Background Glow Halo */}
-                <div style={{ 
-                  position: 'absolute', 
-                  width: '60px', 
-                  height: '60px', 
-                  background: `radial-gradient(circle, ${s.color}15 0%, transparent 70%)`,
-                  borderRadius: '50%',
-                  top: '15%',
-                  pointerEvents: 'none'
-                }} />
+      {/* 1. TOP: Stats (Enlarged and Lowered) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '5px', marginTop: '45px' }}>
+        {[
+          { label: t('thisWeek'), val: weeklyCount, target: 'history' as const, icon: <Activity size={32} />, color: '#4da6ff' },
+          { label: 'PRs', val: tracker.prs.length, target: 'progress' as const, icon: <Award size={32} />, color: '#ffcc00' },
+          { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <HistoryIcon size={32} />, color: '#ff4d4d' }
+        ].map((s, i) => (
+          <div key={i} onClick={() => onTabSwitch(s.target)} style={{ textAlign: 'center', cursor: 'pointer', flex: 1, padding: '10px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ color: s.color, marginBottom: '8px', opacity: 0.8 }}>{s.icon}</div>
+            <div style={{ fontSize: '48px', fontWeight: '950', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit', letterSpacing: '-1.5px' }}>{s.val}</div>
+            <div style={{ fontSize: '11px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '6px' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
 
-                <div style={{ color: s.color, filter: `drop-shadow(0 0 10px ${s.color}60)`, marginBottom: '4px' }}>{s.icon}</div>
-                <div style={{ fontSize: '32px', fontWeight: '950', color: 'var(--text-primary)', lineHeight: '1', fontFamily: 'Outfit, sans-serif', letterSpacing: '-1.5px' }}>{s.val}</div>
-                <div style={{ fontSize: '11px', color: 'rgba(var(--theme-rgb), 0.6)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{s.label}</div>
-                
-                {/* Bottom Neon Indicator */}
-                <div style={{ 
-                  width: '20px', 
-                  height: '2px', 
-                  background: s.color, 
-                  marginTop: '12px', 
-                  borderRadius: '2px', 
-                  boxShadow: `0 0 10px ${s.color}80`,
-                  opacity: 0.4
-                }} />
-              </button>
+      {/* 2. MIDDLE: Elite CTA */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: '1200px', flex: 1 }}>
+        <div
+          onClick={onStartWorkout}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className="pulse-text-elite"
+          style={{
+            cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', transformStyle: 'preserve-3d', textAlign: 'center',
+            padding: '20px', width: '100%', maxWidth: '260px'
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'translateZ(50px)' }}>
+            {workoutWords.map((word, i) => (
+              <div key={i} className="premium-title" style={{ 
+                fontSize: 'min(12vw, 48px)', 
+                lineHeight: '0.85',
+                marginBottom: '5px',
+                textAlign: 'center'
+              }}>
+                {word}
+              </div>
             ))}
+          </div>
+          <div style={{ 
+            marginTop: '12px',
+            fontSize: '9px', 
+            fontWeight: '900', 
+            color: 'var(--accent-color)', 
+            letterSpacing: '5px',
+            textTransform: 'uppercase',
+            opacity: 0.8,
+            transform: 'translateZ(25px)'
+          }}>
+            {lang === 'ar' ? 'اضغط للبدء' : 'TAP TO BEGIN'}
           </div>
         </div>
       </div>
 
-
-      {/* 2. MIDDLE: Start Workout CTA */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', perspective: '1000px' }}>
-        <button
-          onClick={onStartWorkout}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          className="pulse-elite antigravity-card"
-          role="button"
-          style={{
-            background: 'none', border: 'none',
-            color: 'var(--text-primary)', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', gap: '24px',
-            width: '100%',
-            fontFamily: 'Outfit, sans-serif',
-            transformStyle: 'preserve-3d',
-            touchAction: 'manipulation'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', transformStyle: 'preserve-3d' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'translateZ(40px)' }}>
-              {workoutWords.map((word: string, i: number) => (
-                <div key={i} className="premium-title" style={{ 
-                  fontSize: '48px', 
-                  lineHeight: '0.9',
-                  marginBottom: '4px'
-                }}>
-                  {word}
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <span style={{ 
-            fontSize: '12px', 
-            fontWeight: '950', 
-            color: 'var(--accent-color)', 
-            letterSpacing: '5px', 
-            opacity: 0.8,
-            textTransform: 'uppercase',
-            fontFamily: 'Outfit, sans-serif',
-            transform: 'translateZ(20px)'
-          }}>TAP TO BEGIN</span>
-        </button>
-      </div>
-
-      {/* 3. BOTTOM: Last Session */}
-      <div style={{ transformStyle: 'preserve-3d' }}>
+      {/* 3. BOTTOM: Detailed Last Session */}
+      <div style={{ transformStyle: 'preserve-3d', marginBottom: '30px' }}>
         {recentLog ? (
           <div 
             onClick={() => onTabSwitch('history')}
-            className="antigravity-card" 
             role="button"
-            style={{ 
-              borderTop: '1px solid rgba(var(--theme-rgb), 0.05)', 
-              paddingTop: '20px',
-              cursor: 'pointer',
-              touchAction: 'manipulation'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', opacity: 0.7 }}>
-              <Flame size={12} color="var(--accent-color)" />
-              <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession')}</span>
+          style={{ 
+            padding: '24px 16px 24px 32px', 
+            cursor: 'pointer',
+            background: tracker.settings.themeMode === 'dark' ? '#0d0d0d' : '#f8f9fa',
+            border: 'none',
+            borderTop: tracker.settings.themeMode === 'dark' 
+              ? '1px solid rgba(255,255,255,0.05)' 
+              : '1px solid rgba(0,0,0,0.05)',
+            margin: '0 -16px',
+            width: 'calc(100% + 32px)',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <div style={{ 
+            position: 'absolute', 
+            left: '16px', 
+            top: '15%', 
+            bottom: '15%', 
+            width: '4px', 
+            background: 'var(--accent-secondary)', 
+            borderRadius: '2px',
+            boxShadow: '0 0 15px rgba(255, 94, 0, 0.6), 0 0 30px rgba(255, 94, 0, 0.3)',
+            zIndex: 10
+          }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Flame size={12} color="var(--accent-secondary)" fill="var(--accent-secondary)" />
+              <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession')}</span>
             </div>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>
-                  {MUSCLE_GROUPS.find(m => m.key === recentLog.muscleGroup)?.[lang] ?? recentLog.muscleGroup}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {(() => {
+                    const exerciseToMuscle: Record<string, string> = {};
+                    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+                      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+                    });
+                    const involvedGroups = new Set<string>();
+                    recentLog.exercises.forEach(ex => {
+                      const group = exerciseToMuscle[ex.name];
+                      if (group) involvedGroups.add(group);
+                      else involvedGroups.add(recentLog.muscleGroup);
+                    });
+                    return Array.from(involvedGroups).sort().map(g => {
+                      const mg = MUSCLE_GROUPS.find(m => m.key === g);
+                      return mg?.icon ? (
+                        <TransparentImage 
+                          key={g} src={mg.icon} alt="" width={40} height={40} threshold={45}
+                          style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.2)' : 'grayscale(1) brightness(0.8)' }}
+                        />
+                      ) : <span key={g} style={{ fontSize: '20px' }}>💪</span>;
+                    });
+                  })()}
                 </div>
-                <div style={{ width: '1px', height: '15px', background: 'rgba(var(--theme-rgb), 0.08)' }} />
-                <div style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: '800', fontFamily: 'Outfit, sans-serif' }}>
-                  <span style={{ color: 'var(--accent-color)' }}>{totalVolume.toFixed(0)}</span> {unit}
+                <div>
+                  <div style={{ 
+                    fontSize: '19px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', 
+                    letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif', lineHeight: 1.1 
+                  }}>
+                    {recentDisplayTitle}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '9px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)', fontWeight: '900' }}>
+                      <Calendar size={10} color="var(--accent-color)" />
+                      <span>{formatDate(recentLog.date, lang)}</span>
+                    </div>
+                    {recentLog.startTime && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '9px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)', fontWeight: '900' }}>
+                        <Clock size={10} color="var(--accent-color)" />
+                        <span>{formatTime(recentLog.startTime, lang)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>
-                {formatDate(recentLog.date, lang)}
+              
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '14px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit, sans-serif' }}>
+                  {totalVolume.toFixed(0)} <span style={{ fontSize: '9px', opacity: 0.6 }}> {t(unit as any)}</span>
+                </div>
+                <div style={{ fontSize: '8px', color: 'var(--text-secondary)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  {recentLog.exercises.length} EX
+                </div>
               </div>
+              <ChevronRight size={20} color="var(--accent-color)" strokeWidth={3} />
             </div>
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '20px', opacity: 0.2 }}>
-            <div style={{ fontSize: '9px', fontWeight: '950', letterSpacing: '3px', fontFamily: 'Outfit, sans-serif' }}>NO RECENT MISSIONS</div>
+          <div style={{ textAlign: 'center', padding: '15px', opacity: 0.2 }}>
+            <div style={{ fontSize: '8px', fontWeight: '950', letterSpacing: '2px', color: 'var(--text-secondary)' }}>NO RECENT SESSIONS</div>
           </div>
         )}
       </div>
-
     </div>
   );
 }

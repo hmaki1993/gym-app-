@@ -33,14 +33,14 @@ export const SetRow: React.FC<Props> = ({
   return (
     <div style={{
       display: 'flex', alignItems: 'center', padding: '12px 0',
-      borderBottom: '1px solid var(--glass-border)',
+      borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)',
       gap: '8px',
       transformStyle: 'preserve-3d'
     }}>
       <div style={{ width: '24px', fontSize: '14px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8, fontFamily: 'Outfit, sans-serif' }}>
         {index + 1}
       </div>
-      <div style={{ width: '1px', height: '20px', background: 'var(--glass-border)', marginRight: '12px' }} />
+      <div style={{ width: '1.5px', height: '20px', background: 'rgba(var(--theme-rgb), 0.15)', marginRight: '12px' }} />
       
       {/* Weight Input */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -51,7 +51,7 @@ export const SetRow: React.FC<Props> = ({
           onChange={(e) => onUpdate('weight', e.target.value)}
           style={{
             background: 'var(--glass-bg)',
-            border: '1.5px solid var(--glass-border)',
+            border: '1.5px solid rgba(var(--theme-rgb), 0.3)',
             outline: 'none',
             color: 'var(--text-primary)',
             fontSize: '24px',
@@ -92,7 +92,7 @@ export const SetRow: React.FC<Props> = ({
         </div>
       </div>
 
-      <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />
+      <div style={{ width: '1.5px', height: '24px', background: 'rgba(var(--theme-rgb), 0.15)' }} />
       
       {/* Reps Input */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -103,7 +103,7 @@ export const SetRow: React.FC<Props> = ({
           onChange={(e) => onUpdate('reps', e.target.value)}
           style={{
             background: 'var(--glass-bg)',
-            border: '1.5px solid var(--glass-border)',
+            border: '1.5px solid rgba(var(--theme-rgb), 0.3)',
             outline: 'none',
             color: 'var(--text-primary)',
             fontSize: '24px',

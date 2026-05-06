@@ -5,7 +5,7 @@ import { DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
 import { ExerciseCard } from './ExerciseCard';
 import {
-  Clock, Activity, X, ArrowLeft
+  Clock, Play, X, ArrowLeft
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -32,6 +32,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [hasStartedSession, setHasStartedSession] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
@@ -39,18 +40,27 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const sessionStartTimeRef = useRef<number>(Date.now());
   const baseSecondsRef = useRef<number>(0);
+  const savedElapsedRef = useRef<number | null>(null); // Saves elapsed when going back to exercises
 
-  // Initialize base time from logged exercises today for this muscle group
+  // Initialize base time — only on FIRST entry to logging, not on resume
   useEffect(() => {
     if (phase === 'logging' && selectedMuscle) {
-      const today = new Date().toISOString().split('T')[0];
-      const todayMuscleLogs = tracker.logs.filter(l => l.date.startsWith(today) && l.muscleGroup === selectedMuscle);
-      const totalSeconds = todayMuscleLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
-      
-      baseSecondsRef.current = totalSeconds;
-      sessionStartTimeRef.current = Date.now();
+      setHasStartedSession(true); // Mark session as started
+      if (savedElapsedRef.current !== null) {
+        // Resuming from exercises page: restore saved elapsed
+        baseSecondsRef.current = savedElapsedRef.current;
+        sessionStartTimeRef.current = Date.now();
+        savedElapsedRef.current = null;
+      } else {
+        // First time entering logging: calculate from saved logs
+        const today = new Date().toISOString().split('T')[0];
+        const todayMuscleLogs = tracker.logs.filter(l => l.date.startsWith(today) && l.muscleGroup === selectedMuscle);
+        const totalSeconds = todayMuscleLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
+        baseSecondsRef.current = totalSeconds;
+        sessionStartTimeRef.current = Date.now();
+      }
     }
-  }, [phase, selectedMuscle, tracker.logs]);
+  }, [phase, selectedMuscle]);
 
   useEffect(() => {
     if (phase === 'logging') {
@@ -77,28 +87,28 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     return parts.join(':');
   };
 
-  // Auto-load today's exercises for the selected muscle
+  // Auto-load today's workout session on mount (resume)
   useEffect(() => {
-    if (selectedMuscle && activeExercises.length === 0) {
-      const today = new Date().toISOString().split('T')[0];
-      const todayLog = tracker.logs.find(l => 
-        l.date.startsWith(today) && 
-        l.muscleGroup === selectedMuscle
-      );
-      
-      if (todayLog) {
-        setActiveExercises(todayLog.exercises.map(e => e.name));
-        const initialLogged: Record<string, SetLog[]> = {};
-        todayLog.exercises.forEach(e => {
-          initialLogged[e.name] = e.sets;
-        });
-        setLoggedData(initialLogged);
-        
-        // Auto-resume phase
-        setPhase('logging');
+    const today = new Date().toISOString().split('T')[0];
+    const todayLog = tracker.logs.find(l => l.date.startsWith(today));
+    
+    if (todayLog && activeExercises.length === 0) {
+      // Restore the muscle group from today's session
+      if (todayLog.muscleGroup) {
+        setSelectedMuscle(todayLog.muscleGroup as MuscleGroup);
       }
+      // Restore exercises and logged sets
+      setActiveExercises(todayLog.exercises.map(e => e.name));
+      const initialLogged: Record<string, SetLog[]> = {};
+      todayLog.exercises.forEach(e => {
+        initialLogged[e.name] = e.sets;
+      });
+      setLoggedData(initialLogged);
+      setHasStartedSession(true);
+      setPhase('logging');
     }
-  }, [selectedMuscle, tracker.logs]);
+  }, []); // Only on mount
+
 
   useEffect(() => {
     if (containerRef.current && containerRef.current.children.length > 0) {
@@ -178,13 +188,26 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   const handleSave = () => {
     if (!selectedMuscle) return;
+
+    // Merge loggedData with any draftData (sets entered but Done not pressed)
+    const mergedData: Record<string, SetLog[]> = { ...loggedData };
+    Object.entries(draftData).forEach(([name, sets]) => {
+      const validSets = (sets as SetLog[]).filter(s => s.reps > 0);
+      if (validSets.length > 0) {
+        if (!mergedData[name] || mergedData[name].length === 0) {
+          mergedData[name] = validSets;
+        }
+      }
+    });
+
     const exercises: ExerciseLog[] = activeExercises
-      .filter(name => loggedData[name] && loggedData[name].length > 0)
+      .filter(name => mergedData[name] && mergedData[name].length > 0)
       .map(name => ({
         name,
-        sets: loggedData[name],
+        sets: mergedData[name],
         restSeconds: tracker.settings.defaultRestSeconds,
       }));
+
     if (exercises.length === 0) { onClose(); return; }
 
     const log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'> = {
@@ -192,8 +215,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       muscleGroup: selectedMuscle,
       exercises,
     };
-    tracker.saveWorkout(log);
-    setDirtyExercises({}); // Clear all dirty flags
+    // Pass the component's elapsedSeconds so saved duration matches the timer UI
+    tracker.saveWorkout(log, elapsedSeconds);
+    setDirtyExercises({});
     onSaved();
   };
 
@@ -281,7 +305,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
     const diff = e.clientX - touchState.current.startX;
     const xPercent = (diff / e.currentTarget.clientWidth) * 100;
-    gsap.set(swipeContainerRef.current, { xPercent, opacity: 1 - Math.abs(xPercent / 150) });
+    gsap.set(swipeContainerRef.current, { 
+      xPercent, 
+      opacity: 1 - Math.abs(xPercent / 150),
+      scale: 1 - Math.abs(xPercent / 1000) 
+    });
   };
 
   const handleOverlayPointerEnd = (e: React.PointerEvent) => {
@@ -297,20 +325,20 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       if (xPercent > 15) {
         if (currentIdx > 0) handleSwipeTransition('right', activeExercises[currentIdx - 1]);
         else {
-          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.25, ease: 'power4.out', onComplete: () => { touchState.current.isAnimating = false; } });
+          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, scale: 1, duration: 0.25, ease: 'power4.out', onComplete: () => { touchState.current.isAnimating = false; } });
         }
       } else {
         if (currentIdx < activeExercises.length - 1) handleSwipeTransition('left', activeExercises[currentIdx + 1]);
         else handleSwipeTransition('left', activeExercises[0]); // Loop back to first
       }
     } else {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.2, ease: 'power4.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, scale: 1, duration: 0.2, ease: 'power4.out' });
     }
   };
 
   const handleOverlayPointerCancel = () => {
     if (swipeContainerRef.current) {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.4, ease: 'power2.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'power2.out' });
       touchState.current.isAnimating = false;
     }
   };
@@ -328,14 +356,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     gsap.to(swipeContainerRef.current, {
       xPercent: xDist,
       opacity: 0,
-      duration: 0.12,
-      ease: 'power4.in',
+      scale: 0.9,
+      duration: 0.25,
+      ease: 'power2.inOut',
       onComplete: () => {
         setOpenExercise(nextEx);
-        // Animate back in from the opposite side
+        // Animate back in from the opposite side with scale
         gsap.fromTo(swipeContainerRef.current,
-          { xPercent: direction === 'left' ? 100 : -100, opacity: 0 },
-          { xPercent: 0, opacity: 1, duration: 0.18, ease: 'power4.out', onComplete: () => { touchState.current.isAnimating = false; } }
+          { xPercent: direction === 'left' ? 100 : -100, opacity: 0, scale: 0.9 },
+          { xPercent: 0, opacity: 1, scale: 1, duration: 0.35, ease: 'power3.out', onComplete: () => { touchState.current.isAnimating = false; } }
         );
       }
     });
@@ -371,19 +400,21 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         }}>
           <div style={{
             position: 'absolute', top: 0, bottom: 0,
-            width: '100%', maxWidth: '480px', background: '#000',
+            width: '100%', maxWidth: '480px', 
+            background: 'var(--primary-bg)', // Removed black background
             overflow: 'hidden',
             display: 'flex', flexDirection: 'column',
             touchAction: 'none',
             overscrollBehavior: 'none',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            boxShadow: '0 0 50px rgba(0,0,0,0.5)'
           }}>
             {/* Dots */}
-            <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: 'var(--primary-bg)' }}>
+            <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: 'transparent' }}>
               {activeExercises.map((name, i) => (
                 <div key={i} style={{
                   width: name === openExercise ? '20px' : '6px', height: '6px', borderRadius: '3px',
-                  background: name === openExercise ? 'var(--accent-color)' : 'var(--glass-border)',
+                  background: name === openExercise ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.1)',
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                 }} />
               ))}
@@ -510,7 +541,13 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
           {phase === 'logging' && (
             <button 
-              onClick={() => setPhase('exercises')} 
+              onClick={() => {
+                // Save current elapsed before going back to exercises
+                const now = Date.now();
+                const currentSessionSeconds = Math.floor((now - sessionStartTimeRef.current) / 1000);
+                savedElapsedRef.current = baseSecondsRef.current + currentSessionSeconds;
+                setPhase('exercises');
+              }} 
               style={{ 
                 width: '32px', height: '32px', borderRadius: '50%',
                 background: 'none', border: 'none',
@@ -531,10 +568,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               width: '32px', height: '32px', borderRadius: '50%', 
               background: 'none', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#ff3366', cursor: 'pointer', flexShrink: 0,
+              color: '#ff0000', cursor: 'pointer', flexShrink: 0,
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 51, 102, 0.1)'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 0, 0, 0.1)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
           >
             <X size={20} strokeWidth={3} />
@@ -549,6 +586,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               selectedMuscle={selectedMuscle} 
               onSelect={setSelectedMuscle} 
               lang={lang} 
+              themeMode={tracker.settings.themeMode}
             />
             <ExercisePicker
               search={search}
@@ -574,7 +612,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 onClick={() => setPhase('logging')} 
                 disabled={activeExercises.length === 0} 
                 style={{ 
-                  background: 'transparent',
+                  background: hasStartedSession ? 'rgba(var(--accent-rgb), 0.1)' : 'transparent',
                   border: '1px solid var(--accent-color)',
                   color: 'var(--accent-color)',
                   padding: '12px 30px',
@@ -592,7 +630,13 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   touchAction: 'manipulation'
                 }}
               >
-                <Activity size={16} strokeWidth={3} /> {Object.keys(loggedData).length > 0 ? (lang === 'ar' ? 'استكمال التمرين' : 'RESUME WORKOUT') : t('startWorkout').toUpperCase()}
+                <Play size={16} strokeWidth={3} fill="currentColor" />
+                {hasStartedSession 
+                  ? (lang === 'ar' ? 'استكمال التمرين' : 'RESUME SESSION')
+                  : (Object.keys(loggedData).length > 0 
+                    ? (lang === 'ar' ? 'استكمال التمرين' : 'RESUME WORKOUT') 
+                    : t('startWorkout').toUpperCase())
+                }
               </button>
             </div>
           </>

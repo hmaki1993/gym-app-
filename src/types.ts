@@ -59,9 +59,12 @@ export interface ThemeColor {
 
 export interface GymSettings {
   userName: string;
+  userEmail?: string;
+  userPassword?: string;
   weightUnit: WeightUnit;
   language: Language;
   accentColor: string;
+  accentSecondary?: string;
   themeMode: 'dark' | 'light';
   defaultRestSeconds: number;
   soundEnabled: boolean;

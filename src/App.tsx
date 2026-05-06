@@ -12,6 +12,11 @@ import { NutritionPage } from './features/nutrition/NutritionPage';
 import { TrendingUp, History, Settings, Home, Utensils } from 'lucide-react';
 import gsap from 'gsap';
 import './index.css';
+import { preWarmImages } from './features/workout/components/TransparentImage';
+import { MUSCLE_GROUPS } from './data/exercises';
+
+// Pre-process muscle icons immediately on app load (runs once, cached forever)
+preWarmImages(MUSCLE_GROUPS.map(mg => mg.icon), 45);
 
 import { Header } from './features/common/Header';
 import { ConfirmModal } from './features/common/ConfirmModal';
@@ -87,6 +92,24 @@ export default function App() {
     };
   }, [tab, showWorkout]); // Re-bind when state changes to have fresh values
 
+  // ── Dynamic Theme Synchronization ──
+  useEffect(() => {
+    const root = document.documentElement;
+    const accent = tracker.settings.accentColor || '#326144';
+    root.style.setProperty('--accent-color', accent);
+    
+    // Convert hex to RGB for transparency effects (like borders)
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '50, 97, 68';
+    };
+    
+    root.style.setProperty('--accent-rgb', hexToRgb(accent));
+    
+    // Update theme data-attribute
+    root.setAttribute('data-theme', tracker.settings.themeMode);
+  }, [tracker.settings.accentColor, tracker.settings.themeMode]);
+
   // When opening workout, push a state so back gesture can close it
   useEffect(() => {
     if (showWorkout) {
@@ -146,18 +169,18 @@ export default function App() {
         minWidth: '100%', height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        padding: showWorkout ? '0' : 'calc(env(safe-area-inset-top) + 5px) 16px 0',
+        padding: showWorkout ? '0' : 'calc(env(safe-area-inset-top) + 0px) 16px 0',
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        background: 'var(--bg-color)',
+        background: 'var(--primary-bg)',
         touchAction: 'auto',
         overscrollBehaviorX: 'none'
       }}>
 
       {!showWorkout && (
         <>
-          <Header tab={tab} t={t} />
+          <Header tab={tab} t={t} tracker={tracker} />
 
           {/* Accent divider */}
           <div className="accent-divider" style={{ marginBottom: '5px' }} />
@@ -169,7 +192,7 @@ export default function App() {
             flexDirection: 'column',
             overflowY: 'auto',
             overflowX: 'hidden',
-            paddingBottom: '100px',
+            paddingBottom: '0',
             touchAction: 'pan-y'
           }}>
             {tab === 'home' && (

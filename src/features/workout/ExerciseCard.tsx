@@ -13,7 +13,7 @@ interface Props {
   initialSets?: SetLog[];
   isCompleted?: boolean;
   onDone: (sets: SetLog[]) => void;
-  onChange?: (sets: any[]) => void;
+  onChange?: (sets: any[], isDirty: boolean) => void;
   onClose: () => void;
   inline?: boolean;
   fullPage?: boolean;
@@ -21,12 +21,11 @@ interface Props {
   isDirty?: boolean;
 }
 
-export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, onDone, onChange, onClose, inline, fullPage, elapsedSeconds, isDirty: isDirtyProp }: Props) {
+export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onChange, onClose, inline, fullPage, elapsedSeconds, isDirty: isDirtyProp }: Props) {
   const lang = tracker.settings.language;
   const t = (k: string) => (translations[lang] as any)[k] ?? k;
   const unit = tracker.settings.weightUnit;
 
-  const last = tracker.getLastSession(exerciseName);
   const pr = tracker.getExercisePR(exerciseName);
 
   const [sets, setSets] = useState<{ weight: string | number; reps: string | number; restTime?: number }[]>(() => {
@@ -53,7 +52,9 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, 
     const units = ['kg', 'lbs', 'balata'] as const;
     const currentIndex = units.indexOf(activeUnit as any);
     const nextIndex = (currentIndex + 1) % units.length;
-    setActiveUnit(units[nextIndex]);
+    const newUnit = units[nextIndex];
+    setActiveUnit(newUnit);
+    tracker.setSettings({ weightUnit: newUnit });
   };
   const [restActive, setRestActive] = useState(false);
   const [restDuration] = useState(tracker.settings.defaultRestSeconds);
@@ -182,7 +183,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, 
                 paddingRight: '8px'
               }}>{exerciseName}</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
-                {pr && <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', fontFamily: 'Syne, sans-serif' }}>🏆 PR: {pr.weight}{t(unit)} × {pr.reps}</div>}
+                {pr && <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '13px', fontWeight: '900', fontFamily: 'Outfit, sans-serif', letterSpacing: '0.5px' }}>🏆 PR: {pr.weight} {t(unit as any)} × {pr.reps}</div>}
               </div>
             </div>
           </div>
@@ -252,17 +253,6 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, 
           </div>
         </div>
 
-        {last && (
-          <div style={{ margin: '0 20px 12px', padding: '12px 16px', background: 'var(--glass-bg)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--glass-border)', transform: 'translateZ(10px)' }}>
-            <div>
-              <div className="section-label" style={{ marginBottom: '4px', color: 'var(--text-secondary)', opacity: 0.6, fontSize: '11px', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{t('lastSession').toUpperCase()}</div>
-              <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>
-                {last.sets.map((s, i) => <span key={i}>{i > 0 ? ' · ' : ''}{s.weight}{t(unit)}×{s.reps}</span>)}
-              </div>
-            </div>
-            {Math.max(...sets.map(s => Number(s.weight) || 0)) > Math.max(...last.sets.map(s => s.weight)) && <div style={{ fontSize: '22px' }}>🔥</div>}
-          </div>
-        )}
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 20px 16px', WebkitOverflowScrolling: 'touch', minHeight: 0, maxHeight: 'calc(100dvh - 240px)', transformStyle: 'preserve-3d' }}>
@@ -286,12 +276,12 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, 
           ))}
         </div>
 
-        <button onClick={() => { setHasAddedSet(true); handleManualChange([...sets, { weight: '', reps: '' }]); }} style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px dashed var(--glass-border)', borderRadius: '16px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginTop: '12px', fontFamily: 'Outfit, sans-serif' }}>
+        <button onClick={() => { setHasAddedSet(true); handleManualChange([...sets, { weight: '', reps: '' }]); }} style={{ width: '100%', padding: '14px', background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: '16px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginTop: '12px', fontFamily: 'Outfit, sans-serif' }}>
           <Plus size={16} color="var(--accent-color)" /> {t('addSet')}
         </button>
 
         {!hasAddedSet && (
-          <div style={{ padding: '20px 0', opacity: 0.15, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: '30px' }}>
+          <div style={{ padding: '20px 0', opacity: 0.65, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: '30px' }}>
             <div style={{ 
               fontSize: '24px', 
               fontWeight: '900', 
@@ -307,19 +297,19 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, 
         )}
       </div>
 
-      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', background: 'var(--primary-bg)', borderTop: '1px solid var(--glass-border)', transformStyle: 'preserve-3d' }}>
+      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', background: 'var(--primary-bg)', borderTop: '2px solid rgba(var(--theme-rgb), 0.25)', transformStyle: 'preserve-3d' }}>
         
         {/* Rest Timer Removed */}
 
         <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center', gap: '40px', padding: '4px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('totalVolume')}</div>
-            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{totalVolume.toFixed(0)}<span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}>{unit}</span></div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('totalVolume')}</div>
+            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{totalVolume.toFixed(0)} <span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}> {t(unit as any)}</span></div>
           </div>
-          <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />
+          <div style={{ width: '1.5px', height: '24px', background: 'rgba(var(--theme-rgb), 0.15)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
-            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{Math.max(...sets.map(s => Number(s.weight) || 0), 0)}<span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}>{unit}</span></div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
+            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{Math.max(...sets.map(s => Number(s.weight) || 0), 0)} <span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}> {t(unit as any)}</span></div>
           </div>
         </div>
 
@@ -334,7 +324,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, isCompleted, 
             pointerEvents: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'none' : 'auto',
             textTransform: 'uppercase', letterSpacing: isSubmitting ? '4px' : '12px', outline: 'none', 
             animation: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'none' : 'pulse-glow 2.5s ease-in-out infinite', 
-            opacity: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 0.3 : 1,
+            opacity: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 0.6 : 1,
             fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation',
             transition: 'all 0.2s ease'
           }}

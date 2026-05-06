@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Plus, CheckCircle, X, ChevronRight, Info, GripVertical } from 'lucide-react';
 import { EXERCISE_DETAILS } from '../../../data/exercises';
+import gsap from 'gsap';
 
 interface Props {
   search: string;
@@ -25,6 +26,26 @@ export function ExercisePicker({
 }: Props) {
   const [showInput, setShowInput] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const handleToggleWithAnimation = (name: string, el: HTMLDivElement | null) => {
+    if (el) {
+      const isCurrentlySelected = activeExercises.includes(name);
+      if (!isCurrentlySelected) {
+        // SELECT: explosive snap-in
+        gsap.timeline()
+          .to(el, { scale: 0.94, duration: 0.06, ease: 'power2.in' })
+          .to(el, { scale: 1.04, duration: 0.12, ease: 'power3.out' })
+          .to(el, { scale: 1.0, duration: 0.2, ease: 'elastic.out(1.2, 0.5)' });
+      } else {
+        // DESELECT: quick shrink
+        gsap.timeline()
+          .to(el, { scale: 0.96, duration: 0.08, ease: 'power2.in' })
+          .to(el, { scale: 1.0, duration: 0.15, ease: 'power2.out' });
+      }
+    }
+    onToggle(name);
+  };
 
   const handleTouchStart = (index: number) => {
     setDraggingIndex(index);
@@ -145,31 +166,32 @@ export function ExercisePicker({
             <div 
               key={name} 
               data-index={index}
+              ref={(el) => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }}
               style={{ 
                 display: 'flex', 
                 flexDirection: 'column',
                 zIndex: isDragging ? 100 : 1,
                 opacity: isDragging ? 0.7 : 1,
-                transform: isDragging ? 'scale(1.02)' : 'none',
-                transition: isDragging ? 'none' : 'transform 0.2s ease, opacity 0.2s ease',
+                transition: isDragging ? 'none' : 'opacity 0.2s ease',
                 boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.4)' : 'none'
               }}
             >
               <div
-                onClick={() => onToggle(name)}
-                className="exercise-select-btn glass-card"
+                onClick={() => handleToggleWithAnimation(name, itemRefs.current.get(name) ?? null)}
+                className="exercise-select-btn"
                 role="button"
                 style={{
                   position: 'relative',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '18px 12px', 
-                  background: isSelected ? 'rgba(var(--theme-rgb), 0.03)' : 'transparent',
+                  padding: '12px 12px 12px 20px', 
+                  background: isSelected ? 'rgba(255, 61, 0, 0.06)' : 'transparent',
                   border: 'none',
-                  borderBottom: `1px solid ${isSelected ? 'var(--accent-color-alpha)' : 'rgba(var(--theme-rgb), 0.03)'}`,
+                  borderBottom: `1px solid ${isSelected ? 'rgba(255, 61, 0, 0.2)' : 'rgba(var(--theme-rgb), 0.06)'}`,
+                  borderLeft: isSelected ? '3px solid #ff3d00' : '3px solid transparent',
                   width: '100%', cursor: 'pointer',
-                  borderRadius: isSelected && detail ? '16px 16px 0 0' : '16px',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  marginBottom: isSelected && detail ? '0' : '2px',
+                  borderRadius: '0px',
+                  transition: 'all 0.2s ease',
+                  marginBottom: '0',
                   touchAction: 'manipulation'
                 }}
               >
@@ -201,15 +223,18 @@ export function ExercisePicker({
                   </div>
                   {lastData && (
                     <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '800', opacity: 0.5, letterSpacing: '0.5px' }}>
-                      {t('lastSession').toUpperCase()}: {lastData.sets[0]?.weight}{weightUnit} × {lastData.sets[0]?.reps}
+                      {t('lastSession').toUpperCase()}: {lastData.sets[0]?.weight} {t(weightUnit as any)} × {lastData.sets[0]?.reps}
                     </div>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {isSelected && (
-                    <div style={{ color: 'var(--accent-color)', display: 'flex', alignItems: 'center', filter: 'drop-shadow(0 0 5px var(--accent-color-alpha))' }}>
-                      <CheckCircle size={18} strokeWidth={3} />
-                    </div>
+                    <div style={{ 
+                      width: '6px', height: '6px', borderRadius: '50%', 
+                      background: '#ff3d00', 
+                      boxShadow: '0 0 6px #ff3d00',
+                      flexShrink: 0
+                    }} />
                   )}
                   {isSelected && (
                     <button
@@ -217,35 +242,16 @@ export function ExercisePicker({
                         e.stopPropagation();
                         onRemove(name, isCustom);
                       }}
-                      style={{ padding: '6px', background: 'rgba(255,51,102,0.1)', border: 'none', borderRadius: '8px', color: '#ff3366', cursor: 'pointer', display: 'flex', zIndex: 10, opacity: 0.6 }}
+                      style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: '6px', color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', fontWeight: '900', opacity: 0.7 }}
                     >
-                      <X size={14} strokeWidth={3} />
+                      <X size={11} strokeWidth={3} /> Remove
                     </button>
                   )}
+                  {!isSelected && <ChevronRight size={16} style={{ opacity: 0.15 }} />}
                 </div>
               </div>
               
-              {isSelected && detail && (
-                <div style={{
-                  padding: '12px 16px 20px',
-                  background: 'rgba(var(--theme-rgb), 0.02)',
-                  borderBottom: '1px solid var(--accent-color-alpha)',
-                  borderRadius: '0 0 16px 16px',
-                  animation: 'slideDown 0.3s ease-out',
-                  marginBottom: '8px'
-                }}>
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '12px', 
-                    lineHeight: '1.6', 
-                    color: 'rgba(var(--theme-rgb), 0.6)', 
-                    fontFamily: 'Outfit, sans-serif',
-                    textAlign: isRtl ? 'right' : 'left'
-                  }}>
-                    {isRtl ? detail.ar : detail.en}
-                  </p>
-                </div>
-              )}
+
             </div>
           );
         })}

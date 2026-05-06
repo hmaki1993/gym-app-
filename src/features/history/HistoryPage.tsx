@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import type { WorkoutLog } from '../../types';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
-import { Dumbbell, Calendar, Trash2, Clock, ChevronDown } from 'lucide-react';
+import { Dumbbell, Calendar, Trash2, Clock, ChevronDown, Flame } from 'lucide-react';
+import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -31,6 +32,22 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const unit = tracker.settings.weightUnit;
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+
+  // Auto-scroll to expanded log
+  useEffect(() => {
+    if (expandedLogId) {
+      // Wait for the expansion animation to progress
+      setTimeout(() => {
+        const element = document.getElementById(`log-${expandedLogId}`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }, 300);
+    }
+  }, [expandedLogId]);
 
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -78,7 +95,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingBottom: '120px' }}>
       {/* Weightless Elite Calendar - Compact */}
       <div style={{ 
         padding: '5px 0 15px', 
@@ -116,7 +133,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
         }}>
           {/* Day Headers - More Visible */}
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
-            <div key={`${d}-${idx}`} style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', opacity: 0.7, letterSpacing: '1px' }}>{d}</div>
+            <div key={`${d}-${idx}`} style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', opacity: 1, letterSpacing: '1px' }}>{d}</div>
           ))}
 
           {/* Empty spaces for offset */}
@@ -129,32 +146,47 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
             const day = i + 1;
             const worked = hasWorkout(day);
             const active = isSelected(day);
+            const now = new Date();
+            const isToday = now.getFullYear() === currentYear && now.getMonth() === currentMonth && now.getDate() === day;
+
             return (
               <div 
                 key={day}
                 onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
                 style={{
-                  height: '32px',
-                  width: '32px',
+                  height: '34px',
+                  width: '34px',
                   margin: '0 auto',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '13px',
-                  fontWeight: active ? '950' : '800',
-                  color: active ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : 'rgba(var(--theme-rgb), 0.4)'),
-                  cursor: 'pointer',
-                  position: 'relative',
+                  fontWeight: active ? '950' : (isToday ? '950' : '800'),
+                  color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : 'rgba(var(--theme-rgb), 0.7)')),
+                  cursor: 'pointer', position: 'relative',
                   borderRadius: '50%',
-                  background: active ? 'var(--accent-color-alpha)' : 'transparent',
+                  background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : 'transparent'),
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  border: active ? '1px solid var(--accent-color-alpha)' : '1px solid transparent',
+                  border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : '1px solid transparent'),
                   transform: active ? 'scale(1.1)' : 'scale(1)',
-                  boxShadow: active ? '0 0 15px var(--accent-color-alpha)' : 'none'
+                  boxShadow: active ? '0 0 15px var(--accent-color-alpha)' : (isToday ? '0 0 10px var(--accent-color-alpha)' : 'none'),
+                  animation: isToday ? 'pulseToday 2s infinite' : 'none'
                 }}
               >
                 {day}
-                {worked && !active && (
+                {isToday && !active && (
+                   <div style={{ 
+                    position: 'absolute', 
+                    top: '-2px', 
+                    right: '-2px',
+                    width: '6px', 
+                    height: '6px', 
+                    borderRadius: '50%', 
+                    background: 'var(--accent-color)',
+                    boxShadow: '0 0 8px var(--accent-color)'
+                  }} />
+                )}
+                {worked && !active && !isToday && (
                   <div style={{ 
                     position: 'absolute', 
                     bottom: '2px', 
@@ -175,7 +207,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
         {filteredLogs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', opacity: 0.1 }}>
+          <div style={{ textAlign: 'center', padding: '60px 0', opacity: 0.7, color: 'var(--text-secondary)' }}>
             <Dumbbell size={40} style={{ marginBottom: '16px' }} />
             <div style={{ fontSize: '11px', fontWeight: '950', letterSpacing: '3px' }}>{t('noHistory').toUpperCase()}</div>
           </div>
@@ -200,50 +232,106 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
               return mg?.[lang] ?? g;
             }).join(' & ');
 
-            const primaryMg = MUSCLE_GROUPS.find(m => m.key === (sortedGroups[0] || log.muscleGroup));
+
             const volume = tracker.getTotalVolume(log);
             const totalSets = log.exercises.reduce((s, ex) => s + ex.sets.length, 0);
 
             return (
               <div 
                 key={log.id} 
+                id={`log-${log.id}`}
                 onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
                 role="button"
                 style={{ 
-                  padding: '24px 0', 
-                  borderBottom: '2px solid var(--glass-border)',
+                  padding: '24px 16px 24px 32px', 
                   cursor: 'pointer',
-                  touchAction: 'manipulation',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none'
+                  background: tracker.settings.themeMode === 'dark' ? '#0a0a0a' : '#ffffff',
+                  border: tracker.settings.themeMode === 'dark' 
+                    ? '1px solid rgba(255, 61, 0, 0.3)' 
+                    : '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '20px',
+                  margin: '0 0px 12px 0px',
+                  position: 'relative',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                {/* 1. Header: Muscle Group & Date */}
+                {/* Premium Neon Pillar */}
+                <div style={{ 
+                  position: 'absolute', 
+                  left: 0, 
+                  top: '15%', 
+                  bottom: '15%', 
+                  width: '4px', 
+                  background: '#ff3d00', 
+                  borderRadius: '0 2px 2px 0',
+                  boxShadow: '0 0 15px rgba(255, 61, 0, 0.6)',
+                  zIndex: 10
+                }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <Flame size={12} color="var(--accent-secondary)" fill="var(--accent-secondary)" />
+                  <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'Outfit, sans-serif' }}>
+                    {t('session')}
+                  </span>
+                </div>
                 <div 
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: expandedLogId === log.id ? '15px' : '0' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {primaryMg?.icon ? (
-                        <img src={primaryMg.icon} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
-                      ) : (
-                        <span style={{ fontSize: '28px' }}>💪</span>
-                      )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px',
+                      background: 'none'
+                    }}>
+                      {Array.from(involvedGroups).sort().map(g => {
+                        const mg = MUSCLE_GROUPS.find(m => m.key === g);
+                        return mg?.icon ? (
+                          <TransparentImage 
+                            key={g}
+                            src={mg.icon} 
+                            alt="" 
+                            width={42} 
+                            height={42} 
+                            threshold={45}
+                            style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.2)' : 'grayscale(1) brightness(0.8)' }}
+                          />
+                        ) : <span key={g} style={{ fontSize: '24px' }}>💪</span>;
+                      })}
                     </div>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                      <h3 style={{ 
+                        margin: 0, 
+                        fontSize: '22px', 
+                        fontWeight: '950', 
+                        color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', 
+                        letterSpacing: '-0.5px' 
+                      }}>
                         {displayTitle}
                       </h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Calendar size={10} color="var(--accent-color)" />
-                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700' }}>{formatDate(log.date, lang)}</span>
+                          <span style={{ 
+                            fontSize: '12px', 
+                            color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', 
+                            fontWeight: '900' 
+                          }}>{formatDate(log.date, lang)}</span>
                         </div>
                         {log.startTime && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '1px', height: '10px', background: 'var(--glass-border)', margin: '0 2px' }} />
+                            <div style={{ 
+                              width: '1.5px', 
+                              height: '10px', 
+                              background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', 
+                              margin: '0 2px' 
+                            }} />
                             <Clock size={10} color="var(--accent-color)" />
-                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '600', opacity: 0.8 }}>
+                            <span style={{ 
+                              fontSize: '10px', 
+                              color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', 
+                              fontWeight: '900', 
+                              opacity: 1 
+                            }}>
                               {formatTime(log.startTime, lang)}
                             </span>
                           </div>
@@ -251,13 +339,13 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button
                       onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }}
                       style={{ 
-                        background: 'transparent', border: 'none', cursor: 'pointer', 
-                        color: 'rgba(255,51,102,0.3)', padding: '10px',
-                        touchAction: 'manipulation'
+                        background: 'none', border: 'none', cursor: 'pointer', 
+                        color: 'rgba(255,51,102,0.6)', padding: '8px',
+                        marginRight: '-4px'
                       }}
                     >
                       <Trash2 size={18} />
@@ -272,11 +360,9 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        touchAction: 'manipulation',
                         color: 'var(--accent-color)',
-                        filter: 'drop-shadow(0 0 6px var(--accent-color-alpha))',
                         transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease'
+                        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
                       }}
                     >
                       <ChevronDown size={20} strokeWidth={2.5} />
@@ -296,30 +382,37 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                       {/* Stats Row */}
                       <div style={{ 
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '10px 0', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)',
-                        marginBottom: '20px', gap: '4px',
+                        padding: '16px 0', 
+                        borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)', 
+                        borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
+                        marginBottom: '24px', gap: '4px',
                         opacity: expandedLogId === log.id ? 1 : 0,
                         transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)',
-                        transition: 'all 0.4s ease 0.1s'
+                        transition: 'all 0.4s ease'
                       }}>
                         {[
                           { label: t('exercises'), value: log.exercises.length },
                           { label: t('totalSets'), value: totalSets },
-                          { label: t('totalVolume'), value: `${volume.toFixed(0)}${unit}` },
+                          { label: t('totalVolume'), value: `${volume.toFixed(0)} ${t(unit as any)}` },
                           { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
                         ].map((stat, idx) => (
                           <React.Fragment key={stat.label}>
-                            {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'var(--glass-border)' }} />}
+                            {idx > 0 && <div style={{ width: '1px', height: '24px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />}
                             <div style={{ flex: 1, textAlign: 'center' }}>
                               <div style={{ 
-                                fontSize: '15px', 
+                                fontSize: '20px', 
                                 fontWeight: '950', 
-                                color: 'var(--text-primary)', 
-                                whiteSpace: 'nowrap',
-                                fontFamily: 'Inter, sans-serif',
-                                letterSpacing: '0.5px'
+                                color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', 
+                                fontFamily: 'Outfit, sans-serif'
                               }}>{stat.value}</div>
-                              <div style={{ fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.45)', fontWeight: '900', letterSpacing: '3px', marginTop: '8px', textTransform: 'uppercase' }}>{stat.label}</div>
+                              <div style={{ 
+                                fontSize: '10px', 
+                                color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', 
+                                fontWeight: '950', 
+                                letterSpacing: '2px', 
+                                marginTop: '6px', 
+                                textTransform: 'uppercase' 
+                              }}>{stat.label}</div>
                             </div>
                           </React.Fragment>
                         ))}
@@ -327,8 +420,8 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
 
                       {/* Exercises List */}
                       <div style={{ 
-                        display: 'flex', flexDirection: 'column', gap: '14px', 
-                        padding: '4px 0 10px 12px', borderLeft: '2px solid var(--accent-color-alpha)' 
+                        display: 'flex', flexDirection: 'column', gap: '8px', 
+                        paddingLeft: '0' 
                       }}>
                         {log.exercises.map((ex, exIdx) => {
                           const bestSet = ex.sets.reduce((best, s) => s.weight > best.weight ? s : best, ex.sets[0] ?? { weight: 0, reps: 0 });
@@ -340,28 +433,51 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                 opacity: expandedLogId === log.id ? 1 : 0,
                                 transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)',
-                                transition: `all 0.3s ease ${0.2 + exIdx * 0.05}s`
+                                transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`,
+                                background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                                padding: '10px 12px',
+                                borderRadius: '12px'
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
-                                <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', opacity: 0.95 }}>{ex.name}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '15px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.name}</span>
+                                  {(() => {
+                                    const mgKey = exerciseToMuscle[ex.name] || log.muscleGroup;
+                                    const mg = MUSCLE_GROUPS.find(m => m.key === mgKey);
+                                    return (
+                                      <span style={{ 
+                                        fontSize: '9px', 
+                                        fontWeight: '900', 
+                                        color: 'var(--accent-color)', 
+                                        opacity: 0.7, 
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px',
+                                        marginTop: '1px'
+                                      }}>
+                                        {lang === 'ar' ? mg?.ar : mg?.en}
+                                      </span>
+                                    );
+                                  })()}
+                                </div>
                                 {isPR && (
                                   <div style={{ 
-                                    fontSize: '8px', fontWeight: '900', color: 'var(--accent-color)', 
-                                    background: 'rgba(255, 107, 0, 0.08)', padding: '2px 6px', 
-                                    borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px'
+                                    fontSize: '8px', fontWeight: '950', color: '#ff3d00', 
+                                    background: 'rgba(255, 61, 0, 0.1)', padding: '2px 6px', 
+                                    borderRadius: '4px'
                                   }}>PR</div>
                                 )}
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '110px', justifyContent: 'flex-end' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                 <div style={{ textAlign: 'right' }}>
-                                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>{ex.sets.length}</span>
-                                  <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', marginLeft: '4px', opacity: 0.7, letterSpacing: '1px' }}>SETS</span>
+                                  <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.sets.length}</span>
+                                  <span style={{ fontSize: '10px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginLeft: '4px' }}>SETS</span>
                                 </div>
-                                <div style={{ width: '1px', height: '10px', background: 'var(--glass-border)' }} />
-                                <div style={{ textAlign: 'right', minWidth: '45px' }}>
-                                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
-                                  <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginLeft: '2px', opacity: 0.7 }}>{unit}</span>
+                                <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                                <div style={{ textAlign: 'right' }}>
+                                  <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
+                                  <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t(unit as any)}</span>
                                 </div>
                               </div>
                             </div>
@@ -390,7 +506,7 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                           <div style={{ 
                             marginTop: '24px',
                             paddingTop: '20px',
-                            borderTop: '1px solid var(--glass-border)',
+                            borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
                             opacity: expandedLogId === log.id ? 1 : 0,
                             transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(10px)',
                             transition: 'all 0.4s ease 0.2s'
@@ -421,15 +537,15 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
                                 { label: 'FATS', value: `${totalFat.toFixed(0)}g` },
                               ].map((stat, idx) => (
                                 <React.Fragment key={stat.label}>
-                                  {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'var(--glass-border)' }} />}
+                                  {idx > 0 && <div style={{ width: '1px', height: '16px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />}
                                   <div style={{ flex: 1, textAlign: 'center' }}>
                                     <div style={{ 
                                       fontSize: '15px', 
                                       fontWeight: '950', 
-                                      color: idx === 0 ? 'var(--accent-color)' : 'var(--text-primary)', 
+                                      color: idx === 0 ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : '#000'), 
                                       fontFamily: 'Inter, sans-serif'
                                     }}>{stat.value}</div>
-                                    <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.45)', fontWeight: '900', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                                    <div style={{ fontSize: '10px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
                                   </div>
                                 </React.Fragment>
                               ))}
@@ -437,18 +553,24 @@ export function HistoryPage({ tracker, onDeleteWorkout }: Props) {
 
                             {/* Food List (Same as Exercise List) */}
                             <div style={{ 
-                              display: 'flex', flexDirection: 'column', gap: '14px', 
-                              padding: '4px 0 10px 12px', borderLeft: '2px solid rgba(0, 255, 170, 0.2)' 
+                              display: 'flex', flexDirection: 'column', gap: '8px', 
+                              padding: '4px 0 10px 0' 
                             }}>
                               {dayNutrition.map((food: any, fIdx: number) => (
-                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', opacity: 0.9 }}>{food.nameAr || food.name}</span>
-                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.3)' }}>x{food.servingSize}</span>}
+                                <div key={fIdx} style={{ 
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                                  padding: '8px 12px',
+                                  borderRadius: '10px'
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#ff3d00' }} />
+                                    <span style={{ fontSize: '14px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', opacity: 0.9 }}>{food.nameAr || food.name}</span>
+                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>x{food.servingSize}</span>}
                                   </div>
                                   <div style={{ textAlign: 'right', minWidth: '60px' }}>
                                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{food.calories}</span>
-                                    <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginLeft: '2px', opacity: 0.6 }}>KCAL</span>
+                                    <span style={{ fontSize: '9px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px', opacity: 1 }}>KCAL</span>
                                   </div>
                                 </div>
                               ))}

@@ -94,6 +94,44 @@ function MiniChart({ data, color, title, accentColor }: { data: { date: string; 
   );
 }
 
+function MuscleGroupAccordion({ mg, prs, lang, t, unit }: { mg: string, prs: any[], lang: string, t: any, unit: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const mgInfo = MUSCLE_GROUPS.find(g => g.key === mg);
+  
+  return (
+    <div style={{ 
+      background: 'rgba(var(--theme-rgb), 0.03)', 
+      borderRadius: '12px', 
+      overflow: 'hidden',
+      border: '1px solid rgba(var(--theme-rgb), 0.05)'
+    }}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'none', border: 'none', cursor: 'pointer'
+        }}
+      >
+        <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--text-primary)', opacity: 0.8, textTransform: 'uppercase' }}>
+          {mg === 'other' ? (lang === 'ar' ? 'أخرى' : 'OTHER') : (lang === 'ar' ? mgInfo?.ar : mgInfo?.en)}
+          <span style={{ marginLeft: '8px', opacity: 0.4 }}>({prs.length})</span>
+        </div>
+        <div style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease', fontSize: '10px' }}>▼</div>
+      </button>
+      {isOpen && (
+        <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {prs.map((pr) => (
+            <div key={pr.exerciseName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', opacity: 0.9 }}>{pr.exerciseName}</span>
+              <span style={{ fontSize: '12px', fontWeight: '900', color: 'var(--accent-color)' }}>{pr.weight} {t(unit as any)} × {pr.reps}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProgressPage({ tracker }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
@@ -125,7 +163,32 @@ export function ProgressPage({ tracker }: Props) {
   const weeklyCount = tracker.getWeeklyCount();
   const totalVolume = filteredLogs.reduce((s, l) => s + tracker.getTotalVolume(l), 0);
 
-  const loggedMuscles = Array.from(new Set(tracker.logs.map(l => l.muscleGroup)));
+  // Accurate muscle detection based on exercises performed
+  const loggedMuscles = React.useMemo(() => {
+    const muscles = new Set<string>();
+    const exerciseToMuscle: Record<string, string> = {};
+    
+    // Map defaults
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex.toLowerCase()] = group; });
+    });
+    // Map customs
+    Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex.toLowerCase()] = group; });
+    });
+
+    tracker.logs.forEach(log => {
+      // Always include the primary muscle group of the session
+      if (log.muscleGroup) muscles.add(log.muscleGroup);
+      
+      // Also include any muscles from specific exercises
+      log.exercises.forEach(ex => {
+        const group = exerciseToMuscle[ex.name.toLowerCase()];
+        if (group) muscles.add(group);
+      });
+    });
+    return Array.from(muscles);
+  }, [tracker.logs, tracker.customExercises]);
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(loggedMuscles.length > 0 ? loggedMuscles[0] : null);
 
   useEffect(() => {
@@ -147,23 +210,41 @@ export function ProgressPage({ tracker }: Props) {
   */
 
   // Exercise progress data for selected muscle
-  const exerciseFreq: Record<string, number> = {};
-  for (const log of tracker.logs) {
-    if (selectedMuscle && log.muscleGroup === selectedMuscle) {
-      for (const ex of log.exercises) {
-        exerciseFreq[ex.name] = (exerciseFreq[ex.name] ?? 0) + 1;
-      }
-    }
-  }
-  const topExercises = Object.entries(exerciseFreq)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name]) => name);
+  const { exerciseFreq, topExercises, exerciseToMuscle } = React.useMemo(() => {
+    const freq: Record<string, number> = {};
+    const mapping: Record<string, string> = {};
+    
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { mapping[ex.toLowerCase()] = group; });
+    });
+    Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { mapping[ex.toLowerCase()] = group; });
+    });
+
+    tracker.logs.forEach(log => {
+      log.exercises.forEach(ex => {
+        const group = mapping[ex.name.toLowerCase()] || log.muscleGroup;
+        if (group === selectedMuscle) {
+          freq[ex.name] = (freq[ex.name] ?? 0) + 1;
+        }
+      });
+    });
+
+    const top = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+
+    return { exerciseFreq: freq, topExercises: top, exerciseToMuscle: mapping };
+  }, [tracker.logs, selectedMuscle, tracker.customExercises]);
 
   const getExerciseHistory = (name: string) => {
     const history: { date: string; value: number }[] = [];
     for (const log of [...tracker.logs].reverse()) {
-      if (selectedMuscle && log.muscleGroup !== selectedMuscle) continue;
       const ex = log.exercises.find(e => e.name === name);
+      // Verify this exercise belongs to the selected muscle
+      const group = exerciseToMuscle[name.toLowerCase()] || log.muscleGroup;
+      if (group !== selectedMuscle) continue;
+      
       if (ex && ex.sets.length > 0) {
         const max = Math.max(...ex.sets.map(s => s.weight));
         history.push({ date: log.date, value: max });
@@ -189,31 +270,39 @@ export function ProgressPage({ tracker }: Props) {
             {lang === 'ar' ? 'عرض الكل ✕' : 'SHOW ALL ✕'}
           </button>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '24px', borderBottom: '1px solid rgba(var(--theme-rgb), 0.06)' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          padding: '24px', 
+          background: 'rgba(var(--theme-rgb), 0.02)',
+          borderRadius: '24px',
+          border: '1.5px solid rgba(var(--theme-rgb), 0.12)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.02)'
+        }}>
           {[
             { label: selectedDay ? (lang === 'ar' ? 'تمارين اليوم' : 'DAY LOGS') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: '📅' },
             { label: selectedDay ? (lang === 'ar' ? 'تاريخ اليوم' : 'LOG DATE') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: '🏆' },
-            { label: t('totalVolume'), value: totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}T` : `${totalVolume.toFixed(0)}`, sub: unit, icon: '📈' },
+            { label: t('totalVolume'), value: totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}T` : `${totalVolume.toFixed(0)}`, sub: t(unit as any), icon: '📈' },
           ].map((card, index) => (
             <div key={card.label} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
               <div style={{ fontSize: '20px', marginBottom: '8px' }}>{card.icon}</div>
               <div style={{ 
                 fontSize: '24px', 
-                fontWeight: '800', 
+                fontWeight: '950', 
                 color: 'var(--accent-color)', 
                 lineHeight: '1', 
-                letterSpacing: '0.5px',
-                fontFamily: 'Inter, sans-serif'
+                letterSpacing: '-0.5px',
+                fontFamily: 'Outfit, sans-serif'
               }}>{card.value}</div>
-              <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '6px' }}>{card.label}</div>
-              {index < 2 && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: '1px', background: 'var(--glass-border)' }} />}
+              <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '8px' }}>{card.label}</div>
+              {index < 2 && <div style={{ position: 'absolute', right: 0, top: '15%', bottom: '15%', width: '1.5px', background: 'rgba(var(--theme-rgb), 0.2)' }} />}
             </div>
           ))}
         </div>
       </div>
 
       {/* Weekly Activity Bar Chart */}
-      <div style={{ padding: '24px 0', borderBottom: '1px solid var(--glass-border)' }}>
+      <div style={{ padding: '24px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.15)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <BarChart2 size={16} color="var(--accent-color)" />
           <span className="section-label">{t('thisWeek')}</span>
@@ -255,7 +344,7 @@ export function ProgressPage({ tracker }: Props) {
                     ? `linear-gradient(180deg, var(--text-primary), var(--accent-color))`
                     : (count > 0 
                         ? `linear-gradient(180deg, var(--accent-color), var(--danger-color))` 
-                        : (isToday ? 'rgba(255, 140, 0, 0.3)' : 'var(--glass-border)')),
+                        : (isToday ? 'rgba(255, 140, 0, 0.5)' : 'rgba(var(--theme-rgb), 0.3)')),
                   borderRadius: '12px',
                   boxShadow: isSelected
                     ? `0 0 20px var(--accent-color)`
@@ -267,10 +356,10 @@ export function ProgressPage({ tracker }: Props) {
                 }} />
                 <span style={{ 
                   fontSize: '11px', 
-                  fontWeight: isToday || isSelected ? '950' : '700', 
-                  color: isSelected ? 'var(--accent-color)' : (isToday ? '#ff8c00' : 'var(--text-secondary)'), 
+                  fontWeight: '950', 
+                  color: isSelected ? 'var(--accent-color)' : (isToday ? '#ff8c00' : 'var(--text-primary)'), 
                   textTransform: 'uppercase',
-                  opacity: isToday || isSelected ? 1 : 0.4,
+                  opacity: 1,
                   letterSpacing: '0.5px'
                 }}>
                   {dayLabel.slice(0, 2)}
@@ -292,76 +381,106 @@ export function ProgressPage({ tracker }: Props) {
         `}</style>
       </div>
 
-      {/* Personal Records */}
+      {/* Master Records Card (The "Curtain") */}
       {tracker.prs.length > 0 && (
-        <div style={{ padding: '24px 0', borderBottom: '1px solid rgba(var(--theme-rgb), 0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Award size={16} color="#ffd700" />
-            <span className="section-label" style={{ color: '#ffd700', letterSpacing: '1px' }}>{t('personalRecord')}</span>
-          </div>
-          
+        <div style={{ padding: '24px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.15)' }}>
           {(() => {
-            const groupedPRs: Record<string, typeof tracker.prs> = {};
-            tracker.prs.filter(pr => pr.exerciseName && pr.exerciseName.trim() !== '').forEach(pr => {
-              const cleanPRName = pr.exerciseName.trim().toLowerCase();
-              
-              // Find which muscle group this exercise belongs to
-              let mg: string = 'other';
-              
-              // Check default exercises
-              for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
-                if (exercises.some(e => e.toLowerCase() === cleanPRName)) {
-                  mg = group;
-                  break;
-                }
-              }
-              
-              // Check custom exercises if not found in defaults
-              if (mg === 'other') {
-                for (const [group, exercises] of Object.entries(tracker.customExercises)) {
-                  if (exercises.some(e => e.toLowerCase() === cleanPRName)) {
-                    mg = group;
-                    break;
-                  }
-                }
-              }
-              if (!groupedPRs[mg]) groupedPRs[mg] = [];
-              groupedPRs[mg].push(pr);
-            });
+            const today = new Date().toDateString();
+            const todayPRs = tracker.prs.filter(pr => new Date(pr.date).toDateString() === today);
+            const hasWinsToday = todayPRs.length > 0;
+            const [isMasterOpen, setIsMasterOpen] = useState(hasWinsToday);
 
-            return Object.entries(groupedPRs).map(([mg, prs]) => {
-              const mgInfo = MUSCLE_GROUPS.find(g => g.key === mg);
-              return (
-                <div key={mg} style={{ marginBottom: '20px' }}>
-                  <div style={{ 
-                    fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', 
-                    opacity: 0.5, marginBottom: '8px', textTransform: 'uppercase',
-                    letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '8px'
-                  }}>
-                    {mg === 'other' 
-                      ? (lang === 'ar' ? 'تمارين أخرى' : 'OTHER EXERCISES') 
-                      : (lang === 'ar' ? mgInfo?.ar : mgInfo?.en)}
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(var(--theme-rgb), 0.03)' }} />
-                  </div>
-                  {prs.map((pr) => (
-                    <div key={pr.exerciseName} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '10px 0'
-                    }}>
-                      <span style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{pr.exerciseName}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ 
-                          fontSize: '14px', 
-                          fontWeight: '800', 
-                          color: '#ffd700',
-                          fontFamily: 'Inter, sans-serif'
-                        }}>🏆 {pr.weight}{unit}×{pr.reps}</span>
+            return (
+              <div style={{ position: 'relative' }}>
+                {/* The Trigger Card */}
+                <div 
+                  onClick={() => setIsMasterOpen(!isMasterOpen)}
+                  style={{ 
+                    background: hasWinsToday 
+                      ? 'linear-gradient(135deg, rgba(255, 149, 0, 0.15) 0%, rgba(255, 61, 0, 0.1) 100%)'
+                      : 'rgba(var(--theme-rgb), 0.03)',
+                    borderRadius: '20px', 
+                    padding: '18px 20px', 
+                    border: hasWinsToday ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(var(--theme-rgb), 0.1)',
+                    boxShadow: hasWinsToday ? '0 10px 30px rgba(255, 149, 0, 0.1)' : 'none',
+                    cursor: 'pointer',
+                    animation: hasWinsToday ? 'pulse-glow 2s infinite' : 'none',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Award size={20} color={hasWinsToday ? "#ff9500" : "var(--accent-color)"} />
+                      <div>
+                        <div style={{ 
+                          fontSize: '11px', fontWeight: '950', 
+                          color: hasWinsToday ? '#ff9500' : 'var(--text-primary)', 
+                          letterSpacing: '2px', textTransform: 'uppercase' 
+                        }}>
+                          {hasWinsToday ? (lang === 'ar' ? 'إنجازات اليوم! 🔥' : "TODAY'S WINS! 🔥") : t('personalRecord')}
+                        </div>
+                        {!hasWinsToday && <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: '800', marginTop: '2px' }}>{lang === 'ar' ? 'اضغط لعرض الأرقام القياسية' : 'TAP TO VIEW ALL RECORDS'}</div>}
                       </div>
                     </div>
-                  ))}
+                    <div style={{ 
+                      transform: isMasterOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+                      transition: 'transform 0.3s ease',
+                      color: hasWinsToday ? '#ff9500' : 'rgba(var(--theme-rgb), 0.3)'
+                    }}>▼</div>
+                  </div>
                 </div>
-              );
-            });
+
+                {/* The Curtain Content */}
+                {isMasterOpen && (
+                  <div style={{ 
+                    marginTop: '12px', 
+                    animation: 'slideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                    display: 'flex', flexDirection: 'column', gap: '10px'
+                  }}>
+                    {/* Today's Specific List (Only if has wins) */}
+                    {hasWinsToday && (
+                      <div style={{ padding: '0 10px 15px' }}>
+                        {todayPRs.map(pr => (
+                          <div key={pr.exerciseName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid rgba(255, 149, 0, 0.1)', paddingBottom: '8px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '800', color: '#fff' }}>{pr.exerciseName}</span>
+                            <span style={{ fontSize: '13px', fontWeight: '950', color: '#ff9500' }}>{pr.weight} {t(unit as any)} × {pr.reps}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* All Muscle Groups Accordions */}
+                    <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '5px', paddingLeft: '10px' }}>
+                      {lang === 'ar' ? 'الأرقام القياسية حسب العضلة' : 'RECORDS BY MUSCLE'}
+                    </div>
+                    
+                    {(() => {
+                      const groupedPRs: Record<string, typeof tracker.prs> = {};
+                      tracker.prs.filter(pr => pr.exerciseName && pr.exerciseName.trim() !== '').forEach(pr => {
+                        const cleanPRName = pr.exerciseName.trim().toLowerCase();
+                        let mg: string = 'other';
+                        for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
+                          if (exercises.some(e => e.toLowerCase() === cleanPRName)) { mg = group; break; }
+                        }
+                        if (mg === 'other') {
+                          for (const [group, exercises] of Object.entries(tracker.customExercises)) {
+                            if (exercises.some(e => e.toLowerCase() === cleanPRName)) { mg = group; break; }
+                          }
+                        }
+                        if (!groupedPRs[mg]) groupedPRs[mg] = [];
+                        groupedPRs[mg].push(pr);
+                      });
+
+                      return Object.entries(groupedPRs).map(([mg, prs]) => (
+                        <MuscleGroupAccordion 
+                          key={mg} mg={mg} prs={prs} lang={lang} t={t} unit={unit}
+                        />
+                      ));
+                    })()}
+                  </div>
+                )}
+              </div>
+            );
           })()}
         </div>
       )}
@@ -428,7 +547,7 @@ export function ProgressPage({ tracker }: Props) {
                             fontWeight: '800', 
                             color: 'var(--accent-color)',
                             fontFamily: 'Inter, sans-serif'
-                          }}>{latest}{unit}</span>
+                          }}>{latest} {t(unit as any)}</span>
                           {diff !== 0 && (
                             <span style={{ 
                               fontSize: '11px', 
@@ -436,7 +555,7 @@ export function ProgressPage({ tracker }: Props) {
                               color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)',
                               fontFamily: 'Inter, sans-serif'
                             }}>
-                              {diff > 0 ? '+' : ''}{diff}{unit}
+                              {diff > 0 ? '+' : ''}{diff} {t(unit as any)}
                             </span>
                           )}
                         </div>

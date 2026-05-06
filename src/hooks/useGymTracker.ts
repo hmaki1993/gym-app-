@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog } from '../types';
 import { THEME_COLORS } from '../data/exercises';
 
@@ -6,10 +6,13 @@ const STORAGE_KEY = 'gymlog_state_v1';
 
 const DEFAULT_SETTINGS: GymSettings = {
   userName: '',
+  userEmail: '',
+  userPassword: '',
   weightUnit: 'kg',
   language: 'en',
-  accentColor: THEME_COLORS[0].hex,
-  themeMode: 'dark',
+  accentColor: THEME_COLORS[6].hex,
+  accentSecondary: THEME_COLORS[6].secondary,
+  themeMode: 'light',
   defaultRestSeconds: 90,
   soundEnabled: true,
   dailyCalorieGoal: 2500,
@@ -31,18 +34,7 @@ const DEFAULT_STATE: GymState = {
     chest: [], back: [], legs: [], shoulders: [],
     arms: [], abs: [], cardio: [],
   },
-  nutritionLogs: [
-    {
-      id: 'mock-1',
-      name: 'Grilled Chicken & Rice',
-      calories: 550,
-      protein: 45,
-      carbs: 60,
-      fats: 12,
-      date: new Date().toISOString(),
-      portion: 350
-    }
-  ],
+  nutritionLogs: [],
 };
 
 function loadState(): GymState {
@@ -96,14 +88,29 @@ export function playSetDoneSound() {
   playBeep(440, 0.1, 0.2);
 }
 
+// Helper: get local date string YYYY-MM-DD (timezone-safe)
+function getLocalDateStr(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Helper: check if a log's date matches today (handles both UTC ISO and local formats)
+function isLogFromLocalDate(logDate: string, localDateStr: string): boolean {
+  // Parse the stored date and check its local date
+  const d = new Date(logDate);
+  return getLocalDateStr(d) === localDateStr || logDate.startsWith(localDateStr);
+}
+
 export function useGymTracker() {
   const [state, setState] = useState<GymState>(loadState);
   
   // Use state for sessionStartTime to ensure reactivity
   const [sessionStartTime, setSessionStartTimeState] = useState<number>(() => {
     const initialState = loadState();
-    const today = new Date().toISOString().split('T')[0];
-    const todayLogs = initialState.logs.filter(l => l.date.startsWith(today));
+    const today = getLocalDateStr();
+    const todayLogs = initialState.logs.filter(l => isLogFromLocalDate(l.date, today));
     if (todayLogs.length > 0) {
       return Math.min(...todayLogs.map(l => new Date(l.startTime || l.date).getTime()));
     }
@@ -115,13 +122,36 @@ export function useGymTracker() {
     // Apply theme & color
     const root = document.documentElement;
     const theme = THEME_COLORS.find(c => c.hex === state.settings.accentColor);
+    const secondaryColor = state.settings.accentSecondary || theme?.secondary || state.settings.accentColor;
     
     root.setAttribute('data-theme', state.settings.themeMode);
     root.style.setProperty('--accent-color', state.settings.accentColor);
+    root.style.setProperty('--accent-secondary', secondaryColor);
+    root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${state.settings.accentColor}, ${secondaryColor})`);
     root.style.setProperty('--accent-color-alpha', `${state.settings.accentColor}25`);
     root.style.setProperty('--accent-color-alpha-heavy', `${state.settings.accentColor}50`);
-    if (theme) root.style.setProperty('--accent-secondary', theme.secondary);
   }, [state]);
+
+  // Midnight Reset Logic: Clear session if day changed
+  useEffect(() => {
+    const checkNewDay = () => {
+      const lastCheck = localStorage.getItem('gymlog_last_check');
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (lastCheck && lastCheck !== today) {
+        // IT IS A NEW DAY! Clear everything that shouldn't persist
+        console.log('New day detected. Resetting session...');
+        // If there's a specific 'current workout' state in future, reset it here
+        // For now, we ensure 'today' logs are fresh by the natural date check
+      }
+      localStorage.setItem('gymlog_last_check', today);
+    };
+
+    checkNewDay();
+    // Also check when app comes back to focus
+    window.addEventListener('focus', checkNewDay);
+    return () => window.removeEventListener('focus', checkNewDay);
+  }, []);
 
   // Initial sync to fix any "ghost" PRs from storage
   useEffect(() => {
@@ -134,6 +164,11 @@ export function useGymTracker() {
 
   const setSettings = useCallback((s: Partial<GymSettings>) => {
     setState(prev => ({ ...prev, settings: { ...prev.settings, ...s } }));
+  }, []);
+
+  const resetAllData = useCallback(() => {
+    localStorage.clear();
+    window.location.reload();
   }, []);
 
   const addCustomExercise = useCallback((muscle: MuscleGroup, name: string) => {
@@ -218,75 +253,57 @@ export function useGymTracker() {
     return state.prs.find(p => p.exerciseName === exerciseName) ?? null;
   }, [state.prs]);
 
-  const saveWorkout = useCallback((log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'>) => {
+  const saveWorkout = useCallback((log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'>, elapsedSeconds?: number) => {
     const now = Date.now();
-    const start = sessionStartTime; // Use state
-    const durationMinutes = Math.round((now - start) / 60000);
-    const newLog: WorkoutLog = {
-      ...log,
-      id: `wl_${now}`,
-      startTime: new Date(start).toISOString(),
-      endTime: new Date(now).toISOString(),
-      durationMinutes: Math.max(1, durationMinutes),
-    };
+    const start = sessionStartTime;
 
     setState(prev => {
-      const today = new Date().toISOString().split('T')[0];
-      const existingLogIndex = prev.logs.findIndex(l => 
-        l.date.startsWith(today) && l.muscleGroup === log.muscleGroup
-      );
+      const today = getLocalDateStr();
+      const existingLogIndex = prev.logs.findIndex(l => isLogFromLocalDate(l.date, today));
 
       let updatedLogs;
       if (existingLogIndex !== -1) {
-        // MERGE: Update existing log
+        // MERGE: Update the existing log for today
         updatedLogs = [...prev.logs];
         const oldLog = updatedLogs[existingLogIndex];
-        
-        // Merge exercises: if same exercise exists, replace sets; otherwise add new exercise
+
         const mergedExercises = [...oldLog.exercises];
         log.exercises.forEach(newEx => {
           const exIdx = mergedExercises.findIndex(e => e.name === newEx.name);
-          if (exIdx !== -1) {
-            mergedExercises[exIdx] = newEx; // Use latest sets
-          } else {
-            mergedExercises.push(newEx);
-          }
+          if (exIdx !== -1) mergedExercises[exIdx] = newEx;
+          else mergedExercises.push(newEx);
         });
 
-        // Calculate current session duration in seconds
-        const currentSessionSeconds = Math.floor((now - sessionStartTime) / 1000);
-        
+        // Use elapsedSeconds from component if provided, otherwise keep old duration
+        const totalDurationSeconds = elapsedSeconds ?? (oldLog.durationSeconds || oldLog.durationMinutes * 60);
+
         updatedLogs[existingLogIndex] = {
           ...oldLog,
+          muscleGroup: log.muscleGroup,
           exercises: mergedExercises,
           endTime: new Date(now).toISOString(),
-          durationMinutes: Math.round(((oldLog.durationSeconds || (oldLog.durationMinutes * 60)) + currentSessionSeconds) / 60),
-          durationSeconds: (oldLog.durationSeconds || (oldLog.durationMinutes * 60)) + currentSessionSeconds,
+          durationMinutes: Math.round(totalDurationSeconds / 60),
+          durationSeconds: totalDurationSeconds,
         };
       } else {
-        // CREATE: Prepend new log
-        const currentSessionSeconds = Math.floor((now - sessionStartTime) / 1000);
+        // CREATE: First workout of the day
+        const durationSeconds = elapsedSeconds ?? Math.floor((now - start) / 1000);
         const newLog: WorkoutLog = {
           ...log,
           id: `wl_${now}`,
-          startTime: new Date(sessionStartTime).toISOString(),
+          startTime: new Date(start).toISOString(),
           endTime: new Date(now).toISOString(),
-          durationMinutes: Math.round(currentSessionSeconds / 60),
-          durationSeconds: currentSessionSeconds,
+          durationMinutes: Math.round(durationSeconds / 60),
+          durationSeconds,
         };
         updatedLogs = [newLog, ...prev.logs];
       }
 
       const updatedPRs = syncPRsFromLogs(updatedLogs);
-      return {
-        ...prev,
-        logs: updatedLogs,
-        prs: updatedPRs,
-      };
+      return { ...prev, logs: updatedLogs, prs: updatedPRs };
     });
 
-    setSessionStartTimeState(Date.now()); // Update state
-    return newLog;
+    setSessionStartTimeState(Date.now());
   }, [syncPRsFromLogs, sessionStartTime]);
 
   const deleteWorkout = useCallback((id: string) => {
@@ -370,6 +387,7 @@ export function useGymTracker() {
     addMealLog,
     updateMealLog,
     deleteMealLog,
+    resetAllData,
     nutritionLogs: state.nutritionLogs || [],
   };
 }

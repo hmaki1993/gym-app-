@@ -374,11 +374,11 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             }}>
               {/* Meal Name */}
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)', fontFamily: 'Outfit' }}>
+                <div style={{ fontSize: '20px', fontWeight: '950', color: '#ffffff', fontFamily: 'Outfit' }}>
                   {scanResult.name}
                 </div>
                 {scanResult.nameAr && (
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'rgba(var(--theme-rgb), 0.4)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
                     {scanResult.nameAr}
                   </div>
                 )}
@@ -389,7 +389,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 <div style={{ fontSize: '42px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: 1, fontFamily: 'Outfit' }}>
                   {scanResult.calories}
                 </div>
-                <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', opacity: 0.5, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '4px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', opacity: 1, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '6px' }}>
                   Total KCAL
                 </div>
               </div>
@@ -397,16 +397,16 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               {/* Simple Macros Row */}
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 10px', marginBottom: '24px' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#ffcc00', fontSize: '18px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.fats * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Fats</div>
+                  <div style={{ color: '#ffcc00', fontSize: '20px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.fats * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Fats</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#4da6ff', fontSize: '18px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.carbs * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(var(--theme-rgb), 0.3)', fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>Carbs</div>
+                  <div style={{ color: '#4da6ff', fontSize: '20px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.carbs * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Carbs</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#ff4d4d', fontSize: '18px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.protein * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(var(--theme-rgb), 0.3)', fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>Protein</div>
+                  <div style={{ color: '#ff0033', fontSize: '20px', fontWeight: '950', fontFamily: 'Outfit' }}>{(scanResult.protein * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Protein</div>
                 </div>
               </div>
 
@@ -417,17 +417,17 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               }}>
                 <button 
                   onClick={() => setServingSize(Math.max(0.5, servingSize - 0.5))}
-                  style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(var(--theme-rgb), 0.05)', color: 'var(--text-primary)', fontSize: '18px', fontWeight: '900' }}
+                  style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#ffffff', fontSize: '20px', fontWeight: '900' }}
                 >
                   -
                 </button>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit' }}>x{servingSize}</div>
-                  <div style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Servings</div>
+                  <div style={{ fontSize: '20px', fontWeight: '950', color: '#ffffff', fontFamily: 'Outfit' }}>x{servingSize}</div>
+                  <div style={{ fontSize: '11px', fontWeight: '900', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Servings</div>
                 </div>
                 <button 
                   onClick={() => setServingSize(servingSize + 0.5)}
-                  style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(var(--theme-rgb), 0.05)', color: 'var(--text-primary)', fontSize: '18px', fontWeight: '900' }}
+                  style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#ffffff', fontSize: '20px', fontWeight: '900' }}
                 >
                   +
                 </button>
@@ -442,8 +442,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     style={{
                       flex: 1, padding: '8px 4px', borderRadius: '10px', fontSize: '10px', fontWeight: '800',
                       background: 'transparent',
-                      color: targetCategory === cat ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.3)',
-                      border: targetCategory === cat ? '1px dashed var(--accent-color)' : '1px dashed rgba(var(--theme-rgb), 0.15)',
+                      color: targetCategory === cat ? 'var(--accent-color)' : 'rgba(255,255,255,0.4)',
+                      border: targetCategory === cat ? '1.5px dashed var(--accent-color)' : '1px dashed rgba(255,255,255,0.15)',
                       transition: 'all 0.2s ease'
                     }}
                   >
@@ -456,10 +456,10 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 <button
                   onClick={() => { setScanResult(null); setShowResult(false); handleScan(); }}
                   style={{ 
-                    flex: 1, height: '48px', borderRadius: '16px', 
+                    flex: 1, height: '52px', borderRadius: '18px', 
                     background: 'transparent', 
-                    border: '1px solid rgba(var(--theme-rgb), 0.15)', 
-                    color: 'var(--text-primary)', fontWeight: '800', fontSize: '13px'
+                    border: '1.5px solid rgba(255,255,255,0.2)', 
+                    color: '#ffffff', fontWeight: '900', fontSize: '14px'
                   }}
                 >
                   Scan New
@@ -467,11 +467,11 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 <button
                   onClick={() => handleAddLog()}
                   style={{ 
-                    flex: 1, height: '48px', borderRadius: '16px', 
+                    flex: 1, height: '52px', borderRadius: '18px', 
                     background: 'transparent', 
-                    border: '1px solid var(--accent-color)', 
-                    color: 'var(--accent-color)', fontWeight: '950', fontSize: '13px',
-                    textTransform: 'uppercase', letterSpacing: '0.5px'
+                    border: '2px solid var(--accent-color)', 
+                    color: 'var(--accent-color)', fontWeight: '950', fontSize: '14px',
+                    textTransform: 'uppercase', letterSpacing: '1px'
                   }}
                 >
                   Log Meal
@@ -532,28 +532,41 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               }}
               style={{
                 width: '100%', padding: '14px 20px', paddingLeft: '44px',
-                background: 'rgba(var(--theme-rgb), 0.03)', border: '1px solid rgba(var(--theme-rgb), 0.08)',
-                borderRadius: '16px', color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600',
-                outline: 'none', transition: 'all 0.3s ease', fontFamily: 'Outfit'
+                background: showDropdown ? 'rgba(var(--theme-rgb), 0.05)' : 'rgba(var(--theme-rgb), 0.03)', 
+                backdropFilter: showDropdown ? 'blur(30px)' : 'none',
+                WebkitBackdropFilter: showDropdown ? 'blur(30px)' : 'none',
+                border: '1.5px solid rgba(var(--theme-rgb), 0.3)',
+                borderBottom: showDropdown ? 'none' : '1.5px solid rgba(var(--theme-rgb), 0.3)',
+                borderRadius: showDropdown ? '20px 20px 0 0' : '20px', 
+                color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600',
+                outline: 'none', transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'Outfit',
+                boxShadow: showDropdown ? 'none' : '0 4px 12px rgba(0,0,0,0.02)'
               }}
             />
-            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }}>
+            <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.8 }}>
               <Search size={18} />
             </div>
 
             {/* LIVE SEARCH DROPDOWN */}
             {showDropdown && (
               <div className="hide-scrollbar" style={{
-                position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
-                background: 'rgba(20,20,20,0.92)', backdropFilter: 'blur(30px)',
-                border: '1px solid rgba(var(--theme-rgb), 0.1)', borderRadius: '24px',
-                boxShadow: '0 25px 50px rgba(0,0,0,0.6)', padding: '10px',
-                maxHeight: '350px', overflowY: 'auto', animation: 'slide-up 0.2s ease-out'
+                position: 'absolute', top: '100%', left: 0, right: 0,
+                marginTop: '-1.5px', 
+                background: 'rgba(var(--theme-rgb), 0.05)', backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1.5px solid rgba(var(--theme-rgb), 0.3)', 
+                borderTop: 'none',
+                borderRadius: '0 0 24px 24px',
+                boxShadow: '0 25px 50px rgba(0,0,0,0.1)', padding: '10px',
+                maxHeight: '350px', overflowY: 'auto', 
+                transformOrigin: 'top',
+                animation: 'elite-expand 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                zIndex: 1000
               }}>
                 {/* Instant Suggestions from History */}
                 {suggestedResults.length > 0 && (
                   <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.5)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>AI Results</div>
+                    <div style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>AI Suggestions</div>
                     <div style={{ 
                       overflow: 'hidden'
                     }}>
@@ -570,9 +583,9 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(var(--theme-rgb), 0.03)'}
                           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                         >
-                          <div style={{ fontWeight: '800', fontSize: '15px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: 'Outfit' }}>{item.name}</div>
-                          {item.nameAr && <div style={{ fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.4)', fontWeight: '600' }}>{item.nameAr}</div>}
-                          <div style={{ fontSize: '11px', color: 'var(--accent-color)', fontWeight: '900', marginTop: '4px' }}>{item.calories} KCAL</div>
+                          <div style={{ fontWeight: '900', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: 'Outfit' }}>{item.name}</div>
+                          {item.nameAr && <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700', opacity: 0.8 }}>{item.nameAr}</div>}
+                          <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '950', marginTop: '4px', letterSpacing: '0.5px' }}>{item.calories} KCAL</div>
                         </div>
                       ))}
                     </div>
@@ -596,7 +609,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                           margin: '20px 12px' 
                         }} />
                         
-                        <div style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.3)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>AI Results</div>
+                        <div style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>Search Results</div>
                         <div style={{ overflow: 'hidden' }}>
                           {searchResults.map((item, idx) => {
                             const normalizedItem = {
@@ -633,12 +646,12 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                                   e.currentTarget.style.transform = 'translateX(0)';
                                 }}
                               >
-                                <div style={{ fontWeight: '900', fontSize: '15px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: 'Outfit', letterSpacing: '-0.3px' }}>{normalizedItem.name}</div>
-                                {normalizedItem.nameAr && <div style={{ fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.4)', marginBottom: '6px', fontWeight: '600' }}>{normalizedItem.nameAr}</div>}
-                                <div style={{ fontSize: '10px', color: 'var(--accent-color)', fontWeight: '900', letterSpacing: '0.5px' }}>
-                                  {normalizedItem.calories} <span style={{opacity: 0.5}}>KCAL</span> 
-                                  <span style={{ opacity: 0.2, margin: '0 8px' }}>•</span> 
-                                  {normalizedItem.portion || 100}<span style={{opacity: 0.5}}>G</span>
+                                <div style={{ fontWeight: '950', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: 'Outfit', letterSpacing: '-0.3px' }}>{normalizedItem.name}</div>
+                                {normalizedItem.nameAr && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '700', opacity: 0.9 }}>{normalizedItem.nameAr}</div>}
+                                <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '950', letterSpacing: '0.5px' }}>
+                                  {normalizedItem.calories} <span style={{opacity: 0.7}}>KCAL</span> 
+                                  <span style={{ opacity: 0.4, margin: '0 8px' }}>•</span> 
+                                  {normalizedItem.portion || 100}<span style={{opacity: 0.7}}>G</span>
                                 </div>
                               </div>
                             );
@@ -655,8 +668,9 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             onClick={handleBarcodeScan}
             style={{
               width: '50px', height: '50px', borderRadius: '16px',
-              background: 'rgba(0,255,170,0.05)', border: '1px solid rgba(0,255,170,0.1)',
-              color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              background: 'rgba(0,255,170,0.1)', border: '1.5px solid rgba(0,255,170,0.4)',
+              color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0, 255, 170, 0.05)'
             }}
           >
             <Barcode size={22} />
@@ -669,18 +683,19 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           position: 'relative'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-             <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', opacity: 0.6 }}>AI SMART TRACKER</div>
+             <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', opacity: 1 }}>AI SMART TRACKER</div>
              <button 
               onClick={() => setShowSetup(true)}
               style={{ 
                 padding: '6px 12px', 
                 borderRadius: '10px', 
-                background: 'rgba(0,255,170,0.08)', 
-                border: '1px solid rgba(0,255,170,0.15)', 
+                background: 'rgba(0,255,170,0.12)', 
+                border: '1.5px solid rgba(0,255,170,0.4)', 
                 color: 'var(--accent-color)', 
-                fontSize: '9px', 
-                fontWeight: '900',
-                letterSpacing: '0.5px'
+                fontSize: '10px', 
+                fontWeight: '950',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase'
               }}
              >
                {profile ? 'UPDATE PROFILE' : 'START SETUP'}
@@ -691,7 +706,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             {/* Donut Circle on the Left */}
             <div style={{ position: 'relative', width: '140px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="140" height="140" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="44" fill="transparent" stroke="var(--glass-border)" strokeWidth="7" />
+                <circle cx="50" cy="50" r="44" fill="transparent" stroke="rgba(var(--theme-rgb), 0.2)" strokeWidth="7" />
                 {(() => {
                   const circumference = 2 * Math.PI * 44;
                   const pCal = consumedPro * 4;
@@ -711,7 +726,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               </svg>
               <div style={{ position: 'absolute', textAlign: 'center' }}>
                 <div style={{ fontSize: '34px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit', lineHeight: 1, letterSpacing: '-1.5px' }}>{remainingCal}</div>
-                <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px', marginTop: '4px', opacity: 0.7 }}>LEFT</div>
+                <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px', marginTop: '4px', opacity: 1 }}>LEFT</div>
               </div>
             </div>
 
@@ -727,11 +742,11 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             {/* Stats on the Right */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', paddingRight: '15px', textAlign: 'right' }}>
               <div>
-                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.45)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>DAILY GOAL</div>
+                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>DAILY GOAL</div>
                 <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit' }}>{calorieGoal}</div>
               </div>
               <div>
-                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.45)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>CONSUMED</div>
+                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>CONSUMED</div>
                 <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--accent-color)', fontFamily: 'Outfit' }}>{consumedCal}</div>
               </div>
             </div>
@@ -746,7 +761,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             padding: '0 5px'
           }}>
             {[
-              { label: 'PROTEIN', val: consumedPro, color: '#ff4d4d' },
+              { label: 'PROTEIN', val: consumedPro, color: '#ff3300' },
               { label: 'CARBS', val: consumedCarb, color: '#4da6ff' },
               { label: 'FATS', val: consumedFat, color: '#ffcc00' }
             ].map((m, idx) => (
@@ -758,7 +773,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 position: 'relative'
               }}>
                 <div style={{ fontSize: '18px', fontWeight: '900', color: m.color, fontFamily: 'Outfit' }}>{m.val.toFixed(1)}<span style={{fontSize: '10px', opacity: 0.3, fontWeight: '700', marginLeft: '2px'}}>g</span></div>
-                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.45)', fontWeight: '900', letterSpacing: '1px' }}>{m.label}</div>
+                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.85)', fontWeight: '900', letterSpacing: '1px' }}>{m.label}</div>
               </div>
             ))}
           </div>
@@ -798,14 +813,14 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 </div>
                 <div style={{ 
                   flex: 1, 
-                  height: '1px', 
-                  background: 'linear-gradient(to right, var(--glass-border), transparent)'
+                  height: '1.5px', 
+                  background: 'linear-gradient(to right, rgba(var(--theme-rgb), 0.3), transparent)'
                 }} />
                 {catCal > 0 && (
                   <div style={{ 
                     fontSize: '10px', 
                     fontWeight: '900', 
-                    color: 'rgba(var(--theme-rgb), 0.2)',
+                    color: 'rgba(var(--theme-rgb), 0.6)',
                     fontFamily: 'Outfit'
                   }}>
                     {catCal} KCAL
@@ -814,25 +829,34 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               </div>
 
               <div>
-                {catMeals.map((meal: any, i: number) => {
+                {catMeals.map((meal: any) => {
                   const isExpanded = expandedMealId === meal.id;
                   return (
                     <div key={meal.id} style={{
-                      borderBottom: i < catMeals.length - 1 ? '1px solid rgba(var(--theme-rgb), 0.03)' : 'none',
-                      overflow: 'hidden'
+                      background: isExpanded ? 'rgba(var(--theme-rgb), 0.05)' : 'rgba(var(--theme-rgb), 0.01)',
+                      borderRadius: '18px',
+                      margin: '6px 0',
+                      border: '1px solid ' + (isExpanded ? 'rgba(var(--theme-rgb), 0.15)' : 'rgba(var(--theme-rgb), 0.08)'),
+                      boxShadow: isExpanded ? '0 12px 30px rgba(0,0,0,0.04)' : 'none',
+                      overflow: 'hidden',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      outline: 'none',
+                      WebkitTapHighlightColor: 'transparent'
                     }}>
                       <div 
                         onClick={() => setExpandedMealId(isExpanded ? null : meal.id)}
                         style={{
-                          padding: '16px',
+                          padding: '16px 20px',
                           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                           cursor: 'pointer', transition: 'all 0.2s ease',
-                          background: isExpanded ? 'rgba(var(--theme-rgb), 0.02)' : 'transparent'
+                          outline: 'none',
+                          WebkitTapHighlightColor: 'transparent'
                         }}
                       >
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: 'Outfit' }}>{meal.name}</div>
-                          {meal.nameAr && <div style={{ fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.3)', fontWeight: '600', marginBottom: '8px' }}>{meal.nameAr}</div>}
+                          {meal.nameAr && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700', marginBottom: '8px', opacity: 1 }}>{meal.nameAr}</div>}
                           
                           {/* Quick Quantity Toggle - Now below name for better width */}
                           <div style={{ 
@@ -843,8 +867,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                               onClick={(e) => { e.stopPropagation(); updateLogQuantity(meal.id, -1); }}
                               style={{ 
                                 background: 'none', border: 'none', color: 'var(--text-primary)', 
-                                fontSize: '18px', fontWeight: '900', padding: '0 4px',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5
+                                fontSize: '20px', fontWeight: '900', padding: '0 4px',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 1
                               }}
                             >
                               -
@@ -854,8 +878,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                               onClick={(e) => { e.stopPropagation(); updateLogQuantity(meal.id, 1); }}
                               style={{ 
                                 background: 'none', border: 'none', color: 'var(--text-primary)', 
-                                fontSize: '18px', fontWeight: '900', padding: '0 4px',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5
+                                fontSize: '20px', fontWeight: '900', padding: '0 4px',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 1
                               }}
                             >
                               +
@@ -870,7 +894,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                                 <div style={{ fontSize: '10px', opacity: 0.6, fontWeight: '900', letterSpacing: '1px' }}>FAT</div>
                             </div>
                           )}
-                          <ChevronDown size={14} style={{ opacity: 0.3, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
+                          <ChevronDown size={14} style={{ opacity: 0.8, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
                         </div>
                       </div>
 
@@ -886,23 +910,23 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                           <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
                             <div style={{ textAlign: 'center' }}>
                               <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit', lineHeight: 1 }}>{meal.calories}</div>
-                              <div style={{ fontSize: '8px', fontWeight: '900', opacity: 0.3, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '4px' }}>Kcal</div>
+                              <div style={{ fontSize: '9px', fontWeight: '950', opacity: 1, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '4px' }}>Kcal</div>
                             </div>
                             
-                            <div style={{ width: '1px', background: 'rgba(var(--theme-rgb), 0.06)', height: '24px' }} />
+                            <div style={{ width: '2px', background: 'rgba(var(--theme-rgb), 0.15)', height: '24px' }} />
                             
                             <div style={{ display: 'flex', gap: '24px' }}>
                               <div style={{ textAlign: 'center' }}>
                                 <div style={{ color: '#ff4d4d', fontSize: '15px', fontWeight: '900', fontFamily: 'Outfit' }}>{meal.protein}g</div>
-                                <div style={{ fontSize: '7px', opacity: 0.3, fontWeight: '900', letterSpacing: '0.5px' }}>PRO</div>
+                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>PRO</div>
                               </div>
                               <div style={{ textAlign: 'center' }}>
                                 <div style={{ color: '#4da6ff', fontSize: '15px', fontWeight: '900', fontFamily: 'Outfit' }}>{meal.carbs}g</div>
-                                <div style={{ fontSize: '7px', opacity: 0.3, fontWeight: '900', letterSpacing: '0.5px' }}>CARB</div>
+                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>CARB</div>
                               </div>
                               <div style={{ textAlign: 'center' }}>
                                 <div style={{ color: '#ffcc00', fontSize: '15px', fontWeight: '900', fontFamily: 'Outfit' }}>{meal.fats}g</div>
-                                <div style={{ fontSize: '7px', opacity: 0.3, fontWeight: '900', letterSpacing: '0.5px' }}>FAT</div>
+                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>FAT</div>
                               </div>
                             </div>
                           </div>
@@ -914,7 +938,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                               border: 'none', 
                               padding: '8px',
                               color: '#ff4d4d',
-                              opacity: 0.4,
+                              opacity: 1,
                               marginRight: '-8px',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               transition: 'all 0.2s ease'
@@ -945,21 +969,21 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     height: '60px',
                     margin: '25px auto 10px',
                     background: 'transparent', 
-                    border: '1.5px dashed #ff4d4d', 
+                    border: '2px dashed #ff3300', 
                     borderRadius: '50%',
-                    color: '#ff4d4d', 
+                    color: '#ff3300', 
                     fontSize: '32px', 
                     fontWeight: '200', 
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    opacity: scanning ? 0.3 : 0.7,
+                    opacity: scanning ? 0.3 : 1,
                     cursor: 'pointer',
-                    boxShadow: '0 0 15px rgba(255, 77, 77, 0.05)'
+                    boxShadow: '0 0 20px rgba(255, 51, 0, 0.3)'
                   }}
                   onMouseEnter={(e) => { if(!scanning) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.1)'; } }}
-                  onMouseLeave={(e) => { if(!scanning) { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.transform = 'scale(1)'; } }}
+                  onMouseLeave={(e) => { if(!scanning) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; } }}
                 >
-                  {scanning ? <div style={{ width: '20px', height: '20px', border: '2px solid transparent', borderTopColor: '#ff4d4d', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} /> : '+'}
+                  {scanning ? <div style={{ width: '20px', height: '20px', border: '2px solid transparent', borderTopColor: '#ff3300', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} /> : '+'}
                 </button>
               </div>
             </div>

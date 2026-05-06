@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Sun, Moon } from 'lucide-react';
+import { THEME_COLORS } from '../../data/exercises';
 import gsap from 'gsap';
 
 interface Props {
@@ -79,6 +80,9 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain'>('maintain');
   const [goalRate, setGoalRate] = useState(0.5);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
+  const [accentColor, setAccentColor] = useState(THEME_COLORS[6].hex);
+  const [accentSecondary, setAccentSecondary] = useState(THEME_COLORS[6].secondary);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -86,6 +90,21 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
       gsap.fromTo(ref.current, { opacity: 0 }, { opacity: 1, duration: 1, ease: 'power2.out' });
     }
   }, []);
+
+  // Live Theme Preview
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-theme', themeMode);
+    root.style.setProperty('--accent-color', accentColor);
+    root.style.setProperty('--accent-secondary', accentSecondary);
+    
+    // Alpha for glows
+    const hex = accentColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    root.style.setProperty('--accent-color-alpha', `rgba(${r}, ${g}, ${b}, 0.2)`);
+  }, [themeMode, accentColor, accentSecondary]);
 
   // Live Calculation Logic
   const calculateTargets = () => {
@@ -134,7 +153,10 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
         proteinRatio: goal === 'gain' ? 35 : 30,
         carbsRatio: 40,
         fatsRatio: goal === 'lose' ? 20 : 30
-      }
+      },
+      themeMode,
+      accentColor,
+      accentSecondary
     });
     onComplete();
   };
@@ -142,7 +164,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
   return (
     <div className="modal-overlay hide-scrollbar" style={{ 
       alignItems: 'flex-start', 
-      background: '#000',
+      background: 'var(--primary-bg)',
       overflowY: 'auto',
       padding: '30px 25px',
       zIndex: 20000
@@ -308,17 +330,61 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
             </div>
           )}
 
+          {/* Appearance Section */}
+          <div style={{ marginTop: '20px' }}>
+            <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '16px', letterSpacing: '2px', textAlign: 'center' }}>APPEARANCE</label>
+            
+            {/* Mode Toggle */}
+            <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.05)', borderRadius: '20px', padding: '4px', maxWidth: '240px', margin: '0 auto 24px', width: '100%' }}>
+              {(['light', 'dark'] as const).map(mode => (
+                <button key={mode} onClick={() => setThemeMode(mode)} style={{
+                  flex: 1, padding: '12px 0', border: 'none', borderRadius: '16px', fontSize: '11px', fontWeight: '950', cursor: 'pointer',
+                  background: themeMode === mode ? 'var(--accent-color)' : 'transparent',
+                  color: themeMode === mode ? '#fff' : 'rgba(var(--theme-rgb), 0.4)',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}>
+                  {mode === 'light' ? <Sun size={14}/> : <Moon size={14}/>}
+                  {mode.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            {/* Color Selectors */}
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '40px' }}>
+              {THEME_COLORS.map(theme => (
+                <button 
+                  key={theme.name} 
+                  onClick={() => {
+                    setAccentColor(theme.hex);
+                    setAccentSecondary(theme.secondary);
+                  }} 
+                  style={{
+                    width: '38px', height: '38px', borderRadius: '50%', 
+                    background: theme.name === 'Fusion' ? `linear-gradient(135deg, ${theme.hex}, ${theme.secondary})` : theme.hex, 
+                    cursor: 'pointer',
+                    border: accentColor === theme.hex ? '3px solid var(--text-primary)' : '3px solid transparent',
+                    boxShadow: accentColor === theme.hex ? `0 0 15px ${theme.hex}66` : 'none',
+                    transform: accentColor === theme.hex ? 'scale(1.15)' : 'scale(1)',
+                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                  }} 
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Action Button - Minimal Dash or Subtle Box */}
-          <div style={{ marginTop: targets ? '0' : '40px', paddingBottom: '80px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginTop: '0', paddingBottom: '80px', display: 'flex', justifyContent: 'center' }}>
             <button 
               onClick={handleFinalSubmit}
               disabled={!name.trim()}
               style={{ 
-                width: 'fit-content', padding: '12px 30px', borderRadius: '0', 
-                background: 'none', border: '1px dashed var(--accent-color)', color: 'var(--accent-color)', 
-                fontWeight: '950', fontSize: '12px', textTransform: 'uppercase', 
-                letterSpacing: '3px', opacity: name.trim() ? 1 : 0.2, transition: 'all 0.3s ease',
-                cursor: 'pointer'
+                width: '100%', maxWidth: '280px', padding: '18px 30px', borderRadius: '20px', 
+                background: name.trim() ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.05)', 
+                border: 'none', color: name.trim() ? '#fff' : 'rgba(var(--theme-rgb), 0.2)', 
+                fontWeight: '950', fontSize: '13px', textTransform: 'uppercase', 
+                letterSpacing: '3px', transition: 'all 0.3s ease',
+                cursor: 'pointer', boxShadow: name.trim() ? '0 15px 30px var(--accent-color-alpha)' : 'none'
               }}
             >
               FINISH SETUP
