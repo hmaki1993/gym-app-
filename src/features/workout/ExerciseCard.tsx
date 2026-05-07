@@ -88,8 +88,8 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
     if (titleRef.current) {
       const letters = titleRef.current.querySelectorAll('.title-letter');
       gsap.fromTo(letters,
-        { y: 16, opacity: 0, filter: 'blur(6px)' },
-        { y: 0, opacity: 1, filter: 'blur(0px)', stagger: 0.04, duration: 0.45, ease: 'power3.out', delay: 0.1 }
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.04, duration: 0.45, ease: 'power3.out', delay: 0.1 }
       );
     }
   }, [exerciseName]);
