@@ -423,7 +423,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             touchAction: 'none',
             overscrollBehavior: 'none',
             boxSizing: 'border-box',
-            boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+            border: 'none'
           }}>
             {/* Dots */}
             <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: 'transparent' }}>

@@ -162,22 +162,23 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
   return (
     <div
       ref={cardRef}
-      className={(inline || fullPage) ? "antigravity-card" : "glass-card antigravity-card"}
+      className={fullPage ? "" : (inline ? "antigravity-card" : "glass-card antigravity-card")}
       style={fullPage ? {
         display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%',
-        overflow: 'hidden', background: 'var(--primary-bg)', padding: 0, touchAction: 'pan-y', boxSizing: 'border-box', transformStyle: 'preserve-3d'
+        overflow: 'hidden', background: 'var(--primary-bg)', padding: 0, touchAction: 'pan-y', boxSizing: 'border-box'
       } : (inline ? {
         padding: '16px 0', marginBottom: '12px', background: 'transparent',
-        borderBottom: '1.5px solid var(--glass-border)', animation: 'slideDown 0.3s ease', transformStyle: 'preserve-3d'
+        border: 'none', animation: 'slideDown 0.3s ease'
       } : {
         padding: '24px', marginBottom: '20px', background: 'var(--glass-bg)',
-        border: '1px solid var(--glass-border)', borderRadius: '28px', transformStyle: 'preserve-3d'
-      })}>
+        border: 'none', borderRadius: '28px'
+      })}
+    >
 
       <div style={{ flexShrink: 0, transformStyle: 'preserve-3d' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '14px', flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', transform: 'translateZ(20px)', flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
               <h2 ref={titleRef} className="heading-font" style={{ 
                 margin: 0, 
                 marginBottom: '10px',
@@ -187,15 +188,13 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
                 letterSpacing: '1px',
                 textTransform: 'uppercase',
                 lineHeight: '1.15',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
                 paddingRight: '8px',
+                position: 'relative'
               }}>
                 {exerciseName.split(' ').map((word, wi) => (
                   <span key={wi} style={{ display: 'inline-block', whiteSpace: 'nowrap', marginRight: wi < exerciseName.split(' ').length - 1 ? '0.3em' : '0' }}>
                     {word.split('').map((char, ci) => (
-                      <span key={ci} className="title-letter" style={{ display: 'inline-block' }}>
+                      <span key={ci} className="title-letter" style={{ display: 'inline-block', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
                         {char}
                       </span>
                     ))}
