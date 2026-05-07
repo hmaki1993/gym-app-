@@ -83,7 +83,7 @@ export function SessionLogger({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: '700', color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)' }}>
+                  <div style={{ fontSize: '19px', fontWeight: '800', color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>
                     {loggedData[name] ? '✓ ' : ''}{name}
                   </div>
                 </div>
@@ -94,8 +94,28 @@ export function SessionLogger({
         })}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-        <button onClick={onSave} style={{ background: 'rgba(var(--theme-rgb), 0.03)', border: '1px solid var(--accent-color-alpha-heavy)', color: 'var(--accent-color)', fontSize: '12px', fontWeight: '900', padding: '10px 28px', borderRadius: '14px' }}>
-          <Trophy size={16} /> {t('finishSession')}
+        <button 
+          onClick={onSave} 
+          style={{ 
+            background: 'rgba(var(--accent-rgb, 50, 97, 68), 0.1)',
+            border: '1px solid var(--accent-color)',
+            color: 'var(--accent-color)',
+            padding: '12px 30px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: '900',
+            letterSpacing: '1px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 0 15px var(--accent-color-alpha)',
+            cursor: 'pointer',
+            fontFamily: 'Outfit, sans-serif',
+            touchAction: 'manipulation'
+          }}
+        >
+          <Trophy size={16} strokeWidth={3} /> 
+          {t('finishSession').toUpperCase()}
         </button>
       </div>
     </div>
