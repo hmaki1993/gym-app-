@@ -76,23 +76,23 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
   const setsRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    if (setsRef.current) {
+    if (setsRef.current && !fullPage) {
       gsap.fromTo(setsRef.current.children,
         { opacity: 0, x: -10, translateZ: -20 },
         { opacity: 1, x: 0, translateZ: 0, stagger: 0.05, duration: 0.5, ease: 'power2.out' }
       );
     }
-  }, []);
+  }, [fullPage]);
 
   useEffect(() => {
-    if (titleRef.current) {
+    if (titleRef.current && !fullPage) {
       const words = titleRef.current.querySelectorAll('.title-word');
       gsap.fromTo(words,
         { y: 12, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.06, duration: 0.35, ease: 'power2.out' }
       );
     }
-  }, [exerciseName]);
+  }, [exerciseName, fullPage]);
 
   const formatElapsed = (totalSeconds: number) => {
     const h = Math.floor(totalSeconds / 3600);

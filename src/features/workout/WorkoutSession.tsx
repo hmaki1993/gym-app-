@@ -345,7 +345,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   const handleSwipeTransition = (direction: 'left' | 'right', nextEx: string) => {
     if (!swipeContainerRef.current || !nextEx) {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.25, ease: 'power2.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power2.out' });
       touchState.current.isAnimating = false;
       return;
     }
@@ -356,14 +356,14 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     gsap.to(swipeContainerRef.current, {
       xPercent: xDist,
       opacity: 0,
-      duration: 0.2,
+      duration: 0.1,
       ease: 'power2.in',
       force3D: true,
       onComplete: () => {
         setOpenExercise(nextEx);
         gsap.fromTo(swipeContainerRef.current,
           { xPercent: direction === 'left' ? 100 : -100, opacity: 0 },
-          { xPercent: 0, opacity: 1, duration: 0.25, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
+          { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
         );
       }
     });
