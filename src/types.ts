@@ -35,6 +35,7 @@ export interface PersonalRecord {
   weight: number;
   reps: number;
   date: string;
+  muscleGroup?: string;
 }
 
 export type WeightUnit = 'kg' | 'lbs' | 'balata';
@@ -90,5 +91,6 @@ export interface GymState {
   customExercises: Record<MuscleGroup, string[]>;
   hiddenExercises: Record<MuscleGroup, string[]>;
   exerciseOrder: Record<MuscleGroup, string[]>;
+  customTranslations?: Record<string, string>;
   nutritionLogs: MealLog[];
 }

@@ -8,9 +8,10 @@ interface Props {
   lang: 'ar' | 'en';
   themeMode?: 'dark' | 'light';
   accentColor?: string;
+  musclesWithExercises?: Set<MuscleGroup>;
 }
 
-export function MuscleSelector({ selectedMuscle, onSelect, lang }: Props) {
+export function MuscleSelector({ selectedMuscle, onSelect, lang, musclesWithExercises }: Props) {
   return (
     <div className="hide-scrollbar allow-swipe" style={{ 
       display: 'flex', flexDirection: 'row', flexWrap: 'nowrap',
@@ -22,6 +23,7 @@ export function MuscleSelector({ selectedMuscle, onSelect, lang }: Props) {
       <div style={{ display: 'flex', gap: '25px', minWidth: 'max-content' }}>
         {MUSCLE_GROUPS.map(mg => {
           const isSelected = selectedMuscle === mg.key;
+          const hasExercises = musclesWithExercises?.has(mg.key as MuscleGroup);
           return (
             <button
               key={mg.key}
@@ -31,34 +33,36 @@ export function MuscleSelector({ selectedMuscle, onSelect, lang }: Props) {
                 background: 'none', border: 'none', padding: '0',
                 flexShrink: 0, minWidth: '60px', cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                opacity: isSelected ? 1 : 0.5
+                opacity: isSelected ? 1 : (hasExercises ? 0.9 : 0.5),
+                position: 'relative'
               }}
             >
               <div style={{
-                width: '60px', height: '60px', borderRadius: '18px',
+                width: '75px', height: '75px', borderRadius: '22px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: isSelected ? 'rgba(var(--theme-rgb), 0.08)' : 'rgba(var(--theme-rgb), 0.04)',
-                border: `1.5px solid ${isSelected ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.08)'}`,
-                boxShadow: isSelected ? '0 0 20px -4px var(--accent-color-alpha)' : 'none',
+                border: `2px solid ${isSelected ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.08)'}`,
+                boxShadow: isSelected ? '0 0 25px -4px var(--accent-color-alpha)' : 'none',
                 transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 transform: isSelected ? 'translateY(-2px)' : 'none',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                position: 'relative'
               }}>
                 <TransparentImage
                   src={mg.icon}
                   alt={mg.en}
-                  width={44}
-                  height={44}
+                  width={55}
+                  height={55}
                   threshold={45}
                   style={{
-                    filter: 'grayscale(1) brightness(1.1)',
+                    filter: isSelected ? 'grayscale(0) brightness(1.1)' : 'grayscale(1) brightness(1.1)',
                     transition: 'all 0.4s ease'
                   }}
                 />
               </div>
               <span style={{
-                fontSize: '10px', fontWeight: '950',
-                color: isSelected ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontSize: '12px', fontWeight: '950',
+                color: isSelected ? 'var(--accent-color)' : (hasExercises ? 'var(--accent-secondary)' : 'var(--text-secondary)'),
                 textTransform: 'uppercase', letterSpacing: '1px',
                 marginTop: '4px'
               }}>

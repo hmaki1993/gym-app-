@@ -370,6 +370,22 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     });
   };
 
+  const musclesWithExercises = React.useMemo(() => {
+    const set = new Set<MuscleGroup>();
+    const exerciseToMuscle: Record<string, MuscleGroup> = {};
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex] = group as MuscleGroup; });
+    });
+    Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex] = group as MuscleGroup; });
+    });
+    activeExercises.forEach(exName => {
+      const group = exerciseToMuscle[exName];
+      if (group) set.add(group);
+    });
+    return set;
+  }, [activeExercises, tracker.customExercises]);
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -478,20 +494,20 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           minWidth: 0
         }}>
           <div style={{ 
-            width: '4px', 
-            height: '20px', 
+            width: '6px', 
+            height: '32px', 
             background: 'var(--accent-color)', 
-            borderRadius: '2px',
+            borderRadius: '3px',
             boxShadow: '0 0 15px var(--accent-color-alpha)',
             flexShrink: 0
           }} />
           <h1 className="heading-font" style={{ 
             margin: 0, 
-            fontSize: 'min(18px, 4.5vw)', 
+            fontSize: 'min(32px, 8vw)', 
             background: 'linear-gradient(to bottom, var(--text-primary) 50%, var(--accent-color) 150%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            letterSpacing: '-0.5px',
+            letterSpacing: '-1px',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -509,10 +525,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           alignItems: 'center', 
           gap: '4px', 
           flexShrink: 0,
-          background: 'rgba(var(--theme-rgb), 0.03)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: '20px',
-          padding: '4px 8px',
+          background: 'rgba(var(--theme-rgb), 0.05)',
+          border: '1px dashed rgba(var(--theme-rgb), 0.2)',
+          borderRadius: '10px',
+          padding: '6px 10px',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)'
         }}>
@@ -587,6 +603,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               onSelect={setSelectedMuscle} 
               lang={lang} 
               themeMode={tracker.settings.themeMode}
+              musclesWithExercises={musclesWithExercises}
             />
             <ExercisePicker
               search={search}
@@ -594,18 +611,19 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               filteredExercises={filtered}
               activeExercises={activeExercises}
               onToggle={toggleExercise}
-              onAddCustom={(name) => tracker.addCustomExercise(selectedMuscle, name)}
+              onAddCustom={(name, translation) => tracker.addCustomExercise(selectedMuscle!, name, translation)}
               onRemove={(name, isCustom) => {
-                if (isCustom) tracker.removeCustomExercise(selectedMuscle, name);
-                else tracker.hideDefaultExercise(selectedMuscle, name);
+                if (isCustom) tracker.removeCustomExercise(selectedMuscle!, name);
+                else tracker.hideDefaultExercise(selectedMuscle!, name);
                 if (activeExercises.includes(name)) toggleExercise(name);
               }}
               isRtl={isRtl}
               t={t}
               weightUnit={tracker.settings.weightUnit}
               getLastSession={(name) => tracker.getLastSession(name)}
-              customExercises={tracker.customExercises[selectedMuscle]}
-              onReorder={(newOrder) => tracker.reorderExercises(selectedMuscle, newOrder)}
+              customExercises={tracker.customExercises[selectedMuscle!]}
+              onReorder={(newOrder) => tracker.reorderExercises(selectedMuscle!, newOrder)}
+              customTranslations={tracker.state.customTranslations}
             />
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', marginTop: '4px' }}>
               <button 

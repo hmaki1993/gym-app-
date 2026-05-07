@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
-import { ChevronDown, Check, Sun, Moon } from 'lucide-react';
+import { Dumbbell } from 'lucide-react';
 import { THEME_COLORS } from '../../data/exercises';
 import gsap from 'gsap';
 
@@ -9,67 +9,6 @@ interface Props {
   onComplete: () => void;
 }
 
-function EliteSelect({ id, defaultValue, options, onChange }: { id: string, defaultValue: string, options: { value: string, label: string }[], onChange?: (val: string) => void }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState(options.find(o => o.value === defaultValue) || options[0]);
-
-  useEffect(() => {
-    const found = options.find(o => o.value === defaultValue);
-    if (found) setSelected(found);
-  }, [defaultValue, options]);
-
-  return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <input type="hidden" id={id} value={selected.value} />
-      <div 
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          width: '100%', background: 'rgba(var(--theme-rgb), 0.03)', border: '1px solid rgba(var(--theme-rgb), 0.08)',
-          borderRadius: '12px', padding: '10px 14px', color: 'var(--text-primary)', fontWeight: '900', fontSize: '13px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
-          transition: 'all 0.3s ease', fontFamily: 'Outfit'
-        }}
-      >
-        {selected.label}
-        <ChevronDown size={14} style={{ opacity: 0.5, transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
-      </div>
-
-      {isOpen && (
-        <>
-          <div onClick={() => setIsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000 }} />
-          <div style={{
-            position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 2000,
-            background: 'rgba(20,20,20,0.95)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(var(--theme-rgb), 0.1)', borderRadius: '12px',
-            padding: '4px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-            animation: 'slide-up 0.2s ease-out'
-          }}>
-            {options.map(opt => (
-              <div 
-                key={opt.value}
-                onClick={() => { 
-                  setSelected(opt); 
-                  setIsOpen(false); 
-                  if (onChange) onChange(opt.value);
-                }}
-                style={{
-                  padding: '8px 12px', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '12px',
-                  fontWeight: selected.value === opt.value ? '900' : '600',
-                  background: selected.value === opt.value ? 'rgba(0,255,170,0.1)' : 'transparent',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  cursor: 'pointer', transition: 'all 0.2s ease'
-                }}
-              >
-                {opt.label}
-                {selected.value === opt.value && <Check size={12} color="var(--accent-color)" />}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 export function OnboardingModal({ tracker, onComplete }: Props) {
   const [name, setName] = useState('');
@@ -79,10 +18,10 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain'>('maintain');
-  const [goalRate, setGoalRate] = useState(0.5);
+  const [goalRate] = useState(0.5);
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
-  const [accentColor, setAccentColor] = useState(THEME_COLORS[6].hex);
-  const [accentSecondary, setAccentSecondary] = useState(THEME_COLORS[6].secondary);
+  const [accentColor, _setAccentColor] = useState(THEME_COLORS[0].hex);
+  const [accentSecondary, _setAccentSecondary] = useState(THEME_COLORS[0].secondary);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -161,237 +100,361 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
     onComplete();
   };
 
+  const cardStyle: React.CSSProperties = {
+    width: '100%',
+    maxWidth: '400px',
+    background: 'transparent',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+    marginBottom: '35px'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '11px',
+    fontWeight: '900',
+    color: '#ff3d00',
+    letterSpacing: '2.5px',
+    textTransform: 'uppercase',
+    marginBottom: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '0 8px'
+  };
+
+  const inputRowStyle: React.CSSProperties = {
+    background: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)',
+    borderRadius: '16px',
+    padding: '16px',
+    borderTop: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
+    borderLeft: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
+    borderRight: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
+    borderBottom: '3px solid rgba(255, 61, 0, 0.3)',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!name.trim()) return;
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    gsap.to(btn, {
+      rotateY: x * 15,
+      rotateX: -y * 15,
+      translateZ: 40,
+      duration: 0.5,
+      ease: 'power2.out'
+    });
+  };
+
+  const handleHeaderMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    gsap.to(btn, {
+      rotateY: x * 20,
+      rotateX: -y * 20,
+      duration: 0.5,
+      ease: 'power2.out'
+    });
+  };
+
+  const handleHeaderMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.to(e.currentTarget, {
+      rotateY: 0,
+      rotateX: 0,
+      duration: 0.8,
+      ease: 'elastic.out(1, 0.5)'
+    });
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.to(e.currentTarget, {
+      rotateY: 0,
+      rotateX: 0,
+      translateZ: 0,
+      duration: 0.8,
+      ease: 'elastic.out(1, 0.5)'
+    });
+  };
+
   return (
     <div className="modal-overlay hide-scrollbar" style={{ 
       alignItems: 'flex-start', 
-      background: 'var(--primary-bg)',
+      background: themeMode === 'dark' ? '#050505' : '#f8f9fa',
       overflowY: 'auto',
-      padding: '30px 25px',
-      zIndex: 20000
+      padding: '40px 20px',
+      zIndex: 20000,
+      transition: 'background 0.5s ease'
     }}>
       <div ref={ref} style={{ 
         width: '100%', 
         maxWidth: '400px', 
         margin: '0 auto',
-        position: 'relative'
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
       }}>
         
-        {/* Header - Centered & Elite Style */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 className="heading-font" style={{ 
-            margin: 0, 
-            fontSize: '42px',
-            background: 'linear-gradient(to bottom, var(--text-primary) 50%, var(--accent-color) 150%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '-2px',
-            textTransform: 'uppercase',
-            fontWeight: '950',
-            lineHeight: 1
+        {/* Header - Elite Dashboard Style with 3D Interaction */}
+        <div 
+          onMouseMove={handleHeaderMouseMove}
+          onMouseLeave={handleHeaderMouseLeave}
+          style={{ 
+            textAlign: 'center', 
+            marginBottom: '60px',
+            width: '100%',
+            perspective: '1200px',
+            cursor: 'default'
+          }}
+        >
+          <div style={{ 
+            display: 'inline-block',
+            transformStyle: 'preserve-3d',
+            transition: 'transform 0.1s ease-out'
           }}>
-            GYMLOG
-          </h1>
-          <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.2)', fontWeight: '900', letterSpacing: '4px', marginTop: '8px', textTransform: 'uppercase' }}>
-            {language === 'ar' ? 'الإعداد الذكي' : 'SMART SETUP'}
+            <h1 className="heading-font" style={{ 
+              margin: 0, 
+              fontSize: '38px',
+              letterSpacing: '-1px',
+              textTransform: 'uppercase',
+              fontWeight: 950,
+              lineHeight: 1,
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: 'translateZ(30px)',
+            }}>
+              <span style={{ color: '#a0a0a0' }}>POWER</span>
+              <div style={{ 
+                margin: '0 10px',
+                color: '#ff3d00',
+                filter: 'drop-shadow(0 0 12px rgba(255, 61, 0, 0.4))',
+                display: 'flex',
+                alignItems: 'center',
+                transform: 'translateZ(20px)'
+              }}>
+                <Dumbbell size={28} strokeWidth={3} className="pulse-elite" />
+              </div>
+              <span style={{ color: '#ff3d00' }}>GRID</span>
+            </h1>
+            <div style={{ 
+              fontSize: '13px', 
+              color: '#ff3d00', 
+              fontWeight: '950', 
+              letterSpacing: '8px', 
+              marginTop: '16px', 
+              textTransform: 'uppercase',
+              opacity: 1
+            }}>
+              {language === 'ar' ? 'الإعداد الذكي' : 'SMART SETUP'}
+            </div>
           </div>
         </div>
 
-        {/* Minimal Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
-          
-          {/* Language Selector */}
-          <div>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              {(['ar', 'en'] as const).map(lg => (
-                <button key={lg} onClick={() => setLanguage(lg)}
-                  style={{
-                    background: 'none', border: 'none', padding: '0', fontSize: '14px', fontWeight: '950', transition: 'all 0.3s ease',
-                    color: language === lg ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.15)',
-                    cursor: 'pointer'
-                  }}>
-                  {lg === 'ar' ? 'عربي' : 'ENGLISH'}
-                </button>
+        {/* Language Selector Card */}
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <span style={{ fontSize: '14px', fontWeight: '950' }}>{language === 'ar' ? 'اللغة' : 'LANGUAGE'}</span>
+          </div>
+          <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '14px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
+            {(['ar', 'en'] as const).map(lg => (
+              <button key={lg} onClick={() => setLanguage(lg)} style={{
+                flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer',
+                background: language === lg ? '#ff3d00' : 'transparent',
+                color: language === lg ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'),
+                transition: 'all 0.3s ease'
+              }}>{lg === 'ar' ? 'عربي' : 'ENGLISH'}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Identity Card */}
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <span style={{ fontSize: '13px', fontWeight: '950' }}>{language === 'ar' ? 'الاسم الشخصي' : 'PROFILE IDENTITY'}</span>
+          </div>
+          <div style={inputRowStyle}>
+            <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', color: themeMode === 'dark' ? '#fff' : '#000' }}>NICKNAME</div>
+            <input
+              style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+              value={name} onChange={e => setName(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Body Metrics Card */}
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <span>Body Metrics</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            {[
+              { label: 'Weight', val: weight, set: setWeight, unit: 'kg' },
+              { label: 'Height', val: height, set: setHeight, unit: 'cm' },
+              { label: 'Age', val: age, set: setAge, unit: 'yr' }
+            ].map(f => (
+              <div key={f.label} style={{ ...inputRowStyle, padding: '14px 12px' }}>
+                <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1px', color: themeMode === 'dark' ? '#fff' : '#000' }}>{f.label.toUpperCase()}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+                  <input 
+                    type="number" value={f.val} onChange={e => f.set(e.target.value)}
+                    style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+                  />
+                  <span style={{ fontSize: '11px', fontWeight: '950', opacity: 0.6, color: themeMode === 'dark' ? '#fff' : '#000' }}>{f.unit}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: '8px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', marginBottom: '10px', paddingLeft: '4px', color: themeMode === 'dark' ? '#fff' : '#000' }}>GENDER</div>
+            <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '14px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
+              {(['male', 'female'] as const).map(g => (
+                <button key={g} onClick={() => setGender(g)} style={{
+                  flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer',
+                  background: gender === g ? '#ff3d00' : 'transparent',
+                  color: gender === g ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'),
+                  transition: 'all 0.3s ease'
+                }}>{g.toUpperCase()}</button>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Name Input */}
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '14px', letterSpacing: '2px' }}>NAME</label>
-            <input
-              placeholder="..."
-              value={name}
-              onChange={e => setName(e.target.value)}
-              style={{ width: '100%', background: 'none', border: 'none', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '32px', outline: 'none', fontFamily: 'Outfit' }}
-            />
+        {/* Goal Card */}
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <span style={{ fontSize: '14px', fontWeight: '950' }}>Fitness Goal</span>
+          </div>
+          <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '16px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
+            {(['lose', 'maintain', 'gain'] as const).map(g => (
+              <button key={g} onClick={() => setGoal(g)} style={{
+                flex: 1, padding: '14px 0', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer',
+                background: goal === g ? '#ff3d00' : 'transparent',
+                color: goal === g ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'),
+                transition: 'all 0.3s ease'
+              }}>{g.toUpperCase()}</button>
+            ))}
           </div>
 
-          {/* Physical Stats Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-              <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>WEIGHT</label>
-                <div style={{ position: 'relative', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)' }}>
-                  <input type="number" value={weight} placeholder="..." onChange={e => setWeight(e.target.value)}
-                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
-                  />
-                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: 'var(--text-primary)' }}>kg</span>
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>HEIGHT</label>
-                <div style={{ position: 'relative', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)' }}>
-                  <input type="number" value={height} placeholder="..." onChange={e => setHeight(e.target.value)}
-                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
-                  />
-                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: 'var(--text-primary)' }}>cm</span>
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>AGE</label>
-                <div style={{ position: 'relative', borderBottom: '1px solid rgba(var(--theme-rgb), 0.08)' }}>
-                  <input type="number" value={age} placeholder="..." onChange={e => setAge(e.target.value)}
-                    style={{ width: '100%', background: 'none', border: 'none', padding: '12px 0', color: 'var(--text-primary)', fontWeight: '800', fontSize: '24px', outline: 'none', fontFamily: 'Outfit' }}
-                  />
-                  <span style={{ position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.25, color: 'var(--text-primary)' }}>yr</span>
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>GENDER</label>
-                <div>
-                  <EliteSelect 
-                    id="setup-gender" 
-                    defaultValue={gender} 
-                    onChange={(val) => setGender(val as any)}
-                    options={[{ value: 'male', label: 'MALE' }, { value: 'female', label: 'FEMALE' }]} 
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: goal === 'maintain' ? '1fr' : '1.2fr 0.8fr', gap: '20px' }}>
-              <div>
-                <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>GOAL</label>
-                <EliteSelect 
-                  id="setup-goal" 
-                  defaultValue={goal} 
-                  onChange={(val) => setGoal(val as any)}
-                  options={[
-                    { value: 'lose', label: 'LOSE WEIGHT' },
-                    { value: 'maintain', label: 'MAINTAIN' },
-                    { value: 'gain', label: 'GAIN WEIGHT' }
-                  ]} 
-                />
-              </div>
-              {goal !== 'maintain' && (
-                <div>
-                  <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '10px', letterSpacing: '2px' }}>RATE (kg/wk)</label>
-                  <EliteSelect 
-                    id="setup-rate" 
-                    defaultValue={goalRate.toString()} 
-                    onChange={(val) => setGoalRate(Number(val))}
-                    options={[
-                      { value: '0.25', label: '0.25' },
-                      { value: '0.5', label: '0.5' },
-                      { value: '0.75', label: '0.75' },
-                      { value: '1', label: '1.0' }
-                    ]} 
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Live Result Display */}
           {targets && (
             <div style={{ 
-              marginTop: '-20px', 
-              padding: '24px 0', 
-              borderTop: '1px solid rgba(var(--theme-rgb), 0.03)',
-              display: 'flex', flexDirection: 'column', gap: '20px'
+              marginTop: '12px', padding: '30px 20px', background: 'transparent', 
+              borderBottom: '4px solid #ff3d00',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              boxShadow: '0 15px 30px -15px rgba(255, 61, 0, 0.3)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
-                <div style={{ fontSize: '32px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: 1, fontFamily: 'Outfit' }}>{targets.calories}</div>
-                <div style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.3)', marginBottom: '4px', letterSpacing: '1px' }}>DAILY KCAL TARGET</div>
-              </div>
-              
-              <div style={{ display: 'flex', gap: '20px' }}>
-                {[
-                  { label: 'PROTEIN', val: targets.protein, unit: 'g' },
-                  { label: 'CARBS', val: targets.carbs, unit: 'g' },
-                  { label: 'FATS', val: targets.fats, unit: 'g' }
-                ].map(macro => (
-                  <div key={macro.label}>
-                    <div style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.3)', marginBottom: '4px' }}>{macro.label}</div>
-                    <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>{macro.val}<span style={{ fontSize: '8px', opacity: 0.3, marginLeft: '2px' }}>{macro.unit}</span></div>
-                  </div>
-                ))}
+              <div style={{ fontSize: '12px', fontWeight: '950', color: '#ff3d00', letterSpacing: '4px', marginBottom: '4px', opacity: 1 }}>DAILY TARGET</div>
+              <div style={{ fontSize: '56px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', fontFamily: 'Outfit', letterSpacing: '-3px' }}>
+                {targets.calories}
+                <span style={{ fontSize: '16px', fontWeight: '900', opacity: 0.3, marginLeft: '8px', letterSpacing: '1px' }}>KCAL</span>
               </div>
             </div>
           )}
-
-          {/* Appearance Section */}
-          <div style={{ marginTop: '20px' }}>
-            <label style={{ fontSize: '14px', fontWeight: '950', color: 'rgba(var(--theme-rgb), 0.5)', display: 'block', marginBottom: '16px', letterSpacing: '2px', textAlign: 'center' }}>APPEARANCE</label>
-            
-            {/* Mode Toggle */}
-            <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.05)', borderRadius: '20px', padding: '4px', maxWidth: '240px', margin: '0 auto 24px', width: '100%' }}>
-              {(['light', 'dark'] as const).map(mode => (
-                <button key={mode} onClick={() => setThemeMode(mode)} style={{
-                  flex: 1, padding: '12px 0', border: 'none', borderRadius: '16px', fontSize: '11px', fontWeight: '950', cursor: 'pointer',
-                  background: themeMode === mode ? 'var(--accent-color)' : 'transparent',
-                  color: themeMode === mode ? '#fff' : 'rgba(var(--theme-rgb), 0.4)',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                }}>
-                  {mode === 'light' ? <Sun size={14}/> : <Moon size={14}/>}
-                  {mode.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
-            {/* Color Selectors */}
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '40px' }}>
-              {THEME_COLORS.map(theme => (
-                <button 
-                  key={theme.name} 
-                  onClick={() => {
-                    setAccentColor(theme.hex);
-                    setAccentSecondary(theme.secondary);
-                  }} 
-                  style={{
-                    width: '38px', height: '38px', borderRadius: '50%', 
-                    background: theme.name === 'Fusion' ? `linear-gradient(135deg, ${theme.hex}, ${theme.secondary})` : theme.hex, 
-                    cursor: 'pointer',
-                    border: accentColor === theme.hex ? '3px solid var(--text-primary)' : '3px solid transparent',
-                    boxShadow: accentColor === theme.hex ? `0 0 15px ${theme.hex}66` : 'none',
-                    transform: accentColor === theme.hex ? 'scale(1.15)' : 'scale(1)',
-                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                  }} 
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Action Button - Minimal Dash or Subtle Box */}
-          <div style={{ marginTop: '0', paddingBottom: '80px', display: 'flex', justifyContent: 'center' }}>
-            <button 
-              onClick={handleFinalSubmit}
-              disabled={!name.trim()}
-              style={{ 
-                width: '100%', maxWidth: '280px', padding: '18px 30px', borderRadius: '20px', 
-                background: name.trim() ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.05)', 
-                border: 'none', color: name.trim() ? '#fff' : 'rgba(var(--theme-rgb), 0.2)', 
-                fontWeight: '950', fontSize: '13px', textTransform: 'uppercase', 
-                letterSpacing: '3px', transition: 'all 0.3s ease',
-                cursor: 'pointer', boxShadow: name.trim() ? '0 15px 30px var(--accent-color-alpha)' : 'none'
-              }}
-            >
-              FINISH SETUP
-            </button>
-          </div>
-
         </div>
+
+        {/* Appearance Card */}
+        <div style={cardStyle}>
+          <div style={labelStyle}>
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <span style={{ fontSize: '14px', fontWeight: '950' }}>Visual Theme</span>
+          </div>
+          <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '18px', padding: '5px', width: '100%', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
+            {(['dark', 'light'] as const).map(mode => (
+              <button key={mode} onClick={() => setThemeMode(mode)} style={{
+                flex: 1, padding: '12px 0', border: 'none', borderRadius: '14px', fontSize: '11px', fontWeight: '900', cursor: 'pointer',
+                background: themeMode === mode ? '#ff3d00' : 'transparent', 
+                color: themeMode === mode ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'),
+                transition: 'all 0.3s ease'
+              }}>{mode.toUpperCase()}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '12px' }}>
+          </div>
+        </div>
+
+        {/* Action Button - Dashboard Style */}
+        <div style={{ 
+          marginTop: '80px', 
+          paddingBottom: '80px', 
+          width: '100%', 
+          display: 'flex', 
+          justifyContent: 'center',
+          perspective: '1200px'
+        }}>
+          <div
+            onClick={handleFinalSubmit}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              cursor: name.trim() ? 'pointer' : 'default',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transformStyle: 'preserve-3d',
+              textAlign: 'center',
+              padding: '30px',
+              width: '100%',
+              maxWidth: '300px',
+              opacity: name.trim() ? 1 : 0.3,
+              transition: 'opacity 0.4s ease'
+            }}
+          >
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              gap: '10px',
+              transform: 'translateZ(50px)' 
+            }}>
+              <div className="premium-title" style={{ 
+                fontSize: '24px', 
+                lineHeight: '1',
+                color: themeMode === 'dark' ? '#fff' : '#000',
+                fontWeight: '950',
+                letterSpacing: '-1px'
+              }}>
+                START
+              </div>
+              <div className="premium-title" style={{ 
+                fontSize: '24px', 
+                lineHeight: '1',
+                color: '#ff3d00',
+                fontWeight: '950',
+                letterSpacing: '-1px'
+              }}>
+                JOURNEY
+              </div>
+            </div>
+            <div style={{ 
+              marginTop: '16px',
+              fontSize: '10px', 
+              fontWeight: '950', 
+              color: '#ff3d00', 
+              letterSpacing: '5px',
+              textTransform: 'uppercase',
+              opacity: 0.8,
+              transform: 'translateZ(25px)'
+            }}>
+              {language === 'ar' ? 'اضغط للبدء' : 'TAP TO BEGIN'}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

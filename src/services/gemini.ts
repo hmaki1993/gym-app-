@@ -49,7 +49,7 @@ export const GeminiService = {
       console.log(`📡 Header Auth Analysis with Key: ${key.substring(0, 6)}...`);
       const prompt = `Analyze this food image. Return ONLY a valid JSON object: {"name":"food name","nameAr":"الاسم بالعربي","calories":number,"protein":number,"carbs":number,"fats":number,"portion":number}. Be highly accurate.`;
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export const GeminiService = {
 
     try {
       console.log(`📡 Header Auth Text with Key: ${key.substring(0, 6)}...`);
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -124,6 +124,34 @@ export const GeminiService = {
       console.error('Gemini Direct Text Error:', err);
       if (err.message?.includes('429') || err.message?.includes('404')) rotateKey();
       throw err;
+    }
+  },
+
+  translateExercise: async (name: string, muscleGroup?: string): Promise<{ en: string, ar: string }> => {
+    const prompt = `Analyze this gym exercise: "${name}"${muscleGroup ? ` (targeted muscle: ${muscleGroup})` : ''}.
+    The input might be in English, Arabic, or Franco-Arabic (slang).
+    
+    TASK:
+    1. Identify the standard English name (e.g., "EZ Bar Bicep Curl").
+    2. Provide a clear Arabic translation (e.g., "بايسبس بالبار الزجزاج").
+    
+    RULES:
+    - If the input mentions a specific equipment (like "bar zegzag"), keep it in the name.
+    - DO NOT map to a completely different exercise (e.g., don't turn a bicep move into a bench press).
+    - If unsure, preserve the user's original words but format them nicely.
+    
+    Return ONLY a valid JSON object: {"en":"Standard Name", "ar":"الاسم بالعربي"}.`;
+    
+    try {
+      const result = await GeminiService.generateText(prompt);
+      const jsonMatch = result.match(/\{[\s\S]*?\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return { en: name, ar: name };
+    } catch (err) {
+      console.error('Translation failed:', err);
+      return { en: name, ar: name };
     }
   }
 };

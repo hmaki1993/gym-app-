@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    appName: 'POWERGRID',
+    appName: 'POWER GRID',
     premiumSystem: 'ELITE TRAINING SYSTEM',
     welcomeBack: 'WELCOME BACK',
     todaySummary: "TODAY'S SUMMARY",
@@ -54,7 +54,7 @@ export const translations = {
     duration: 'Duration',
     notes: 'Notes',
     optional: 'optional',
-    onboarding_title: 'Welcome to GymLog 💪',
+    onboarding_title: 'Welcome to Power Grid 💪',
     onboarding_sub: 'Set up your profile to get started',
     onboarding_name: 'YOUR NAME',
     onboarding_unit: 'Preferred weight unit?',
@@ -147,7 +147,7 @@ export const translations = {
     duration: 'المدة',
     notes: 'ملاحظات',
     optional: 'اختياري',
-    onboarding_title: 'أهلاً في جيم لوج 💪',
+    onboarding_title: 'أهلاً في باور جريد 💪',
     onboarding_sub: 'سطّر بروفايلك عشان نبدأ',
     onboarding_name: 'اسمك',
     onboarding_unit: 'بتستخدم كيلو ولا رطل؟',

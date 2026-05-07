@@ -69,7 +69,7 @@ export const SetRow: React.FC<Props> = ({
           style={{
             fontSize: '11px',
             fontWeight: '950',
-            color: 'var(--accent-color)',
+            color: '#666',
             textTransform: 'uppercase',
             letterSpacing: '1px',
             cursor: 'pointer',
@@ -79,7 +79,7 @@ export const SetRow: React.FC<Props> = ({
             alignItems: 'center',
             justifyContent: 'center',
             fontFamily: 'Outfit, sans-serif',
-            filter: 'drop-shadow(0 0 8px var(--accent-color-alpha))',
+            filter: 'none',
             lineHeight: '1',
             transition: 'transform 0.2s ease'
           }}
@@ -88,7 +88,7 @@ export const SetRow: React.FC<Props> = ({
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           {t(activeUnit)}
-          <div style={{ width: '12px', height: '2px', background: 'var(--accent-color)', marginTop: '3px', borderRadius: '1px', boxShadow: `0 0 5px var(--accent-color)` }} />
+          <div style={{ width: '12px', height: '2px', background: '#666', marginTop: '3px', borderRadius: '1px' }} />
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export const SetRow: React.FC<Props> = ({
         ) : (
           <button
             onClick={onStartRest}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: isResting ? 'var(--accent-color)' : 'var(--text-secondary)', opacity: isResting ? 1 : 0.2, padding: '4px' }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: isResting ? 'var(--accent-color)' : '#555', opacity: isResting ? 1 : 0.5, padding: '4px' }}
           >
             <Clock size={16} />
           </button>

@@ -41,6 +41,67 @@ export const DEFAULT_EXERCISES: Record<MuscleGroup, string[]> = {
   ],
 };
 
+export const EXERCISE_TRANSLATIONS: Record<string, string> = {
+  // Chest
+  'Bench Press': 'بنش برس - دفع بالبار',
+  'Incline Bench Press': 'بنش عالي - دفع بالبار مائل',
+  'Decline Bench Press': 'بنش مقلوب - دفع بالبار مائل لأسفل',
+  'Dumbbell Fly': 'تفتيح بالدمبل',
+  'Cable Crossover': 'تجميع كابل',
+  'Push Up': 'تمرين الضغط',
+  'Chest Dip': 'متوازي صدر',
+  // Back
+  'Deadlift': 'ديدليفت - الرفعة الميتة',
+  'Pull Up': 'عقلة',
+  'Lat Pulldown': 'سحب عالي للظهر',
+  'Seated Row': 'سحب أرضي',
+  'Barbell Row': 'تجديف بالبار',
+  'Dumbbell Row': 'تجديف بالدمبل',
+  'Face Pull': 'سحب للوجه',
+  'Shrug': 'ترابيس',
+  // Legs
+  'Squat': 'سكوات - قرفصاء',
+  'Leg Press': 'رجل لج برس',
+  'Romanian Deadlift': 'ديدليفت روماني',
+  'Leg Curl': 'مرجحة رجل خلفي',
+  'Leg Extension': 'رفرفة رجل أمامي',
+  'Calf Raise': 'سمانة',
+  'Hack Squat': 'هاك سكوات',
+  'Lunges': 'طعن',
+  // Shoulders
+  'Overhead Press': 'دفع فوق الرأس بالبار',
+  'Dumbbell Press': 'دفع بالأكتاف دمبل',
+  'Lateral Raise': 'رفرفة جانبي',
+  'Front Raise': 'رفرفة أمامي',
+  'Rear Delt Fly': 'رفرفة خلفي',
+  'Arnold Press': 'أرنولد برس',
+  'Upright Row': 'تجديف للأعلى',
+  // Arms
+  'Barbell Curl': 'بايسبس بالبار',
+  'Dumbbell Curl': 'بايسبس بالدمبل',
+  'Hammer Curl': 'بايسبس شاكوش',
+  'Preacher Curl': 'بايسبس ارتكاز',
+  'Tricep Pushdown': 'ترايسبس كابل',
+  'Skull Crusher': 'ترايسبس بار فرنسي',
+  'Overhead Extension': 'ترايسبس خلف الرأس',
+  'Tricep Dip': 'متوازي تراي',
+  // Abs
+  'Crunch': 'طحن بطن',
+  'Plank': 'بلانك',
+  'Leg Raise': 'رفع أرجل',
+  'Russian Twist': 'لف روسي',
+  'Cable Crunch': 'طحن كابل',
+  'Ab Wheel': 'عجلة بطن',
+  'Mountain Climber': 'متسلق الجبال',
+  // Cardio
+  'Treadmill': 'مشاية',
+  'Bike': 'عجلة',
+  'Rowing': 'تجديف كاردو',
+  'Jump Rope': 'نط الحبل',
+  'Stair Climber': 'سلم',
+  'Elliptical': 'أوربتراك',
+};
+
 export const EXERCISE_DETAILS: Record<string, { en: string; ar: string }> = {
   'Bench Press': {
     en: 'Lower the bar to mid-chest with controlled motion, then drive it up locking your elbows.',
@@ -85,11 +146,5 @@ export const EXERCISE_DETAILS: Record<string, { en: string; ar: string }> = {
 };
 
 export const THEME_COLORS = [
-  { name: 'Emerald',  hex: '#00e5a0', secondary: '#00b37d' },
-  { name: 'Purple',   hex: '#a855f7', secondary: '#7c3aed' },
-  { name: 'Orange',   hex: '#ff5e00', secondary: '#ff9500' },
-  { name: 'Cyan',     hex: '#00f0ff', secondary: '#0099cc' },
-  { name: 'Red',      hex: '#ff3366', secondary: '#cc0033' },
-  { name: 'Gold',     hex: '#ffcc00', secondary: '#cc9900' },
   { name: 'Fusion',   hex: '#326144', secondary: '#ff5e00' },
 ];

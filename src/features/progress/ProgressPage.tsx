@@ -94,9 +94,9 @@ function MiniChart({ data, color, title, accentColor }: { data: { date: string; 
   );
 }
 
-function MuscleGroupAccordion({ mg, prs, lang, t, unit }: { mg: string, prs: any[], lang: string, t: any, unit: any }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const mgInfo = MUSCLE_GROUPS.find(g => g.key === mg);
+function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: string, prs: any[], today: string, lang: string, t: any, unit: any }) {
+  const [isDateOpen, setIsDateOpen] = useState(dateStr === today);
+  const displayDate = new Date(dateStr).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   
   return (
     <div style={{ 
@@ -106,31 +106,76 @@ function MuscleGroupAccordion({ mg, prs, lang, t, unit }: { mg: string, prs: any
       border: '1px solid rgba(var(--theme-rgb), 0.05)'
     }}>
       <button 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsDateOpen(!isDateOpen)}
         style={{
           width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: 'none', border: 'none', cursor: 'pointer'
         }}
       >
         <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--text-primary)', opacity: 0.8, textTransform: 'uppercase' }}>
-          {mg === 'other' ? (lang === 'ar' ? 'أخرى' : 'OTHER') : (lang === 'ar' ? mgInfo?.ar : mgInfo?.en)}
+          {dateStr === today ? (lang === 'ar' ? 'اليوم' : 'TODAY') : displayDate}
           <span style={{ marginLeft: '8px', opacity: 0.4 }}>({prs.length})</span>
         </div>
-        <div style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease', fontSize: '10px' }}>▼</div>
+        <div style={{ transform: isDateOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease', fontSize: '10px', color: 'var(--accent-color)' }}>▼</div>
       </button>
-      {isOpen && (
-        <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {prs.map((pr) => (
-            <div key={pr.exerciseName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', opacity: 0.9 }}>{pr.exerciseName}</span>
-              <span style={{ fontSize: '12px', fontWeight: '900', color: 'var(--accent-color)' }}>{pr.weight} {t(unit as any)} × {pr.reps}</span>
-            </div>
-          ))}
+      {isDateOpen && (
+        <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: '0' }}>
+          {(() => {
+            // Group PRs by muscle group
+            const groups: Record<string, any[]> = {};
+            prs.forEach(pr => {
+              const mgKey = pr.muscleGroup || 'other';
+              if (!groups[mgKey]) groups[mgKey] = [];
+              groups[mgKey].push(pr);
+            });
+
+            const sortedEntries = Object.entries(groups).sort();
+            return sortedEntries.map(([mgKey, items], groupIdx) => {
+              const mg = MUSCLE_GROUPS.find(m => m.key === mgKey);
+              const groupName = mg ? (lang === 'ar' ? mg.ar : mg.en) : (lang === 'ar' ? 'أخرى' : 'OTHER');
+              
+              return (
+                <React.Fragment key={mgKey}>
+                  <div style={{ 
+                    fontSize: '10px', 
+                    fontWeight: '950', 
+                    color: 'var(--accent-color)', 
+                    letterSpacing: '3px', 
+                    textTransform: 'uppercase',
+                    marginTop: groupIdx === 0 ? '12px' : '24px',
+                    marginBottom: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    <span style={{ whiteSpace: 'nowrap' }}>{groupName}</span>
+                    <div style={{ flex: 1, height: '1.5px', background: 'var(--accent-color)', opacity: 0.15, borderRadius: '1px' }} />
+                  </div>
+                  {items.map((pr, idx) => (
+                    <div key={pr.exerciseName} style={{ 
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                      padding: '12px 0', 
+                      borderBottom: idx === items.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.03)',
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
+                        <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>
+                          {groupName}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit, sans-serif' }}>{pr.weight} {t(unit as any)} × {pr.reps}</span>
+                    </div>
+                  ))}
+                </React.Fragment>
+              );
+            });
+          })()}
         </div>
       )}
     </div>
   );
 }
+
 
 export function ProgressPage({ tracker }: Props) {
   const lang = tracker.settings.language;
@@ -210,7 +255,7 @@ export function ProgressPage({ tracker }: Props) {
   */
 
   // Exercise progress data for selected muscle
-  const { exerciseFreq, topExercises, exerciseToMuscle } = React.useMemo(() => {
+  const { topExercises, exerciseToMuscle } = React.useMemo(() => {
     const freq: Record<string, number> = {};
     const mapping: Record<string, string> = {};
     
@@ -414,7 +459,7 @@ export function ProgressPage({ tracker }: Props) {
                       <div>
                         <div style={{ 
                           fontSize: '11px', fontWeight: '950', 
-                          color: hasWinsToday ? '#ff9500' : 'var(--text-primary)', 
+                          color: hasWinsToday ? '#ff3d00' : 'var(--text-primary)', 
                           letterSpacing: '2px', textTransform: 'uppercase' 
                         }}>
                           {hasWinsToday ? (lang === 'ar' ? 'إنجازات اليوم! 🔥' : "TODAY'S WINS! 🔥") : t('personalRecord')}
@@ -425,7 +470,8 @@ export function ProgressPage({ tracker }: Props) {
                     <div style={{ 
                       transform: isMasterOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
                       transition: 'transform 0.3s ease',
-                      color: hasWinsToday ? '#ff9500' : 'rgba(var(--theme-rgb), 0.3)'
+                      color: hasWinsToday ? '#ff3d00' : 'var(--accent-color)',
+                      opacity: 1
                     }}>▼</div>
                   </div>
                 </div>
@@ -437,43 +483,34 @@ export function ProgressPage({ tracker }: Props) {
                     animation: 'slideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
                     display: 'flex', flexDirection: 'column', gap: '10px'
                   }}>
-                    {/* Today's Specific List (Only if has wins) */}
-                    {hasWinsToday && (
-                      <div style={{ padding: '0 10px 15px' }}>
-                        {todayPRs.map(pr => (
-                          <div key={pr.exerciseName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid rgba(255, 149, 0, 0.1)', paddingBottom: '8px' }}>
-                            <span style={{ fontSize: '14px', fontWeight: '800', color: '#fff' }}>{pr.exerciseName}</span>
-                            <span style={{ fontSize: '13px', fontWeight: '950', color: '#ff9500' }}>{pr.weight} {t(unit as any)} × {pr.reps}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* All Muscle Groups Accordions */}
+                    {/* All Records Grouped by Date (Latest First) */}
                     <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '5px', paddingLeft: '10px' }}>
-                      {lang === 'ar' ? 'الأرقام القياسية حسب العضلة' : 'RECORDS BY MUSCLE'}
+                      {lang === 'ar' ? 'سجل الإنجازات الزمني' : 'CHRONOLOGICAL RECORDS'}
                     </div>
                     
                     {(() => {
-                      const groupedPRs: Record<string, typeof tracker.prs> = {};
-                      tracker.prs.filter(pr => pr.exerciseName && pr.exerciseName.trim() !== '').forEach(pr => {
-                        const cleanPRName = pr.exerciseName.trim().toLowerCase();
-                        let mg: string = 'other';
-                        for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
-                          if (exercises.some(e => e.toLowerCase() === cleanPRName)) { mg = group; break; }
-                        }
-                        if (mg === 'other') {
-                          for (const [group, exercises] of Object.entries(tracker.customExercises)) {
-                            if (exercises.some(e => e.toLowerCase() === cleanPRName)) { mg = group; break; }
-                          }
-                        }
-                        if (!groupedPRs[mg]) groupedPRs[mg] = [];
-                        groupedPRs[mg].push(pr);
+                      // Group PRs by Date
+                      const dateGroups: Record<string, typeof tracker.prs> = {};
+                      tracker.prs.forEach(pr => {
+                        const dateStr = new Date(pr.date).toDateString();
+                        if (!dateGroups[dateStr]) dateGroups[dateStr] = [];
+                        dateGroups[dateStr].push(pr);
                       });
 
-                      return Object.entries(groupedPRs).map(([mg, prs]) => (
-                        <MuscleGroupAccordion 
-                          key={mg} mg={mg} prs={prs} lang={lang} t={t} unit={unit}
+                      // Sort dates latest first
+                      const sortedDates = Object.keys(dateGroups).sort((a, b) => 
+                        new Date(b).getTime() - new Date(a).getTime()
+                      );
+
+                      return sortedDates.map(dateStr => (
+                        <RecordDateAccordion 
+                          key={dateStr}
+                          dateStr={dateStr}
+                          prs={dateGroups[dateStr]}
+                          today={today}
+                          lang={lang}
+                          t={t}
+                          unit={unit}
                         />
                       ));
                     })()}

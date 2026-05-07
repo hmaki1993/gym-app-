@@ -8,35 +8,31 @@ interface Props {
 
 export function Header({ tab, t, tracker }: Props) {
   return (
-    <div style={{ marginBottom: '5px', direction: 'ltr', transformStyle: 'preserve-3d', position: 'relative' }}>
+    <div style={{ marginBottom: '5px', direction: 'ltr', transformStyle: 'preserve-3d', position: 'relative', padding: '0 16px' }}>
       {tab === 'home' ? (
         <div style={{ transform: 'translateZ(20px)' }}>
           <h1 style={{ 
             margin: 0, 
             fontSize: 'var(--logo-font-size)', 
-            display: 'flex', 
+            display: 'inline-flex', 
             alignItems: 'center',
             fontFamily: 'Outfit, sans-serif',
             fontWeight: 950,
             letterSpacing: '-1px',
             textTransform: 'uppercase',
-            background: tracker.settings.themeMode === 'light'
-              ? 'linear-gradient(135deg, #111 0%, #444 50%, var(--accent-secondary) 100%)'
-              : 'linear-gradient(135deg, #fff 0%, #fff 50%, var(--accent-secondary) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            width: 'fit-content'
           }}>
-            <span>POWER</span>
+            <span style={{ color: '#a0a0a0' }}>POWER</span>
             <div style={{ 
               margin: '0 6px',
-              color: 'var(--accent-secondary)',
-              filter: 'drop-shadow(0 0 8px var(--accent-color-alpha))',
+              color: '#ff3d00',
+              filter: 'drop-shadow(0 0 8px rgba(255, 61, 0, 0.4))',
               display: 'flex',
               alignItems: 'center'
             }}>
               <Dumbbell size={22} strokeWidth={3} className="pulse-elite" />
             </div>
-            <span>GRID</span>
+            <span style={{ color: '#ff3d00' }}>GRID</span>
           </h1>
           <div className="subtitle-text logo-underline" style={{ width: 'fit-content', letterSpacing: '4px', opacity: 1, color: 'var(--text-secondary)', fontWeight: '900', fontSize: '10px' }}>{t('premiumSystem')}</div>
         </div>
@@ -53,10 +49,13 @@ export function Header({ tab, t, tracker }: Props) {
             <h1 className="heading-font logo-underline" style={{ 
               margin: 0, 
               fontSize: '32px',
-              background: tracker.settings.themeMode === 'light'
-                ? 'linear-gradient(135deg, #111 0%, #444 50%, var(--accent-secondary) 100%)'
-                : 'linear-gradient(135deg, #fff 0%, #fff 50%, var(--accent-secondary) 100%)',
+              display: 'inline-block',
+              width: 'fit-content',
+              backgroundImage: tracker.settings.themeMode === 'light'
+                ? 'linear-gradient(135deg, #000 0%, #333 100%)'
+                : 'linear-gradient(135deg, #fff 0%, #aaa 100%)',
               WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               letterSpacing: '-1.5px',
               textTransform: 'uppercase'

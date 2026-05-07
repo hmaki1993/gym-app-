@@ -169,7 +169,7 @@ export default function App() {
         minWidth: '100%', height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        padding: showWorkout ? '0' : 'calc(env(safe-area-inset-top) + 0px) 16px 0',
+        padding: showWorkout ? '0' : 'calc(env(safe-area-inset-top) + 15px) 0 0',
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
@@ -192,7 +192,9 @@ export default function App() {
             flexDirection: 'column',
             overflowY: 'auto',
             overflowX: 'hidden',
-            paddingBottom: '0',
+            paddingLeft: tab === 'home' ? '0px' : '16px',
+            paddingRight: tab === 'home' ? '0px' : '16px',
+            paddingBottom: '0px',
             touchAction: 'pan-y'
           }}>
             {tab === 'home' && (

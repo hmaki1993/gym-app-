@@ -75,9 +75,18 @@
 }
 
 [data-theme='light'] .premium-title {
-  background: linear-gradient(135deg, #111 0%, #444 50%, var(--accent-secondary) 100%);
+  background: linear-gradient(135deg, 
+    #000 0%, 
+    #222 40%, 
+    var(--accent-secondary) 50%, 
+    #222 60%, 
+    #000 100%
+  );
+  background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  animation: liquidShimmer 5s linear infinite;
 }
 
 .logo-underline {
@@ -544,44 +553,40 @@ input[type=number] {
   align-items: center;
   justify-content: space-around;
   gap: 0;
-  padding: 4px;
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
   background: var(--nav-bg);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-top: 1px solid var(--glass-border);
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
-  z-index: 100;
-  touch-action: auto !important;
+  flex-shrink: 0;
 }
 
 .nav-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: 8px;
   border-radius: 12px;
   background: transparent;
   border: none;
   cursor: pointer;
   transition: all 0.25s ease;
   color: var(--text-secondary);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-family: 'Inter', sans-serif;
   flex: 1;
   touch-action: auto !important;
 }
 
+.nav-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
 .nav-btn.active {
-  color: var(--accent-secondary);
+  color: #ff3d00;
   background: transparent;
-  filter: drop-shadow(0 0 8px var(--accent-secondary));
+  filter: drop-shadow(0 0 8px rgba(255, 61, 0, 0.4));
 }
 
 .nav-btn:hover:not(.active) {

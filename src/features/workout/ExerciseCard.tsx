@@ -45,7 +45,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
     if (onChange) onChange(sets, false);
   }, []); // Run only ONCE on mount
 
-  const [hasAddedSet, setHasAddedSet] = useState(false);
+  const [, setHasAddedSet] = useState(false);
   const [activeUnit, setActiveUnit] = useState(unit || 'kg');
 
   const cycleUnit = () => {
@@ -74,6 +74,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
 
   // Stagger sets on mount
   const setsRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (setsRef.current) {
       gsap.fromTo(setsRef.current.children,
@@ -82,6 +83,16 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
       );
     }
   }, []);
+
+  useEffect(() => {
+    if (titleRef.current) {
+      const letters = titleRef.current.querySelectorAll('.title-letter');
+      gsap.fromTo(letters,
+        { y: 16, opacity: 0, filter: 'blur(6px)' },
+        { y: 0, opacity: 1, filter: 'blur(0px)', stagger: 0.04, duration: 0.45, ease: 'power3.out', delay: 0.1 }
+      );
+    }
+  }, [exerciseName]);
 
   const formatElapsed = (totalSeconds: number) => {
     const h = Math.floor(totalSeconds / 3600);
@@ -167,23 +178,32 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '14px', flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', flexDirection: 'column', transform: 'translateZ(20px)', flex: 1, minWidth: 0 }}>
-              <h2 className="heading-font" style={{ 
+              <h2 ref={titleRef} className="heading-font" style={{ 
                 margin: 0, 
-                fontSize: 'min(20px, 5vw)', 
-                fontWeight: '800',
-                background: 'linear-gradient(to bottom, var(--text-primary) 30%, var(--accent-color) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                letterSpacing: '-0.5px',
+                marginBottom: '10px',
+                fontSize: 'clamp(18px, 5.5vw, 28px)', 
+                fontWeight: '950',
+                color: 'var(--text-primary)',
+                letterSpacing: '1px',
                 textTransform: 'uppercase',
                 lineHeight: '1.15',
-                textShadow: '0 5px 15px rgba(0,0,0,0.3)',
-                whiteSpace: 'normal',
-                wordBreak: 'break-word',
-                paddingRight: '8px'
-              }}>{exerciseName}</h2>
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                paddingRight: '8px',
+              }}>
+                {exerciseName.split(' ').map((word, wi) => (
+                  <span key={wi} style={{ display: 'inline-block', whiteSpace: 'nowrap', marginRight: wi < exerciseName.split(' ').length - 1 ? '0.3em' : '0' }}>
+                    {word.split('').map((char, ci) => (
+                      <span key={ci} className="title-letter" style={{ display: 'inline-block' }}>
+                        {char}
+                      </span>
+                    ))}
+                  </span>
+                ))}
+              </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
-                {pr && <div className="pr-badge" style={{ color: 'var(--accent-color)', fontSize: '13px', fontWeight: '900', fontFamily: 'Outfit, sans-serif', letterSpacing: '0.5px' }}>🏆 PR: {pr.weight} {t(unit as any)} × {pr.reps}</div>}
+                {pr && <div className="pr-badge" style={{ color: '#ff5e00', fontSize: '13px', fontWeight: '900', fontFamily: 'Outfit, sans-serif', letterSpacing: '0.5px' }}>🏆 PR: {pr.weight} {t(unit as any)} × {pr.reps}</div>}
               </div>
             </div>
           </div>
@@ -193,10 +213,10 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
             alignItems: 'center', 
             gap: '4px', 
             flexShrink: 0,
-            background: 'rgba(var(--theme-rgb), 0.03)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '20px',
-            padding: '4px 8px', // Matched outer
+            background: 'rgba(var(--theme-rgb), 0.05)',
+            border: '1px dashed rgba(var(--theme-rgb), 0.2)',
+            borderRadius: '10px',
+            padding: '6px 10px',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
             transform: 'translateZ(10px)',
@@ -280,7 +300,7 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
           <Plus size={16} color="var(--accent-color)" /> {t('addSet')}
         </button>
 
-        {!hasAddedSet && (
+        {sets.length <= 1 && (
           <div style={{ padding: '20px 0', opacity: 0.65, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: '30px' }}>
             <div style={{ 
               fontSize: '24px', 

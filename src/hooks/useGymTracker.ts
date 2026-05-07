@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog } from '../types';
-import { THEME_COLORS } from '../data/exercises';
+import { THEME_COLORS, DEFAULT_EXERCISES } from '../data/exercises';
 
 const STORAGE_KEY = 'gymlog_state_v1';
 
@@ -10,8 +10,8 @@ const DEFAULT_SETTINGS: GymSettings = {
   userPassword: '',
   weightUnit: 'kg',
   language: 'en',
-  accentColor: THEME_COLORS[6].hex,
-  accentSecondary: THEME_COLORS[6].secondary,
+  accentColor: THEME_COLORS[0].hex,
+  accentSecondary: THEME_COLORS[0].secondary,
   themeMode: 'light',
   defaultRestSeconds: 90,
   soundEnabled: true,
@@ -34,6 +34,7 @@ const DEFAULT_STATE: GymState = {
     chest: [], back: [], legs: [], shoulders: [],
     arms: [], abs: [], cardio: [],
   },
+  customTranslations: {},
   nutritionLogs: [],
 };
 
@@ -49,6 +50,7 @@ function loadState(): GymState {
       customExercises: { ...DEFAULT_STATE.customExercises, ...parsed.customExercises },
       hiddenExercises: { ...DEFAULT_STATE.hiddenExercises, ...parsed.hiddenExercises },
       exerciseOrder: { ...DEFAULT_STATE.exerciseOrder, ...parsed.exerciseOrder },
+      customTranslations: { ...DEFAULT_STATE.customTranslations, ...parsed.customTranslations },
     };
   } catch {
     return DEFAULT_STATE;
@@ -155,7 +157,7 @@ export function useGymTracker() {
 
   // Initial sync to fix any "ghost" PRs from storage
   useEffect(() => {
-    const fixedPRs = syncPRsFromLogs(state.logs);
+    const fixedPRs = syncPRsFromLogs(state.logs, state.customExercises);
     // Only update if there's a difference to avoid loops
     if (JSON.stringify(fixedPRs) !== JSON.stringify(state.prs)) {
       setState(prev => ({ ...prev, prs: fixedPRs }));
@@ -171,13 +173,17 @@ export function useGymTracker() {
     window.location.reload();
   }, []);
 
-  const addCustomExercise = useCallback((muscle: MuscleGroup, name: string) => {
+  const addCustomExercise = useCallback((muscle: MuscleGroup, name: string, translation?: string) => {
     setState(prev => ({
       ...prev,
       customExercises: {
         ...prev.customExercises,
         [muscle]: [...prev.customExercises[muscle], name],
       },
+      customTranslations: translation ? {
+        ...(prev.customTranslations || {}),
+        [name]: translation
+      } : prev.customTranslations
     }));
   }, []);
 
@@ -221,8 +227,18 @@ export function useGymTracker() {
     return null;
   }, [state.logs]);
 
-  const syncPRsFromLogs = useCallback((logs: WorkoutLog[]) => {
+  const syncPRsFromLogs = useCallback((logs: WorkoutLog[], customExercises: Record<MuscleGroup, string[]>) => {
     const prMap: Record<string, PersonalRecord> = {};
+    
+    // Create a reverse mapping of exercise name to muscle group
+    const exerciseToMuscle: Record<string, string> = {};
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex.toLowerCase()] = group; });
+    });
+    Object.entries(customExercises).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex.toLowerCase()] = group; });
+    });
+
     // Process from oldest to newest to ensure we get the best record
     [...logs].reverse().forEach(log => {
       log.exercises.forEach(ex => {
@@ -241,7 +257,8 @@ export function useGymTracker() {
             exerciseName: ex.name, 
             weight: bestSet.weight, 
             reps: bestSet.reps, 
-            date: log.date 
+            date: log.date,
+            muscleGroup: exerciseToMuscle[ex.name.toLowerCase()] || log.muscleGroup
           };
         }
       });
@@ -299,7 +316,7 @@ export function useGymTracker() {
         updatedLogs = [newLog, ...prev.logs];
       }
 
-      const updatedPRs = syncPRsFromLogs(updatedLogs);
+      const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises);
       return { ...prev, logs: updatedLogs, prs: updatedPRs };
     });
 
@@ -309,7 +326,7 @@ export function useGymTracker() {
   const deleteWorkout = useCallback((id: string) => {
     setState(prev => {
       const newLogs = prev.logs.filter(l => l.id !== id);
-      const newPRs = syncPRsFromLogs(newLogs);
+      const newPRs = syncPRsFromLogs(newLogs, prev.customExercises);
       return { 
         ...prev, 
         logs: newLogs,

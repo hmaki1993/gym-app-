@@ -1,8 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
-import { THEME_COLORS } from '../../data/exercises';
-import { User, Scale, Target, Palette } from 'lucide-react';
+import { Target } from 'lucide-react';
 
 
 interface Props {
@@ -62,14 +61,17 @@ export function SettingsPage({ tracker }: Props) {
   };
 
   const inputRowStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: '12px',
-    padding: '14px 16px',
-    borderBottom: '1px solid rgba(255, 61, 0, 0.1)',
+    background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)',
+    borderRadius: '16px',
+    padding: '16px',
+    borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
+    borderLeft: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
+    borderRight: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
+    borderBottom: '3px solid rgba(255, 61, 0, 0.3)',
     transition: 'all 0.3s ease',
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px'
+    gap: '6px'
   };
 
   return (
@@ -159,25 +161,25 @@ export function SettingsPage({ tracker }: Props) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={inputRowStyle} className="elite-input-wrapper">
-            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px' }}>NICKNAME</div>
-            <input
-              style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
-              value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })}
-            />
+            <div style={{ fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>NICKNAME</div>
+              <input
+                style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+                value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })}
+              />
           </div>
           <div style={inputRowStyle} className="elite-input-wrapper">
-            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px' }}>EMAIL</div>
-            <input
-              type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
-              value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })}
-            />
+            <div style={{ fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>EMAIL</div>
+              <input
+                type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+                value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })}
+              />
           </div>
           <div style={inputRowStyle} className="elite-input-wrapper">
-            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px' }}>{t('password').toUpperCase()}</div>
-            <input
-              type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
-              value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })}
-            />
+            <div style={{ fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>{t('password').toUpperCase()}</div>
+              <input
+                type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+                value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })}
+              />
           </div>
         </div>
       </div>
@@ -195,12 +197,12 @@ export function SettingsPage({ tracker }: Props) {
             { label: 'Age', key: 'age', unit: '' }
           ].map(f => (
             <div key={f.key} style={{ ...inputRowStyle, padding: '10px 12px' }} className="elite-input-wrapper">
-              <div style={{ fontSize: '8px', fontWeight: '900', opacity: 0.4 }}>{f.label.toUpperCase()}</div>
+              <div style={{ fontSize: '10px', fontWeight: '900', opacity: 0.6, color: 'var(--text-primary)' }}>{f.label.toUpperCase()}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
                 <input 
                   type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[f.key] || 0}
                   onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [f.key]: Number(e.target.value) } as any })}
-                  style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: '800', color: '#fff', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
+                  style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }}
                 />
                 <span style={{ fontSize: '8px', fontWeight: '900', opacity: 0.3 }}>{f.unit}</span>
               </div>
@@ -215,7 +217,7 @@ export function SettingsPage({ tracker }: Props) {
               <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })} style={{
                 flex: 1, padding: '10px 0', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '900', cursor: 'pointer',
                 background: tracker.settings.nutritionProfile?.gender === g ? '#ff3d00' : 'transparent',
-                color: tracker.settings.nutritionProfile?.gender === g ? '#000' : 'rgba(255,255,255,0.4)',
+                color: tracker.settings.nutritionProfile?.gender === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'),
                 transition: 'all 0.3s ease'
               }}>{g.toUpperCase()}</button>
             ))}
@@ -236,7 +238,7 @@ export function SettingsPage({ tracker }: Props) {
             })} style={{
               flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '900', cursor: 'pointer',
               background: tracker.settings.nutritionProfile?.goal === g ? '#ff3d00' : 'transparent',
-              color: tracker.settings.nutritionProfile?.goal === g ? '#000' : 'rgba(255,255,255,0.4)',
+              color: tracker.settings.nutritionProfile?.goal === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'),
               transition: 'all 0.3s ease'
             }}>{g.toUpperCase()}</button>
           ))}
@@ -250,7 +252,7 @@ export function SettingsPage({ tracker }: Props) {
           boxShadow: '0 10px 20px -10px rgba(255, 61, 0, 0.2)'
         }}>
           <div style={{ fontSize: '9px', fontWeight: '900', color: '#ff3d00', letterSpacing: '3px', marginBottom: '4px', opacity: 0.6 }}>DAILY TARGET</div>
-          <div style={{ fontSize: '48px', fontWeight: '900', color: '#fff', fontFamily: 'Outfit', letterSpacing: '-2px' }}>
+          <div style={{ fontSize: '48px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: 'Outfit', letterSpacing: '-2px' }}>
             {(() => {
               const p = tracker.settings.nutritionProfile;
               if (!p?.weight || !p?.height || !p?.age) return '0';
@@ -275,36 +277,14 @@ export function SettingsPage({ tracker }: Props) {
               <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{
                 flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '900', cursor: 'pointer',
                 background: tracker.settings.themeMode === mode ? '#ff3d00' : 'transparent', 
-                color: tracker.settings.themeMode === mode ? '#000' : 'rgba(255,255,255,0.4)',
+                color: tracker.settings.themeMode === mode ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'),
                 transition: 'all 0.3s ease'
               }}>{mode.toUpperCase()}</button>
             ))}
          </div>
 
-         <div style={{ marginTop: '12px' }}>
-            <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px', marginBottom: '8px', paddingLeft: '8px' }}>WEIGHT UNIT</div>
-            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '4px', width: '100%', border: '1px solid rgba(255,255,255,0.05)' }}>
-              {(['kg', 'lbs', 'balata'] as const).map(u => (
-                <button key={u} onClick={() => tracker.setSettings({ weightUnit: u })} style={{
-                  flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '900', cursor: 'pointer',
-                  background: tracker.settings.weightUnit === u ? '#ff3d00' : 'transparent', 
-                  color: tracker.settings.weightUnit === u ? '#000' : 'rgba(255,255,255,0.4)',
-                  transition: 'all 0.3s ease'
-                }}>{t(u as any).toUpperCase()}</button>
-              ))}
-            </div>
-         </div>
-         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
-            {THEME_COLORS.map(theme => (
-              <button key={theme.name} onClick={() => tracker.setSettings({ accentColor: theme.hex, accentSecondary: theme.secondary })} style={{
-                width: '32px', height: '32px', borderRadius: '50%', background: theme.name === 'Fusion' ? `linear-gradient(135deg, ${theme.hex}, ${theme.secondary})` : theme.hex, cursor: 'pointer',
-                border: tracker.settings.accentColor === theme.hex ? '2.5px solid #fff' : '2.5px solid transparent', transition: 'all 0.3s ease',
-                boxShadow: tracker.settings.accentColor === theme.hex ? `0 0 15px ${theme.hex}66` : 'none'
-              }} />
-            ))}
-         </div>
 
-         <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+         <div style={{ marginTop: '100px', display: 'flex', justifyContent: 'center' }}>
             <button 
               onClick={() => {
                 console.log('Reset Clicked');
