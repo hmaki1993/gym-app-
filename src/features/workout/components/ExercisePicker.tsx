@@ -39,11 +39,11 @@ export function ExercisePicker({
     if (showSearch && overlayRef.current && searchBarRef.current) {
       gsap.fromTo(overlayRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.25, ease: 'power2.out' }
+        { opacity: 1, duration: 0.15, ease: 'power2.out' }
       );
       gsap.fromTo(searchBarRef.current,
-        { y: -40, opacity: 0, scale: 0.92 },
-        { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)', delay: 0.05 }
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.2, ease: 'power3.out', delay: 0.05 }
       );
       // Focus input
       setTimeout(() => inputRef.current?.focus(), 150);
@@ -56,8 +56,8 @@ export function ExercisePicker({
       const items = resultsRef.current.querySelectorAll('.search-result-item');
       if (items.length > 0) {
         gsap.fromTo(items,
-          { y: 10, opacity: 0 },
-          { y: 0, opacity: 1, stagger: 0.04, duration: 0.25, ease: 'power2.out' }
+          { y: 8, opacity: 0 },
+          { y: 0, opacity: 1, stagger: 0.02, duration: 0.15, ease: 'power2.out' }
         );
       }
     }
@@ -125,9 +125,9 @@ export function ExercisePicker({
           ref={overlayRef}
           style={{
             position: 'fixed', inset: 0, zIndex: 9000,
-            background: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
+            background: 'rgba(0,0,0,0.88)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
             flexDirection: 'column',
             paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
