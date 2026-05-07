@@ -86,10 +86,10 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
 
   useEffect(() => {
     if (titleRef.current) {
-      const letters = titleRef.current.querySelectorAll('.title-letter');
-      gsap.fromTo(letters,
-        { y: 16, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.04, duration: 0.45, ease: 'power3.out', delay: 0.1 }
+      const words = titleRef.current.querySelectorAll('.title-word');
+      gsap.fromTo(words,
+        { y: 12, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.06, duration: 0.35, ease: 'power2.out' }
       );
     }
   }, [exerciseName]);
@@ -192,12 +192,15 @@ export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onCha
                 position: 'relative'
               }}>
                 {exerciseName.split(' ').map((word, wi) => (
-                  <span key={wi} style={{ display: 'inline-block', whiteSpace: 'nowrap', marginRight: wi < exerciseName.split(' ').length - 1 ? '0.3em' : '0' }}>
-                    {word.split('').map((char, ci) => (
-                      <span key={ci} className="title-letter" style={{ display: 'inline-block', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-                        {char}
-                      </span>
-                    ))}
+                  <span key={wi} className="title-word" style={{ 
+                    display: 'inline-block', 
+                    whiteSpace: 'nowrap', 
+                    marginRight: '0.3em',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    willChange: 'transform, opacity'
+                  }}>
+                    {word}
                   </span>
                 ))}
               </h2>
