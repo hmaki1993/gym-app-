@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Search, Plus, X, GripVertical, RotateCcw, Trash2, Pen } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../../hooks/useGymTracker';
-import { DEFAULT_EXERCISES } from '../../../data/exercises';
+import { DEFAULT_EXERCISES, EXERCISE_TRANSLATIONS } from '../../../data/exercises';
 import type { MuscleGroup } from '../../../types';
 
 interface Props {
@@ -142,7 +142,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   <div style={{ fontSize: 18, fontWeight: 800, color: isActive ? 'var(--accent-color)' : 'var(--text-primary)', transition: 'color 0.3s ease', fontFamily: 'Outfit, sans-serif' }}>
                     {isRecent && <RotateCcw size={14} style={{ marginRight: 6, opacity: 0.5, verticalAlign: 'middle' }} />}{name}
                   </div>
-                  {!customTranslations[name] && (
+                  {isActive && !customTranslations[name] && (
                     <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); setRenameValue(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: 'var(--text-secondary)', opacity: 0.3, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                       <Pen size={14} />
                     </button>
@@ -150,7 +150,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 </>
               )}
             </div>
-            {(customTranslations[name]) && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>{customTranslations[name]}</div>}
+            {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>{EXERCISE_TRANSLATIONS[name]}</div>}
+            {customTranslations[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>{customTranslations[name]}</div>}
             {lastSession && <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, fontWeight: 800, opacity: 0.5, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -206,6 +207,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name, null); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(255,61,0,0.1)' : 'rgba(255,255,255,0.04)', border: isActive ? '1px solid rgba(255,61,0,0.3)' : '1px solid rgba(255,255,255,0.06)', borderLeft: isActive ? '3px solid #ff3d00' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#ff3d00' : '#fff', fontFamily: 'Outfit, sans-serif' }}>{name}</div>
+                    {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2, fontWeight: 700, fontFamily: 'Outfit, sans-serif' }}>{EXERCISE_TRANSLATIONS[name]}</div>}
                     {lastSession && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontWeight: 800, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
                   </div>
                   {isActive ? (
