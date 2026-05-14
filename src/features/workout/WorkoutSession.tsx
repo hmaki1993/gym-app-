@@ -22,7 +22,7 @@ interface Props {
 export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
-  const isRtl = lang === 'ar';
+  // const isRtl = lang === 'ar';
 
   const [phase, setPhase] = useState<'exercises' | 'logging'>('exercises');
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>(tracker.logs[0]?.muscleGroup || 'chest');
@@ -563,19 +563,18 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           <>
             <MuscleSelector 
               selectedMuscle={selectedMuscle} 
-              onSelect={setSelectedMuscle} 
+              onSelect={(m) => setSelectedMuscle(m as MuscleGroup)} 
               lang={lang} 
               musclesWithExercises={musclesWithExercises}
             />
             <ExercisePicker
               search={search}
               onSearchChange={setSearch}
-              filteredExercises={activeExercises} // placeholder
               activeExercises={activeExercises}
               onToggle={toggleExercise}
               muscleGroup={selectedMuscle}
               tracker={tracker}
-              t={t}
+              t={t as any}
             />
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', marginTop: '4px' }}>
               <button 

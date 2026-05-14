@@ -80,7 +80,6 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
   const lang = tracker.settings.language;
   const t = (k: string) => (translations[lang] as any)[k] ?? k;
   const weightUnit = tracker.settings.weightUnit;
-  const pr = tracker.getExercisePR(exerciseName);
 
   const initSets = () => initialSets && initialSets.length > 0
     ? initialSets.map(s => ({ ...s, unit: (s.unit || weightUnit || 'kg') as any }))

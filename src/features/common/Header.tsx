@@ -1,4 +1,4 @@
-import { Dumbbell } from 'lucide-react';
+// No imports needed for current Header implementation
 
 interface Props {
   tab: string;
