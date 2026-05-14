@@ -1,6 +1,7 @@
 import React from 'react';
-import { GripVertical, Plus, Trophy } from 'lucide-react';
+import { GripVertical, Plus, Trophy, Check } from 'lucide-react';
 import type { SetLog } from '../../../types';
+import { DEFAULT_EXERCISES } from '../../../data/exercises';
 
 interface Props {
   activeExercises: string[];
@@ -12,19 +13,20 @@ interface Props {
   handleTouchMove: (e: React.TouchEvent) => void;
   handleTouchEnd: () => void;
   draggingIndex: number | null;
+  customExercises: Record<string, string[]>;
   t: (k: any) => string;
 }
 
 export function SessionLogger({
   activeExercises, loggedData, weightUnit, onOpenExercise, onSave,
-  handleTouchStart, handleTouchMove, handleTouchEnd, draggingIndex, t
+  handleTouchStart, handleTouchMove, handleTouchEnd, draggingIndex, customExercises, t
 }: Props) {
   const loggedCount = Object.keys(loggedData).filter(k => activeExercises.includes(k)).length;
   const totalVolume = Object.values(loggedData).flat().reduce((s, set) => s + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0 }}>
-      <div style={{ padding: '14px 0', borderBottom: '1px solid rgba(var(--theme-rgb), 0.1)' }}>
+      <div style={{ padding: '14px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <div>
             <div className="section-label" style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '1.5px', marginBottom: '4px' }}>{t('todaySummary')}</div>
@@ -77,14 +79,64 @@ export function SessionLogger({
                 style={{ 
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
                   padding: '14px 0', background: 'none', border: 'none', 
-                  borderBottom: !isDragging ? `1px solid ${loggedData[name] ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.05)'}` : 'none', 
                   flex: 1, textAlign: 'left',
                   pointerEvents: isDragging ? 'none' : 'auto'
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '19px', fontWeight: '800', color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>
-                    {loggedData[name] ? '✓ ' : ''}{name}
+                  <div style={{ 
+                    fontSize: '18px', 
+                    fontWeight: '900', 
+                    color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)', 
+                    fontFamily: 'Outfit, sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    position: 'relative'
+                  }}>
+                    {loggedData[name] && (
+                      <div style={{
+                        width: '22px', height: '22px', borderRadius: '50%',
+                        background: 'rgba(255, 140, 0, 0.15)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '1px solid #FF8C00',
+                        boxShadow: '0 0 10px rgba(255, 140, 0, 0.4)'
+                      }}>
+                        <Check size={14} color="#FF8C00" strokeWidth={4} />
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={loggedData[name] ? {
+                        WebkitBackgroundClip: 'text',
+                        backgroundImage: 'linear-gradient(90deg, var(--accent-color) 0%, #fff 50%, var(--accent-color) 100%)',
+                        backgroundSize: '200% auto',
+                        WebkitTextFillColor: 'transparent',
+                        animation: 'text-shimmer 4s linear infinite',
+                        opacity: 0.9
+                      } : {}}>
+                        {name}
+                      </span>
+                      <div style={{ 
+                        fontSize: '10px', 
+                        fontWeight: '900', 
+                        color: 'var(--accent-color)', 
+                        opacity: 0.5, 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '1px',
+                        marginTop: '2px',
+                        WebkitTextFillColor: 'initial' // Ensure visibility
+                      }}>
+                        {(() => {
+                          for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
+                            if ((exercises as string[]).includes(name)) return group;
+                          }
+                          for (const [group, exercises] of Object.entries(customExercises)) {
+                            if ((exercises as string[]).includes(name)) return group;
+                          }
+                          return '';
+                        })()}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <Plus size={16} color="var(--text-secondary)" />

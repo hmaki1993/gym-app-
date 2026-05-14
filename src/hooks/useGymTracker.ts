@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog } from '../types';
+import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog, WeightUnit } from '../types';
 import { THEME_COLORS, DEFAULT_EXERCISES } from '../data/exercises';
 
 const STORAGE_KEY = 'gymlog_state_v1';
@@ -105,6 +105,26 @@ function isLogFromLocalDate(logDate: string, localDateStr: string): boolean {
   return getLocalDateStr(d) === localDateStr || logDate.startsWith(localDateStr);
 }
 
+// Unit conversion factors
+const KG_TO_LBS = 2.20462;
+const LBS_TO_KG = 0.453592;
+
+export function convertWeight(weight: number, from: WeightUnit | undefined, to: WeightUnit): number {
+  if (!from || from === to) return weight;
+  
+  // Convert from whatever to kg first
+  let inKg = weight;
+  if (from === 'lbs') inKg = weight * LBS_TO_KG;
+  else if (from === 'balata') inKg = weight * 20; // assuming 20kg per plate
+
+  // Convert from kg to target
+  if (to === 'kg') return inKg;
+  if (to === 'lbs') return inKg * KG_TO_LBS;
+  if (to === 'balata') return inKg / 20;
+  
+  return weight;
+}
+
 export function useGymTracker() {
   const [state, setState] = useState<GymState>(loadState);
   
@@ -158,10 +178,8 @@ export function useGymTracker() {
   // Initial sync to fix any "ghost" PRs from storage
   useEffect(() => {
     const fixedPRs = syncPRsFromLogs(state.logs, state.customExercises);
-    // Only update if there's a difference to avoid loops
-    if (JSON.stringify(fixedPRs) !== JSON.stringify(state.prs)) {
-      setState(prev => ({ ...prev, prs: fixedPRs }));
-    }
+    // Force update to include units even if weight/reps are the same
+    setState(prev => ({ ...prev, prs: fixedPRs }));
   }, []); // Run once on mount
 
   const setSettings = useCallback((s: Partial<GymSettings>) => {
@@ -218,23 +236,26 @@ export function useGymTracker() {
   }, []);
 
   const permanentlyDeleteExercise = useCallback((muscle: MuscleGroup, name: string) => {
-    setState(prev => {
-      return {
-        ...prev,
-        customExercises: {
-          ...prev.customExercises,
-          [muscle]: prev.customExercises[muscle].filter(e => e !== name),
-        },
-        // Also ensure it's not in hidden/deleted if we want to be thorough
-        state: {
-          ...(prev as any).state,
-          deletedExercises: {
-            ...((prev as any).state?.deletedExercises || {}),
-            [muscle]: [...((prev as any).state?.deletedExercises?.[muscle] || []), name]
-          }
-        }
-      };
-    });
+    setState(prev => ({
+      ...prev,
+      customExercises: {
+        ...prev.customExercises,
+        [muscle]: (prev.customExercises[muscle] || []).filter(e => e !== name),
+      },
+      hiddenExercises: {
+        ...prev.hiddenExercises,
+        [muscle]: (prev.hiddenExercises[muscle] || []).filter(e => e !== name),
+      },
+      deletedExercises: {
+        ...(prev as any).deletedExercises || {},
+        [muscle]: [...((prev as any).deletedExercises?.[muscle] || []), name]
+      },
+      customTranslations: (() => {
+        const next = { ...(prev as any).customTranslations || {} };
+        delete next[name];
+        return next;
+      })()
+    }));
   }, []);
 
   const renameExercise = useCallback((muscle: MuscleGroup, oldName: string, newName: string) => {
@@ -313,18 +334,25 @@ export function useGymTracker() {
         if (!ex.sets || ex.sets.length === 0) return;
         
         let bestSet = ex.sets[0];
+        let bestValInKg = convertWeight(bestSet.weight, bestSet.unit || 'kg', 'kg');
+
         ex.sets.forEach(s => {
-          if (s.weight > bestSet.weight || (s.weight === bestSet.weight && s.reps > bestSet.reps)) {
+          const currentValInKg = convertWeight(s.weight, s.unit || 'kg', 'kg');
+          if (currentValInKg > bestValInKg || (currentValInKg === bestValInKg && s.reps > bestSet.reps)) {
             bestSet = s;
+            bestValInKg = currentValInKg;
           }
         });
 
         const existing = prMap[ex.name];
-        if (!existing || bestSet.weight > existing.weight || (bestSet.weight === existing.weight && bestSet.reps > existing.reps)) {
+        const existingValInKg = existing ? convertWeight(existing.weight, (existing.unit as any) || 'kg', 'kg') : 0;
+
+        if (!existing || bestValInKg > existingValInKg || (bestValInKg === existingValInKg && bestSet.reps > existing.reps)) {
           prMap[ex.name] = { 
             exerciseName: ex.name, 
             weight: bestSet.weight, 
             reps: bestSet.reps, 
+            unit: bestSet.unit || 'kg',
             date: log.date,
             muscleGroup: exerciseToMuscle[ex.name.toLowerCase()] || log.muscleGroup
           };
@@ -441,11 +469,17 @@ export function useGymTracker() {
     return state.logs.filter(l => new Date(l.date) >= weekAgo).length;
   }, [state.logs]);
 
-  const getTotalVolume = useCallback((log: WorkoutLog) => {
+  const getTotalVolume = useCallback((log: WorkoutLog, targetUnit?: WeightUnit) => {
+    // Detect target unit for the total volume
+    const finalTargetUnit = targetUnit || log.exercises[0]?.sets[0]?.unit || state.settings.weightUnit || 'kg';
+    
     return log.exercises.reduce((total, ex) =>
-      total + ex.sets.reduce((s, set) => s + set.weight * set.reps, 0), 0
+      total + ex.sets.reduce((s, set) => {
+        const weightInTarget = convertWeight(set.weight, set.unit || 'kg', finalTargetUnit);
+        return s + (weightInTarget * set.reps);
+      }, 0), 0
     );
-  }, []);
+  }, [state.settings.weightUnit]);
 
   return {
     state,
@@ -478,6 +512,7 @@ export function useGymTracker() {
     updateMealLog,
     deleteMealLog,
     resetAllData,
+    convertWeight,
     nutritionLogs: state.nutritionLogs || [],
   };
 }

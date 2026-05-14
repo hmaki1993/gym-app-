@@ -286,14 +286,22 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
       {/* Delete confirm modal */}
       {deleteConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ width: '100%', maxWidth: 340, background: 'rgba(20,20,20,0.95)', borderRadius: 32, padding: '32px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🗑️</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 8 }}>DELETE FOREVER</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 24 }}>Are you sure you want to permanently delete "{deleteConfirm[0]}"?</div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, height: 48, borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', fontWeight: 900, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => { deleteConfirm.forEach(n => tracker.permanentlyDeleteExercise(muscleGroup as MuscleGroup, n)); setDeleteConfirm(null); }} style={{ flex: 1, height: 48, borderRadius: 12, background: 'rgba(255,50,50,0.2)', border: '1px solid rgba(255,50,50,0.5)', color: '#ff4444', fontWeight: 900, cursor: 'pointer' }}>Yes, Delete</button>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ 
+            width: '100%', maxWidth: 340, 
+            background: 'rgba(255,255,255,0.03)', 
+            border: '1px solid rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 32, padding: '40px 24px', textAlign: 'center',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(var(--accent-rgb), 0.1)'
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 16, filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.3))' }}>🗑️</div>
+            <div style={{ fontSize: 22, fontWeight: 950, color: '#fff', marginBottom: 8, fontFamily: 'Outfit, sans-serif', letterSpacing: -0.5 }}>DELETE FOREVER</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 32, fontWeight: 600, lineHeight: 1.4 }}>Are you sure you want to permanently delete "{deleteConfirm[0]}"?</div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: 15, fontFamily: 'Outfit, sans-serif' }}>Cancel</button>
+              <button onClick={() => { deleteConfirm.forEach(n => tracker.permanentlyDeleteExercise(muscleGroup as MuscleGroup, n)); setDeleteConfirm(null); }} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(255,50,50,0.2)', border: '1.5px solid rgba(255,50,50,0.4)', color: '#ff5555', fontWeight: 950, cursor: 'pointer', fontSize: 15, fontFamily: 'Outfit, sans-serif', boxShadow: '0 0 20px rgba(255,50,50,0.15)' }}>Yes, Delete</button>
             </div>
           </div>
         </div>

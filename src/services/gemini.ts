@@ -9,6 +9,10 @@ const getKeys = () => {
   if (import.meta.env.VITE_GEMINI_KEY) keys.push(import.meta.env.VITE_GEMINI_KEY);
   if (import.meta.env.VITE_GEMINI_API_KEY && import.meta.env.VITE_GEMINI_API_KEY !== import.meta.env.VITE_GEMINI_KEY) 
     keys.push(import.meta.env.VITE_GEMINI_API_KEY);
+  
+  // Fallback direct key
+  keys.push('AIzaSyBkBcTygJozSsumNog5cMSJZWv4qdhnfA8');
+  
   return keys.filter(k => k && k.trim().length > 0);
 };
 
@@ -33,7 +37,7 @@ export const GeminiService = {
     const key = getActiveKey();
     if (!key) return;
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${key.trim()}`);
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key.trim()}`);
       const data = await response.json();
       console.log('📋 Available Models for this Key:', data.models?.map((m: any) => m.name.replace('models/', '')));
     } catch (err) {
@@ -45,86 +49,100 @@ export const GeminiService = {
     const key = getActiveKey();
     if (!key) throw new Error('API Key missing');
 
-    try {
-      console.log(`📡 Header Auth Analysis with Key: ${key.substring(0, 6)}...`);
-      const prompt = `Analyze this food image. Return ONLY a valid JSON object: {"name":"food name","nameAr":"الاسم بالعربي","calories":number,"protein":number,"carbs":number,"fats":number,"portion":number}. Be highly accurate.`;
-      
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-goog-api-key': key.trim()
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: mimeType, data: base64Image } }
-            ]
-          }]
-        })
-      });
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro'];
+    let lastError = null;
 
-      if (!response.ok) {
-        const err = await response.json();
-        console.error('Gemini API Error Response:', err);
-        if (response.status === 429) rotateKey();
-        throw new Error(err.error?.message || 'Gemini API Error');
-      }
+    for (const modelName of models) {
+      try {
+        const fullModelName = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
+        console.log(`📡 Trying Model: ${fullModelName} with Key: ${key.substring(0, 6)}...`);
+        const prompt = `Analyze this food image. Return ONLY a valid JSON object: {"name":"food name","nameAr":"الاسم بالعربي","calories":number,"protein":number,"carbs":number,"fats":number,"portion":number}. Be highly accurate.`;
+        
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${fullModelName}:generateContent?key=${key.trim()}`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: mimeType, data: base64Image } }
+              ]
+            }]
+          })
+        });
 
-      const result = await response.json();
-      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const jsonMatch = text.match(/\{[\s\S]*?\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          name: parsed.name || 'Analyzed Meal',
-          nameAr: parsed.nameAr || '',
-          calories: Math.round(parsed.calories) || 0,
-          protein: Math.round(parsed.protein) || 0,
-          carbs: Math.round(parsed.carbs) || 0,
-          fats: Math.round(parsed.fats) || 0,
-          portion: Math.round(parsed.portion) || 300
-        };
+        if (!response.ok) {
+          const err = await response.json();
+          console.error(`❌ Model ${modelName} failed:`, err);
+          if (response.status === 404) continue; // Try next model
+          if (response.status === 429 || response.status === 403 || response.status === 401) rotateKey();
+          throw new Error(err.error?.message || 'Gemini API Error');
+        }
+
+        const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const jsonMatch = text.match(/\{[\s\S]*?\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            name: parsed.name || 'Analyzed Meal',
+            nameAr: parsed.nameAr || '',
+            calories: Math.round(parsed.calories) || 0,
+            protein: Math.round(parsed.protein) || 0,
+            carbs: Math.round(parsed.carbs) || 0,
+            fats: Math.round(parsed.fats) || 0,
+            portion: Math.round(parsed.portion) || 300
+          };
+        }
+        throw new Error('Invalid response format');
+      } catch (err: any) {
+        lastError = err;
+        if (err.message?.includes('404')) continue;
+        throw err;
       }
-      throw new Error('Invalid response format');
-    } catch (err: any) {
-      console.error('Gemini Direct Error:', err);
-      if (err.message?.includes('429') || err.message?.includes('404')) rotateKey();
-      throw err;
     }
+    throw lastError || new Error('All models failed');
   },
 
   generateText: async (prompt: string): Promise<string> => {
     const key = getActiveKey();
     if (!key) throw new Error('API Key missing');
 
-    try {
-      console.log(`📡 Header Auth Text with Key: ${key.substring(0, 6)}...`);
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-goog-api-key': key.trim()
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro'];
+    let lastError = null;
 
-      if (!response.ok) {
-        const err = await response.json();
-        if (response.status === 429) rotateKey();
-        throw new Error(err.error?.message || 'Gemini API Error');
+    for (const modelName of models) {
+      try {
+        const fullModelName = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
+        console.log(`📡 Text Auth with Model: ${fullModelName}...`);
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${fullModelName}:generateContent?key=${key.trim()}`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          if (response.status === 404) continue;
+          if (response.status === 429 || response.status === 403 || response.status === 401) rotateKey();
+          throw new Error(err.error?.message || 'Gemini API Error');
+        }
+
+        const result = await response.json();
+        return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      } catch (err: any) {
+        lastError = err;
+        if (err.message?.includes('404')) continue;
+        throw err;
       }
-
-      const result = await response.json();
-      return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    } catch (err: any) {
-      console.error('Gemini Direct Text Error:', err);
-      if (err.message?.includes('429') || err.message?.includes('404')) rotateKey();
-      throw err;
     }
+    throw lastError || new Error('All models failed');
   },
 
   translateExercise: async (name: string, muscleGroup?: string): Promise<{ en: string, ar: string }> => {

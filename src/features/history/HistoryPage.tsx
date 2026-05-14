@@ -71,6 +71,32 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
     });
   };
 
+  const monthDayMuscles = React.useMemo(() => {
+    const map: Record<number, string[]> = {};
+    const exerciseToMuscle: Record<string, string> = {};
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+    });
+    Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+    });
+
+    tracker.logs.forEach(log => {
+      const d = new Date(log.date);
+      if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+        const day = d.getDate();
+        const groups = new Set<string>();
+        log.exercises.forEach(ex => {
+          const group = (ex as any).muscleGroup || exerciseToMuscle[ex.name] || log.muscleGroup;
+          if (group) groups.add(group);
+        });
+        if (!map[day]) map[day] = [];
+        map[day] = Array.from(new Set([...map[day], ...Array.from(groups)]));
+      }
+    });
+    return map;
+  }, [tracker.logs, tracker.customExercises, currentYear, currentMonth]);
+
   const isSelected = (day: number) => {
     if (!selectedDate) return false;
     return selectedDate.getFullYear() === currentYear &&
@@ -140,7 +166,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
           {Array.from({ length: totalDays }).map((_, i) => {
             const day = i + 1;
-            const worked = hasWorkout(day);
+            const dayMuscles = monthDayMuscles[day] || [];
+            const worked = dayMuscles.length > 0;
             const active = isSelected(day);
             const now = new Date();
             const isToday = now.getFullYear() === currentYear && now.getMonth() === currentMonth && now.getDate() === day;
@@ -151,24 +178,36 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 key={day}
                 onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
                 style={{
-                  height: '40px', width: '40px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  height: '50px', width: '50px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   fontSize: '16px', fontWeight: active ? '950' : (isToday ? '950' : '800'),
                   color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
                   cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                  background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (isPast && !worked ? 'rgba(255, 94, 0, 0.12)' : 'transparent')),
+                  background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (isPast && !worked ? 'rgba(255, 94, 0, 0.05)' : 'transparent')),
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : '1px solid transparent'),
                   transform: active ? 'scale(1.1)' : 'scale(1)',
-                  boxShadow: active ? '0 0 15px var(--accent-color-alpha)' : (isToday ? '0 0 10px var(--accent-color-alpha)' : 'none'),
-                  animation: isToday ? 'pulseToday 2s infinite' : 'none'
+                  paddingTop: dayMuscles.length > 0 ? '3px' : '0px'
                 }}
               >
-                {day}
-                {isToday && !active && (
-                   <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px var(--accent-color)' }} />
+                <span style={{ lineHeight: 1 }}>{day}</span>
+                {dayMuscles.length > 0 && (
+                  <div style={{ display: 'flex', gap: '2px', marginTop: '2px', height: '16px', alignItems: 'center', justifyContent: 'center' }}>
+                    {dayMuscles.slice(0, 3).map((g, idx) => {
+                      const mg = MUSCLE_GROUPS.find(m => m.key === g);
+                      return mg?.icon ? (
+                        <TransparentImage key={g} src={mg.icon} alt="" width={15} height={15} threshold={45} style={{ filter: 'grayscale(1) brightness(2)', opacity: 1, marginLeft: idx > 0 ? '-3px' : 0 }} />
+                      ) : <span key={g} style={{ fontSize: '10px' }}>•</span>;
+                    })}
+                    {dayMuscles.length > 3 && <div style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: 900 }}>+</div>}
+                  </div>
                 )}
-                {worked && !active && !isToday && (
-                  <div style={{ position: 'absolute', bottom: '2px', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px var(--accent-color)' }} />
+                {isToday && !active && (
+                   <div style={{ 
+                     position: 'absolute', inset: '-2px', borderRadius: '50%', 
+                     border: '2px solid var(--accent-color)', 
+                     boxShadow: '0 0 15px var(--accent-color-alpha)',
+                     animation: 'pulseToday 2s infinite ease-in-out'
+                   }} />
                 )}
               </div>
             );
@@ -205,6 +244,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
             const volume = tracker.getTotalVolume(log);
             const totalSets = log.exercises.reduce((s, ex) => s + ex.sets.length, 0);
+            
+            // Detect workout unit from the first set found
+            const workoutUnit = log.exercises[0]?.sets[0]?.unit || unit;
 
             return (
               <div 
@@ -264,7 +306,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                         {[
                           { label: t('exercises'), value: log.exercises.length },
                           { label: t('totalSets'), value: totalSets },
-                          { label: t('totalVolume'), value: `${volume.toFixed(0)} ${t(unit as any)}` },
+                          { label: t('totalVolume'), value: `${volume.toFixed(0)} ${t(workoutUnit as any)}` },
                           { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
                         ].map((stat, idx) => (
                           <React.Fragment key={stat.label}>
@@ -322,7 +364,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                     <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
                                     <div style={{ textAlign: 'right' }}>
                                       <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
-                                      <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t(unit as any)}</span>
+                                      <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t((bestSet.unit || unit) as any)}</span>
                                     </div>
                                   </div>
                                 </div>

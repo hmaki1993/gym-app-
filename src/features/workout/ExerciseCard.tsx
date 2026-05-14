@@ -283,9 +283,93 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
             <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>{maxWeight} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
           </div>
         </div>
-        <button onClick={handleDone} disabled={saving || !isDirtyRef || sets.every(s => !Number(s.reps))} style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: 16, fontWeight: 800, padding: '4px 8px', width: 'fit-content', cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer', pointerEvents: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'auto', textTransform: 'uppercase', letterSpacing: saving ? '4px' : '12px', outline: 'none', animation: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'pulse-glow 2.5s ease-in-out infinite', opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.6 : 1, fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation', transition: 'all 0.2s ease' }}>
-          {saving ? (lang === 'ar' ? 'جاري الحفظ...' : 'SAVING...') : t('done')}
-        </button>
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px 0' }}>
+          <button 
+            onClick={handleDone} 
+            disabled={saving || !isDirtyRef || sets.every(s => !Number(s.reps))} 
+            style={{ 
+              background: 'none', 
+              border: '2px solid var(--accent-color)', 
+              color: 'var(--accent-color)', 
+              fontSize: 14, 
+              fontWeight: 950, 
+              padding: '16px 50px', 
+              width: 'fit-content', 
+              cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer', 
+              pointerEvents: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'auto', 
+              textTransform: 'uppercase', 
+              letterSpacing: '4px', 
+              outline: 'none', 
+              opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.3 : 1, 
+              fontFamily: 'Syne, sans-serif', 
+              position: 'relative',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              clipPath: 'polygon(0% 15%, 5% 0%, 95% 0%, 100% 15%, 100% 85%, 95% 100%, 5% 100%, 0% 85%, 0% 50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 0 25px var(--accent-color-alpha), inset 0 0 10px var(--accent-color-alpha)',
+              textShadow: '0 0 10px var(--accent-color)'
+            }}
+            onMouseDown={e => {
+              e.currentTarget.style.transform = 'scale(0.94)';
+              e.currentTarget.style.background = 'var(--accent-color)';
+              e.currentTarget.style.color = '#000';
+              e.currentTarget.style.boxShadow = '0 0 50px var(--accent-color)';
+            }}
+            onMouseUp={e => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.background = 'none';
+              e.currentTarget.style.color = 'var(--accent-color)';
+              e.currentTarget.style.boxShadow = '0 0 25px var(--accent-color-alpha), inset 0 0 10px var(--accent-color-alpha)';
+            }}
+          >
+            <span style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              position: 'relative'
+            }}>
+              {saving ? (lang === 'ar' ? 'جاري...' : 'SAVING...') : (
+                <>
+                  <span style={{ 
+                    letterSpacing: '3px',
+                    background: 'linear-gradient(90deg, var(--accent-color) 20%, #fff 50%, var(--accent-color) 80%)',
+                    backgroundSize: '200% auto',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    animation: 'text-shimmer 2s linear infinite',
+                    fontWeight: 900,
+                    fontSize: 16
+                  }}>S E T   S A</span>
+                  
+                  <div style={{ display: 'inline-flex', transform: 'translateY(-1px)' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent-color)" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 8px var(--accent-color))' }}>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                  </div>
+                  
+                  <span style={{ 
+                    letterSpacing: '3px',
+                    background: 'linear-gradient(90deg, var(--accent-color) 20%, #fff 50%, var(--accent-color) 80%)',
+                    backgroundSize: '200% auto',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    animation: 'text-shimmer 2s linear infinite',
+                    fontWeight: 900,
+                    fontSize: 16
+                  }}>E D</span>
+                </>
+              )}
+            </span>
+          </button>
+        </div>
+        
+        <style>{`
+          @keyframes text-shimmer {
+            to { background-position: 200% center; }
+          }
+        `}</style>
       </div>
     </div>
   );

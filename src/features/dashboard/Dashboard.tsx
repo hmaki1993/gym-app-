@@ -34,11 +34,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout, o
 
   const { totalVolume, unit } = React.useMemo(() => {
     if (!recentLog) return { totalVolume: 0, unit: '' };
-    const vol = recentLog.exercises.reduce((acc, ex) => 
-      acc + ex.sets.reduce((setAcc, set) => setAcc + (Number(set.weight || 0) * Number(set.reps || 0)), 0), 0
-    );
-    return { totalVolume: vol, unit: tracker.settings.weightUnit || 'kg' };
-  }, [recentLog, tracker.settings.weightUnit]);
+    const targetUnit = tracker.settings.weightUnit || 'kg';
+    const vol = tracker.getTotalVolume(recentLog, targetUnit);
+    return { totalVolume: vol, unit: targetUnit };
+  }, [recentLog, tracker.settings.weightUnit, tracker.getTotalVolume]);
 
   const recentDisplayTitle = React.useMemo(() => {
     if (!recentLog) return '';
@@ -98,11 +97,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout, o
     return logLocalDate === todayStr || log.date.startsWith(todayStr);
   });
 
-  const workoutWords = (hasWorkoutToday 
-    ? (lang === 'ar' ? 'تكملة التمرين' : 'RESUME WORKOUT') 
-    : (lang === 'ar' ? 'بدء التمرين' : 'START WORKOUT')
-  ).split(' ');
-
   return (
     <div ref={containerRef} style={{
       display: 'flex', flexDirection: 'column',
@@ -141,32 +135,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout, o
           style={{
             cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', transformStyle: 'preserve-3d', textAlign: 'center',
-            padding: '20px', width: '100%', maxWidth: '350px'
+            padding: '20px', width: '100%', maxWidth: '350px',
+            position: 'relative'
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'translateZ(50px)' }}>
-            {workoutWords.map((word, i) => (
-              <div key={i} className="premium-title" style={{ 
-                fontSize: 'min(16vw, 68px)', 
-                lineHeight: '0.85',
-                marginBottom: '8px',
-                textAlign: 'center'
-              }}>
-                {word}
-              </div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'translateZ(60px)' }}>
+            <span style={{ 
+              fontSize: 'min(18vw, 92px)', 
+              fontWeight: 950,
+              fontFamily: 'Outfit, sans-serif',
+              letterSpacing: '-4px',
+              textTransform: 'uppercase',
+              display: 'block',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              backgroundImage: 'linear-gradient(90deg, var(--accent-color) 0%, rgba(255, 150, 50, 0.6) 45%, #fff 50%, rgba(255, 150, 50, 0.6) 55%, var(--accent-color) 100%)',
+              backgroundSize: '200% auto',
+              WebkitTextFillColor: 'transparent',
+              color: 'transparent',
+              animation: 'text-shimmer 4s linear infinite',
+              lineHeight: 0.8,
+              filter: 'none'
+            }}>
+              {hasWorkoutToday ? (lang === 'ar' ? 'استكمال' : 'RESUME') : (lang === 'ar' ? 'ابدأ' : 'START')}
+            </span>
           </div>
+          
           <div style={{ 
-            marginTop: '16px',
+            marginTop: '10px',
             fontSize: '11px', 
             fontWeight: '900', 
-            color: 'rgba(255,255,255,0.4)', 
+            color: 'var(--accent-color)', 
             letterSpacing: '6px',
             textTransform: 'uppercase',
-            opacity: 0.8,
-            transform: 'translateZ(25px)'
+            opacity: 0.5,
+            transform: 'translateZ(30px)'
           }}>
-            {lang === 'ar' ? 'اضغط للبدء' : 'TAP TO BEGIN'}
+            {lang === 'ar' ? 'اضغط للبدء' : 'SYSTEM READY'}
           </div>
         </div>
       </div>

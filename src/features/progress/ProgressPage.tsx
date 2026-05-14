@@ -104,7 +104,7 @@ function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: 
                         <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
                         <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{groupName}</span>
                       </div>
-                      <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit, sans-serif' }}>{pr.weight} {t(unit as any)} × {pr.reps}</span>
+                      <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit, sans-serif' }}>{pr.weight} {t((pr.unit || unit) as any)} × {pr.reps}</span>
                     </div>
                   ))}
                 </React.Fragment>
@@ -144,7 +144,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
 
   const totalWorkouts = filteredLogs.length;
   const weeklyCount = tracker.getWeeklyCount();
-  const totalVolume = filteredLogs.reduce((s, l) => s + tracker.getTotalVolume(l), 0);
+  const totalVolume = filteredLogs.reduce((s, l) => s + tracker.getTotalVolume(l, unit), 0);
 
   const loggedMuscles = React.useMemo(() => {
     const muscles = new Set<string>();
@@ -200,8 +200,8 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
       const group = exerciseToMuscle[name.toLowerCase()] || log.muscleGroup;
       if (group !== selectedMuscle) continue;
       if (ex && ex.sets.length > 0) {
-        const max = Math.max(...ex.sets.map(s => s.weight));
-        history.push({ date: log.date, value: max });
+        const max = Math.max(...ex.sets.map(s => tracker.convertWeight(s.weight, s.unit || 'kg', unit)));
+        history.push({ date: log.date, value: Number(max.toFixed(1)) });
       }
     }
     return history;

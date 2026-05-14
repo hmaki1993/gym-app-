@@ -299,27 +299,27 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       if (xPercent > 15) {
         if (currentIdx > 0) handleSwipeTransition('right', activeExercises[currentIdx - 1]);
         else {
-          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, scale: 1, duration: 0.25, ease: 'power4.out', onComplete: () => { touchState.current.isAnimating = false; } });
+          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power3.out', onComplete: () => { touchState.current.isAnimating = false; } });
         }
       } else {
         if (currentIdx < activeExercises.length - 1) handleSwipeTransition('left', activeExercises[currentIdx + 1]);
         else handleSwipeTransition('left', activeExercises[0]);
       }
     } else {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, scale: 1, duration: 0.2, ease: 'power4.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power3.out' });
     }
   };
 
   const handleOverlayPointerCancel = () => {
     if (swipeContainerRef.current) {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'power2.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.2, ease: 'power2.out' });
       touchState.current.isAnimating = false;
     }
   };
 
   const handleSwipeTransition = (direction: 'left' | 'right', nextEx: string) => {
     if (!swipeContainerRef.current || !nextEx) {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power2.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.1, ease: 'power2.out' });
       touchState.current.isAnimating = false;
       return;
     }
@@ -328,14 +328,14 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     gsap.to(swipeContainerRef.current, {
       xPercent: xDist,
       opacity: 0,
-      duration: 0.1,
+      duration: 0.08,
       ease: 'power2.in',
       force3D: true,
       onComplete: () => {
         setOpenExercise(nextEx);
         gsap.fromTo(swipeContainerRef.current,
           { xPercent: direction === 'left' ? 100 : -100, opacity: 0 },
-          { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
+          { xPercent: 0, opacity: 1, duration: 0.12, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
         );
       }
     });
@@ -377,10 +377,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       {openExercise && (
         <div style={{
           position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
-          background: 'rgba(0,0,0,0.8)', zIndex: 2000,
+          background: 'rgba(0,0,0,0.9)', zIndex: 2000,
           display: 'flex', justifyContent: 'center',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
           touchAction: 'none',
           overscrollBehavior: 'none',
           boxSizing: 'border-box'
@@ -401,7 +399,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 <div key={i} style={{
                   width: name === openExercise ? '20px' : '6px', height: '6px', borderRadius: '3px',
                   background: name === openExercise ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.1)',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                  transition: 'all 0.3s ease'
                 }} />
               ))}
             </div>
@@ -413,7 +411,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 touchAction: 'pan-y', userSelect: 'none',
                 flex: 1, minHeight: 0, width: '100%',
                 display: 'flex', flexDirection: 'column',
-                overflow: 'hidden', position: 'relative'
+                overflow: 'hidden', position: 'relative',
+                willChange: 'transform, opacity'
               }}
               onPointerDown={handleOverlayPointerStart}
               onPointerMove={handleOverlayPointerMove}
@@ -622,6 +621,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             handleTouchMove={handleTouchMove}
             handleTouchEnd={handleTouchEnd}
             draggingIndex={draggingIndex}
+            customExercises={tracker.customExercises}
             t={t}
           />
         )}
