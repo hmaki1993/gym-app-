@@ -102,3 +102,4 @@ export function TransparentImage({ src, alt, width, height, style, threshold = 5
     />
   );
 }
+export default TransparentImage;

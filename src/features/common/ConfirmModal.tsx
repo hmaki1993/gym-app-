@@ -39,3 +39,4 @@ export function ConfirmModal({ title, message, confirmLabel, cancelLabel, onConf
     </div>
   );
 }
+export default ConfirmModal;

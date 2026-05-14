@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useGymTracker } from './hooks/useGymTracker';
 import { translations } from './translations';
 import { Dashboard } from './features/dashboard/Dashboard';
-import { WorkoutSession } from './features/workout/WorkoutSession';
+import WorkoutSession from './features/workout/WorkoutSession';
 import { HistoryPage } from './features/history/HistoryPage';
-import { ProgressPage } from './features/progress/ProgressPage';
+import ProgressPage from './features/progress/ProgressPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { OnboardingModal } from './features/common/OnboardingModal';
 import { BottomNav } from './features/common/BottomNav';
@@ -143,9 +143,7 @@ export default function App() {
     }
   };
 
-  const handleDeleteWorkout = (id: string) => {
-    setConfirmDelete(id);
-  };
+
 
   const confirmDeleteAction = () => {
     if (confirmDelete) {
@@ -205,7 +203,7 @@ export default function App() {
               />
             )}
             {tab === 'history' && (
-              <HistoryPage tracker={tracker} onDeleteWorkout={handleDeleteWorkout} />
+              <HistoryPage tracker={tracker} />
             )}
             {tab === 'progress' && <ProgressPage tracker={tracker} />}
             {tab === 'nutrition' && <NutritionPage tracker={tracker} />}

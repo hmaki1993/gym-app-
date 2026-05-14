@@ -14,6 +14,7 @@ export const DEFAULT_EXERCISES: Record<MuscleGroup, string[]> = {
   chest: [
     'Bench Press', 'Incline Bench Press', 'Decline Bench Press',
     'Dumbbell Fly', 'Cable Crossover', 'Push Up', 'Chest Dip',
+    'Butterfly Machine', 'Pec Deck', 'butter flay machine',
   ],
   back: [
     'Deadlift', 'Pull Up', 'Lat Pulldown', 'Seated Row',
@@ -50,6 +51,9 @@ export const EXERCISE_TRANSLATIONS: Record<string, string> = {
   'Cable Crossover': 'تجميع كابل',
   'Push Up': 'تمرين الضغط',
   'Chest Dip': 'متوازي صدر',
+  'Butterfly Machine': 'جهاز الفراشة - تجميع صدر',
+  'Pec Deck': 'بك دك - تجميع صدر جهاز',
+  'butter flay machine': 'جهاز الفراشة',
   // Back
   'Deadlift': 'ديدليفت - الرفعة الميتة',
   'Pull Up': 'عقلة',

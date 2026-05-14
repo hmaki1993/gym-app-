@@ -10,6 +10,7 @@ export type MuscleGroup =
 export interface SetLog {
   weight: number;
   reps: number;
+  unit?: WeightUnit;
 }
 
 export interface ExerciseLog {
@@ -32,8 +33,10 @@ export interface WorkoutLog {
 
 export interface PersonalRecord {
   exerciseName: string;
+  name?: string; // alias used in some contexts
   weight: number;
   reps: number;
+  unit?: string;
   date: string;
   muscleGroup?: string;
 }

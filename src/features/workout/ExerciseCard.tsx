@@ -1,359 +1,289 @@
-import { useState, useEffect, useRef } from 'react';
-import { useGymTracker, playSetDoneSound, playRestDoneSound } from '../../hooks/useGymTracker';
-import type { SetLog } from '../../types';
-import { translations } from '../../translations';
-import { X, Plus, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef, memo } from 'react';
+import { X, Clock, Plus, Trash2 } from 'lucide-react';
 import gsap from 'gsap';
-import { SetRow } from './components/SetRow';
+import { useGymTracker } from '../../hooks/useGymTracker';
+
+const translations: any = {
+  en: { totalVolume: 'Total Volume', addSet: 'Add Set', reps: 'Reps', done: 'Done', kg: 'kg', lbs: 'lbs', balata: 'plate', lastSession: 'Last Session' },
+  ar: { totalVolume: 'الحجم الكلي', addSet: 'أضف سيت', reps: 'عدات', done: 'تمام', kg: 'كج', lbs: 'رطل', balata: 'بلاطة', lastSession: 'آخر جلسة' },
+};
+
+// Rest timer sounds
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.setValueAtTime(880, ctx.currentTime); g.gain.setValueAtTime(0.3, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    o.start(); o.stop(ctx.currentTime + 0.3);
+  } catch {}
+}
+function playStart() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.setValueAtTime(440, ctx.currentTime); g.gain.setValueAtTime(0.2, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    o.start(); o.stop(ctx.currentTime + 0.15);
+  } catch {}
+}
+
+// SetRow component (Ka from bundle)
+const SetRow = ({ index, weight, reps, restTime, activeUnit, isResting, canRemove, t, onUpdate, onCycleUnit, onStartRest, onRemove }: any) => (
+  <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)', gap: 8, transformStyle: 'preserve-3d' }}>
+    <div style={{ width: 24, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: 'Outfit, sans-serif' }}>{index + 1}</div>
+    <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 12 }} />
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'var(--glass-bg)', border: '1.5px solid rgba(var(--theme-rgb), 0.3)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '4px 0', borderRadius: 8, fontFamily: 'Outfit, sans-serif' }} />
+      <div onClick={onCycleUnit} style={{ fontSize: 11, fontWeight: 950, color: '#666', textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', minWidth: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, sans-serif', lineHeight: 1, transition: 'transform 0.2s ease' }} onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.9)')} onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
+        {t(activeUnit)}
+        <div style={{ width: 12, height: 2, background: '#666', marginTop: 3, borderRadius: 1 }} />
+      </div>
+    </div>
+    <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'var(--glass-bg)', border: '1.5px solid rgba(var(--theme-rgb), 0.3)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '4px 0', borderRadius: 8, fontFamily: 'Outfit, sans-serif' }} />
+      <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif' }}>{t('reps')}</div>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      {restTime
+        ? <div style={{ fontSize: 10, color: 'var(--accent-color)', fontWeight: 900, background: 'rgba(0,229,160,0.1)', padding: '2px 4px', borderRadius: 4, fontFamily: 'Outfit, sans-serif' }}>{restTime}s</div>
+        : <button onClick={onStartRest} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: isResting ? 'var(--accent-color)' : '#555', opacity: isResting ? 1 : 0.5, padding: 4 }}><Clock size={16} /></button>
+      }
+      {canRemove && (
+        <button onClick={onRemove} style={{ background: 'transparent', border: 'none', width: 28, height: 28, cursor: 'pointer', color: 'rgba(255,51,102,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: 0 }}>
+          <Trash2 size={16} />
+        </button>
+      )}
+    </div>
+  </div>
+);
 
 interface Props {
   exerciseName: string;
   muscleGroup: string;
   tracker: ReturnType<typeof useGymTracker>;
-  initialSets?: SetLog[];
+  initialSets?: any[];
   isCompleted?: boolean;
-  onDone: (sets: SetLog[]) => void;
-  onChange?: (sets: any[], isDirty: boolean) => void;
-  onClose: () => void;
-  inline?: boolean;
-  fullPage?: boolean;
   elapsedSeconds?: number;
+  onDone: (sets: any[]) => void;
+  onChange?: (sets: any[], dirty: boolean) => void;
+  onClose: () => void;
+  fullPage?: boolean;
+  inline?: boolean;
   isDirty?: boolean;
 }
 
-export function ExerciseCard({ exerciseName, tracker, initialSets, onDone, onChange, onClose, inline, fullPage, elapsedSeconds, isDirty: isDirtyProp }: Props) {
+const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets, onDone, onChange, onClose, fullPage, inline, elapsedSeconds, isDirty }) => {
   const lang = tracker.settings.language;
   const t = (k: string) => (translations[lang] as any)[k] ?? k;
-  const unit = tracker.settings.weightUnit;
-
+  const weightUnit = tracker.settings.weightUnit;
   const pr = tracker.getExercisePR(exerciseName);
 
-  const [sets, setSets] = useState<{ weight: string | number; reps: string | number; restTime?: number }[]>(() => {
-    if (initialSets && initialSets.length > 0) return initialSets.map(s => ({ ...s }));
-    return [{ weight: '', reps: '' }];
-  });
+  const initSets = () => initialSets && initialSets.length > 0
+    ? initialSets.map(s => ({ ...s, unit: (s.unit || weightUnit || 'kg') as any }))
+    : [{ weight: '', reps: '', unit: (weightUnit || 'kg') as any }];
 
-  const isDirty = !!isDirtyProp;
-
-  const handleManualChange = (newSets: typeof sets) => {
-    setSets(newSets);
-    if (onChange) onChange(newSets, true);
-  };
-
-  useEffect(() => {
-    // Initial sync without marking as dirty
-    if (onChange) onChange(sets, false);
-  }, []); // Run only ONCE on mount
-
-  const [, setHasAddedSet] = useState(false);
-  const [activeUnit, setActiveUnit] = useState(unit || 'kg');
-
-  const cycleUnit = () => {
-    const units = ['kg', 'lbs', 'balata'] as const;
-    const currentIndex = units.indexOf(activeUnit as any);
-    const nextIndex = (currentIndex + 1) % units.length;
-    const newUnit = units[nextIndex];
-    setActiveUnit(newUnit);
-    tracker.setSettings({ weightUnit: newUnit });
-  };
-  const [restActive, setRestActive] = useState(false);
-  const [restDuration] = useState(tracker.settings.defaultRestSeconds);
-  const [restRemaining, setRestRemaining] = useState(tracker.settings.defaultRestSeconds);
+  const [sets, setSets] = useState(initSets);
+  const [activeUnit, setActiveUnit] = useState(initialSets?.[0]?.unit || weightUnit || 'kg');
+  const [isResting, setIsResting] = useState(false);
+  const [restSeconds, setRestSeconds] = useState(tracker.settings.defaultRestSeconds);
   const [restingSetIndex, setRestingSetIndex] = useState<number | null>(null);
+  const restTimerRef = useRef<any>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const intervalRef = useRef<number | null>(null);
+  const setsRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [saving, setSaving] = useState(false);
+  const isDirtyRef = !!isDirty;
 
+  // Re-init when exercise changes
+  useEffect(() => {
+    const s = initSets();
+    setSets(s);
+    setActiveUnit(initialSets?.[0]?.unit || weightUnit || 'kg');
+    onChange && onChange(s, false);
+  }, [exerciseName]);
+
+  useEffect(() => { onChange && onChange(sets, false); }, []);
+
+  // GSAP animations
   useEffect(() => {
     if (cardRef.current && !fullPage) {
-      gsap.fromTo(cardRef.current, 
-        { y: 30, opacity: 0, rotateX: 15, translateZ: -100 }, 
-        { y: 0, opacity: 1, rotateX: 0, translateZ: 0, duration: 0.6, ease: 'power4.out' }
-      );
+      gsap.fromTo(cardRef.current, { y: 30, opacity: 0, rotateX: 15, translateZ: -100 }, { y: 0, opacity: 1, rotateX: 0, translateZ: 0, duration: 0.6, ease: 'power4.out' });
     }
   }, [fullPage]);
 
-  // Stagger sets on mount
-  const setsRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (setsRef.current && !fullPage) {
-      gsap.fromTo(setsRef.current.children,
-        { opacity: 0, x: -10, translateZ: -20 },
-        { opacity: 1, x: 0, translateZ: 0, stagger: 0.05, duration: 0.5, ease: 'power2.out' }
-      );
+      gsap.fromTo(setsRef.current.children, { opacity: 0, x: -10, translateZ: -20 }, { opacity: 1, x: 0, translateZ: 0, stagger: 0.05, duration: 0.5, ease: 'power2.out' });
     }
   }, [fullPage]);
 
   useEffect(() => {
     if (titleRef.current && !fullPage) {
       const words = titleRef.current.querySelectorAll('.title-word');
-      gsap.fromTo(words,
-        { y: 12, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.06, duration: 0.35, ease: 'power2.out' }
-      );
+      if (words.length > 0) {
+        gsap.fromTo(words, { y: 12, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.06, duration: 0.35, ease: 'power2.out' });
+      }
     }
   }, [exerciseName, fullPage]);
 
-  const formatElapsed = (totalSeconds: number) => {
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    const parts = [
-      h > 0 ? h.toString().padStart(2, '0') : null,
-      m.toString().padStart(2, '0'),
-      s.toString().padStart(2, '0')
-    ].filter(p => p !== null);
-    return parts.join(':');
-  };
-
+  // Rest timer
   useEffect(() => {
-    if (restActive && restRemaining > 0) {
-      intervalRef.current = window.setInterval(() => {
-        setRestRemaining(prev => {
+    if (isResting && restSeconds > 0) {
+      restTimerRef.current = window.setInterval(() => {
+        setRestSeconds(prev => {
           if (prev <= 1) {
-            setRestActive(false);
+            setIsResting(false);
             if (restingSetIndex !== null) {
-              updateSet(restingSetIndex, 'restTime', restDuration);
+              updateSet(restingSetIndex, 'restTime', tracker.settings.defaultRestSeconds);
               setRestingSetIndex(null);
             }
-            if (intervalRef.current) clearInterval(intervalRef.current);
-            if (tracker.settings.soundEnabled) playRestDoneSound();
+            if (restTimerRef.current) clearInterval(restTimerRef.current);
+            if (tracker.settings.soundEnabled) playBeep();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [restActive, restingSetIndex, restDuration]);
+    return () => { if (restTimerRef.current) clearInterval(restTimerRef.current); };
+  }, [isResting, restingSetIndex]);
 
-  const startRest = (index?: number) => {
-    if (restActive && restingSetIndex === index) {
-      const timeSpent = restDuration - restRemaining;
-      if (timeSpent > 0) updateSet(restingSetIndex, 'restTime', timeSpent);
-      setRestActive(false);
-      setRestingSetIndex(null);
-      if (intervalRef.current) clearInterval(intervalRef.current);
+  const cycleUnit = () => {
+    const units = ['kg', 'lbs', 'balata'];
+    const next = units[(units.indexOf(activeUnit) + 1) % units.length];
+    setActiveUnit(next);
+    const updated = sets.map(s => ({ ...s, unit: next }));
+    setSets(updated);
+    onChange && onChange(updated, true);
+    tracker.setSettings({ weightUnit: next as any });
+  };
+
+  const updateSet = (idx: number, field: string, val: any) => {
+    const updated = [...sets];
+    updated[idx] = { ...updated[idx], [field]: val };
+    setSets(updated);
+    onChange && onChange(updated, true);
+  };
+
+  const startRest = (idx?: number) => {
+    if (isResting && restingSetIndex === idx) {
+      const elapsed2 = tracker.settings.defaultRestSeconds - restSeconds;
+      if (elapsed2 > 0 && idx !== undefined) updateSet(idx, 'restTime', elapsed2);
+      setIsResting(false); setRestingSetIndex(null);
+      if (restTimerRef.current) clearInterval(restTimerRef.current);
       return;
     }
-    if (tracker.settings.soundEnabled) playSetDoneSound();
-    setRestRemaining(restDuration);
-    setRestActive(true);
-    if (index !== undefined) setRestingSetIndex(index);
+    if (tracker.settings.soundEnabled) playStart();
+    setRestSeconds(tracker.settings.defaultRestSeconds);
+    setIsResting(true);
+    if (idx !== undefined) setRestingSetIndex(idx);
   };
 
-  const updateSet = (index: number, field: 'weight' | 'reps' | 'restTime', value: string | number) => {
-    const newSets = [...sets];
-    newSets[index] = { ...newSets[index], [field]: value };
-    handleManualChange(newSets);
-  };
+  const totalVolume = sets.reduce((sum, s) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0);
+  const maxWeight = Math.max(...sets.map(s => Number(s.weight) || 0), 0);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const handleDone = () => {
-    if (isSubmitting) return;
-    const validSets = sets.filter(s => Number(s.reps) > 0).map(s => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0, restTime: s.restTime }));
-    if (validSets.length === 0) { onClose(); return; }
-    setIsSubmitting(true);
-    onDone(validSets);
+    if (saving) return;
+    const valid = sets.filter(s => Number(s.reps) > 0).map(s => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0, unit: s.unit || activeUnit, restTime: s.restTime }));
+    if (valid.length === 0) { onClose(); return; }
+    setSaving(true);
+    onDone(valid);
   };
 
-  const totalVolume = sets.reduce((s, set) => s + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0);
+  const formatTime = (secs: number) => {
+    const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+    return [h > 0 ? h.toString().padStart(2, '0') : null, m.toString().padStart(2, '0'), s.toString().padStart(2, '0')].filter(Boolean).join(':');
+  };
+
+  const wrapStyle: React.CSSProperties = fullPage
+    ? { display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%', overflow: 'hidden', background: 'var(--primary-bg)', padding: 0, touchAction: 'none', boxSizing: 'border-box' }
+    : inline
+      ? { padding: '16px 0', marginBottom: 12, background: 'transparent', border: 'none', animation: 'slideDown 0.3s ease' }
+      : { padding: 24, marginBottom: 20, background: 'var(--glass-bg)', border: 'none', borderRadius: 28 };
 
   return (
-    <div
-      ref={cardRef}
-      className={fullPage ? "" : (inline ? "antigravity-card" : "glass-card antigravity-card")}
-      style={fullPage ? {
-        display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%',
-        overflow: 'hidden', background: 'var(--primary-bg)', padding: 0, touchAction: 'pan-y', boxSizing: 'border-box'
-      } : (inline ? {
-        padding: '16px 0', marginBottom: '12px', background: 'transparent',
-        border: 'none', animation: 'slideDown 0.3s ease'
-      } : {
-        padding: '24px', marginBottom: '20px', background: 'var(--glass-bg)',
-        border: 'none', borderRadius: '28px'
-      })}
-    >
-
+    <div ref={cardRef} className={fullPage ? '' : inline ? 'antigravity-card' : 'glass-card antigravity-card'} style={wrapStyle}>
+      {/* Header */}
       <div style={{ flexShrink: 0, transformStyle: 'preserve-3d' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingLeft: '14px', flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-              <h2 ref={titleRef} className="heading-font" style={{ 
-                margin: 0, 
-                marginBottom: '10px',
-                fontSize: 'clamp(18px, 5.5vw, 28px)', 
-                fontWeight: '950',
-                color: 'var(--text-primary)',
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                lineHeight: '1.15',
-                paddingRight: '8px',
-                position: 'relative'
-              }}>
-                {exerciseName.split(' ').map((word, wi) => (
-                  <span key={wi} className="title-word" style={{ 
-                    display: 'inline-block', 
-                    whiteSpace: 'nowrap', 
-                    marginRight: '0.3em',
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    willChange: 'transform, opacity'
-                  }}>
-                    {word}
-                  </span>
-                ))}
-              </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
-                {pr && <div className="pr-badge" style={{ color: '#ff5e00', fontSize: '13px', fontWeight: '900', fontFamily: 'Outfit, sans-serif', letterSpacing: '0.5px' }}>🏆 PR: {pr.weight} {t(unit as any)} × {pr.reps}</div>}
-              </div>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, paddingLeft: 4 }}>
+            <h2 ref={titleRef} className="heading-font" style={{ margin: 0, fontSize: 'clamp(18px, 5.5vw, 28px)', fontWeight: 950, color: 'var(--text-primary)', letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.1, paddingRight: 10 }}>
+              {exerciseName.split(' ').map((word, i) => (
+                <span key={i} className="title-word" style={{ display: 'inline-block', whiteSpace: 'nowrap', marginRight: '0.3em' }}>{word}</span>
+              ))}
+            </h2>
           </div>
-          
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '4px', 
-            flexShrink: 0,
-            background: 'rgba(var(--theme-rgb), 0.05)',
-            border: '1px dashed rgba(var(--theme-rgb), 0.2)',
-            borderRadius: '10px',
-            padding: '6px 10px',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            transform: 'translateZ(10px)',
-            marginTop: '-4px'
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, background: 'rgba(var(--theme-rgb), 0.05)', border: '1px dashed rgba(var(--theme-rgb), 0.2)', borderRadius: 10, padding: '6px 10px', backdropFilter: 'blur(10px)', marginTop: -4 }}>
             {elapsedSeconds !== undefined && (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '6px', // Matched outer
-                padding: '0 8px',
-                minWidth: '75px', // Matched outer
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} /> {/* Matched outer */}
-                <span style={{ 
-                  fontFamily: 'Outfit, sans-serif', 
-                  fontSize: '17px', // Matched outer
-                  fontWeight: '900', 
-                  color: 'var(--text-primary)',
-                  fontVariantNumeric: 'tabular-nums'
-                }}>
-                  {formatElapsed(elapsedSeconds)}
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px', minWidth: 75, justifyContent: 'center', flexShrink: 0 }}>
+                <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} />
+                <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 17, fontWeight: 900, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsedSeconds)}</span>
               </div>
             )}
-            
-            <button 
-              onClick={onClose} 
-              onPointerDown={(e) => e.stopPropagation()} 
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                padding: '0', 
-                width: '32px', // Matched outer
-                height: '32px', // Matched outer
-                borderRadius: '50%', 
-                color: '#ff3366', 
-                cursor: 'pointer', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
-                flexShrink: 0, 
-                zIndex: 100, 
-                pointerEvents: 'auto'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 51, 102, 0.1)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-            >
-              <X size={20} strokeWidth={3} /> {/* Matched outer */}
+            <button onClick={onClose} onPointerDown={e => e.stopPropagation()} style={{ background: 'none', border: 'none', padding: 0, width: 32, height: 32, borderRadius: '50%', color: '#ff3366', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <X size={20} strokeWidth={3} />
             </button>
           </div>
         </div>
 
+        {/* PR bar */}
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '8px 20px 12px' }}>
+          {pr && (
+            <div style={{ background: 'rgba(var(--theme-rgb), 0.03)', borderRadius: 12, padding: '6px 14px', color: 'var(--text-primary)', fontSize: 13, fontWeight: 800, fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+              <span style={{ color: 'var(--accent-color)', fontSize: 9, fontWeight: 900, letterSpacing: 1, opacity: 0.8 }}>LAST:</span>
+              <span style={{ fontWeight: 900 }}>{pr.reps} Reps</span>
+              <div style={{ width: '1px', height: 10, background: 'rgba(var(--theme-rgb), 0.1)', margin: '0 4px' }} />
+              <span style={{ fontWeight: 950, fontSize: 15, color: 'var(--accent-color)' }}>{pr.weight}</span>
+              <span style={{ fontSize: 10, opacity: 0.6 }}>{t(pr.unit || weightUnit)}</span>
+              <span style={{ fontSize: 16, marginLeft: 4, filter: 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.3))' }}>🏆</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 20px 16px', WebkitOverflowScrolling: 'touch', minHeight: 0, maxHeight: 'calc(100dvh - 240px)', transformStyle: 'preserve-3d' }}>
-        <div ref={setsRef} style={{ display: 'flex', flexDirection: 'column', gap: '0', transformStyle: 'preserve-3d' }}>
-          {sets.map((set, i) => (
-            <SetRow
-              key={i}
-              index={i}
-              weight={set.weight}
-              reps={set.reps}
-              restTime={set.restTime}
-              activeUnit={activeUnit}
-              isResting={restingSetIndex === i}
-              canRemove={sets.length > 1}
-              t={t}
-              onUpdate={(field, val) => updateSet(i, field, val)}
-              onCycleUnit={cycleUnit}
-              onStartRest={() => startRest(i)}
-              onRemove={() => { handleManualChange(sets.filter((_, idx) => idx !== i)); }}
-            />
+      {/* Sets list */}
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 20px 16px', WebkitOverflowScrolling: 'touch', minHeight: 0, maxHeight: 'calc(100dvh - 240px)', transformStyle: 'preserve-3d', touchAction: 'pan-y' }}>
+        <div ref={setsRef} style={{ display: 'flex', flexDirection: 'column', gap: 0, transformStyle: 'preserve-3d' }}>
+          {sets.map((s, i) => (
+            <SetRow key={i} index={i} weight={s.weight} reps={s.reps} restTime={s.restTime} activeUnit={activeUnit} isResting={restingSetIndex === i} canRemove={sets.length > 1} t={t} onUpdate={(field: string, val: any) => updateSet(i, field, val)} onCycleUnit={cycleUnit} onStartRest={() => startRest(i)} onRemove={() => { const updated = sets.filter((_, j) => j !== i); setSets(updated); onChange && onChange(updated, true); }} />
           ))}
         </div>
-
-        <button onClick={() => { setHasAddedSet(true); handleManualChange([...sets, { weight: '', reps: '' }]); }} style={{ width: '100%', padding: '14px', background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: '16px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginTop: '12px', fontFamily: 'Outfit, sans-serif' }}>
+        <button onClick={() => { const updated = [...sets, { weight: '', reps: '', unit: activeUnit }]; setSets(updated); onChange && onChange(updated, true); }} style={{ width: '100%', padding: 14, background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: 16, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', marginTop: 12, fontFamily: 'Outfit, sans-serif' }}>
           <Plus size={16} color="var(--accent-color)" /> {t('addSet')}
         </button>
-
         {sets.length <= 1 && (
-          <div style={{ padding: '20px 0', opacity: 0.65, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: '30px' }}>
-            <div style={{ 
-              fontSize: '24px', 
-              fontWeight: '900', 
-              color: 'var(--text-primary)', 
-              letterSpacing: '2px', 
-              textTransform: 'uppercase', 
-              lineHeight: '1.4', 
-              fontFamily: 'Outfit, sans-serif' 
-            }}>
-              STAY FOCUSED<br/>{tracker.settings.userName.toUpperCase()}
+          <div style={{ padding: '20px 0', opacity: 0.65, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: 30 }}>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: 2, textTransform: 'uppercase', lineHeight: 1.4, fontFamily: 'Outfit, sans-serif' }}>
+              STAY FOCUSED<br />{tracker.settings.userName.toUpperCase()}
             </div>
           </div>
         )}
       </div>
 
-      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', background: 'var(--primary-bg)', borderTop: '2px solid rgba(var(--theme-rgb), 0.25)', transformStyle: 'preserve-3d' }}>
-        
-        {/* Rest Timer Removed */}
-
-        <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center', gap: '40px', padding: '4px 0' }}>
+      {/* Footer */}
+      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', background: 'var(--primary-bg)', borderTop: '2px solid rgba(var(--theme-rgb), 0.25)', transformStyle: 'preserve-3d' }}>
+        <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center', gap: 40, padding: '4px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>{t('totalVolume')}</div>
-            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{totalVolume.toFixed(0)} <span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}> {t(unit as any)}</span></div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: 'Outfit, sans-serif' }}>{t('totalVolume')}</div>
+            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>{totalVolume.toFixed(0)} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
           </div>
-          <div style={{ width: '1.5px', height: '24px', background: 'rgba(var(--theme-rgb), 0.15)' }} />
+          <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
-            <div style={{ fontSize: '22px', color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit, sans-serif' }}>{Math.max(...sets.map(s => Number(s.weight) || 0), 0)} <span style={{ fontSize: '12px', marginLeft: '3px', color: 'var(--accent-color)', opacity: 0.7 }}> {t(unit as any)}</span></div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
+            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>{maxWeight} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
           </div>
         </div>
-
-        <button 
-          onClick={handleDone} 
-          disabled={isSubmitting || !isDirty || sets.every(s => !Number(s.reps))}
-          style={{ 
-            background: 'transparent', border: 'none', 
-            color: 'var(--accent-color)', fontSize: '16px', fontWeight: '800', 
-            padding: '4px 8px', width: 'fit-content', 
-            cursor: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'default' : 'pointer', 
-            pointerEvents: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'none' : 'auto',
-            textTransform: 'uppercase', letterSpacing: isSubmitting ? '4px' : '12px', outline: 'none', 
-            animation: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 'none' : 'pulse-glow 2.5s ease-in-out infinite', 
-            opacity: (isSubmitting || !isDirty || sets.every(s => !Number(s.reps))) ? 0.6 : 1,
-            fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {isSubmitting ? (lang === 'ar' ? 'جاري الحفظ...' : 'SAVING...') : t('done')}
+        <button onClick={handleDone} disabled={saving || !isDirtyRef || sets.every(s => !Number(s.reps))} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: 16, fontWeight: 800, padding: '4px 8px', width: 'fit-content', cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer', pointerEvents: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'auto', textTransform: 'uppercase', letterSpacing: saving ? '4px' : '12px', outline: 'none', animation: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'pulse-glow 2.5s ease-in-out infinite', opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.6 : 1, fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation', transition: 'all 0.2s ease' }}>
+          {saving ? (lang === 'ar' ? 'جاري الحفظ...' : 'SAVING...') : t('done')}
         </button>
       </div>
     </div>
   );
-}
+});
+
+export default ExerciseCard;
+export { ExerciseCard };

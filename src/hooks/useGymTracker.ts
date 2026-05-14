@@ -207,6 +207,50 @@ export function useGymTracker() {
     }));
   }, []);
 
+  const restoreExercise = useCallback((muscle: MuscleGroup, name: string) => {
+    setState(prev => ({
+      ...prev,
+      hiddenExercises: {
+        ...prev.hiddenExercises,
+        [muscle]: (prev.hiddenExercises[muscle] || []).filter(e => e !== name),
+      },
+    }));
+  }, []);
+
+  const permanentlyDeleteExercise = useCallback((muscle: MuscleGroup, name: string) => {
+    setState(prev => {
+      return {
+        ...prev,
+        customExercises: {
+          ...prev.customExercises,
+          [muscle]: prev.customExercises[muscle].filter(e => e !== name),
+        },
+        // Also ensure it's not in hidden/deleted if we want to be thorough
+        state: {
+          ...(prev as any).state,
+          deletedExercises: {
+            ...((prev as any).state?.deletedExercises || {}),
+            [muscle]: [...((prev as any).state?.deletedExercises?.[muscle] || []), name]
+          }
+        }
+      };
+    });
+  }, []);
+
+  const renameExercise = useCallback((muscle: MuscleGroup, oldName: string, newName: string) => {
+    setState(prev => ({
+      ...prev,
+      customExercises: {
+        ...prev.customExercises,
+        [muscle]: prev.customExercises[muscle].map(e => e === oldName ? newName : e),
+      },
+      customTranslations: {
+        ...(prev.customTranslations || {}),
+        [newName]: (prev.customTranslations || {})[oldName] || ''
+      }
+    }));
+  }, []);
+
   const reorderExercises = useCallback((muscle: MuscleGroup, newOrder: string[]) => {
     setState(prev => ({
       ...prev,
@@ -217,15 +261,39 @@ export function useGymTracker() {
     }));
   }, []);
 
-  const getLastSession = useCallback((exerciseName: string): { sets: SetLog[]; date: string } | null => {
+  const getLastSession = useCallback((exerciseName: string): { sets: SetLog[]; date: string; bestSet: SetLog } | null => {
     for (const log of state.logs) {
       const ex = log.exercises.find(e => e.name === exerciseName);
       if (ex && ex.sets.length > 0) {
-        return { sets: ex.sets, date: log.date };
+        // Find the BEST set in this specific session to display on the picker
+        const bestSet = ex.sets.reduce((prev, curr) => {
+          const prevW = prev.weight || 0;
+          const currW = curr.weight || 0;
+          return (currW > prevW || (currW === prevW && curr.reps > prev.reps)) ? curr : prev;
+        }, ex.sets[0]);
+        
+        return { sets: ex.sets, date: log.date, bestSet: { ...bestSet, unit: bestSet.unit || 'kg' } };
       }
     }
     return null;
   }, [state.logs]);
+
+  const getExercisesByMuscle = useCallback((muscle: MuscleGroup) => {
+    const defaults = (DEFAULT_EXERCISES[muscle] || []).map(name => ({ name, isCustom: false }));
+    const customs = (state.customExercises[muscle] || []).map(name => ({ name, isCustom: true }));
+    return [...defaults, ...customs];
+  }, [state.customExercises]);
+
+  const getBestExercises = useCallback((muscle: MuscleGroup) => {
+    return state.prs
+      .filter(p => p.muscleGroup === muscle)
+      .sort((a, b) => (b.weight * b.reps) - (a.weight * a.reps))
+      .slice(0, 5)
+      .map(p => ({
+        name: p.exerciseName,
+        bestSet: { weight: p.weight, reps: p.reps, unit: state.settings.weightUnit }
+      }));
+  }, [state.prs, state.settings.weightUnit]);
 
   const syncPRsFromLogs = useCallback((logs: WorkoutLog[], customExercises: Record<MuscleGroup, string[]>) => {
     const prMap: Record<string, PersonalRecord> = {};
@@ -391,6 +459,9 @@ export function useGymTracker() {
     addCustomExercise,
     removeCustomExercise,
     hideDefaultExercise,
+    restoreExercise,
+    permanentlyDeleteExercise,
+    renameExercise,
     reorderExercises,
     getLastSession,
     getExercisePR,
@@ -401,6 +472,8 @@ export function useGymTracker() {
     sessionStartTime,
     getWeeklyCount,
     getTotalVolume,
+    getExercisesByMuscle,
+    getBestExercises,
     addMealLog,
     updateMealLog,
     deleteMealLog,

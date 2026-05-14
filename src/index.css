@@ -7,8 +7,8 @@
   --glass-hover: rgba(var(--theme-rgb), 0.08);
   --accent-color: #326144;
   --accent-rgb: 50, 97, 68;
-  --accent-secondary: #ff5e00;
-  --accent-secondary-rgb: 255, 94, 0;
+  --accent-secondary: #ff3d00;
+  --accent-secondary-rgb: 255, 61, 0;
   --accent-gradient: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
   --accent-color-alpha: rgba(50, 97, 68, 0.2);
   --danger-color: #ff3366;
@@ -100,9 +100,9 @@
   left: 0;
   width: 25px;
   height: 3px;
-  background: var(--accent-secondary);
+  background: #ff3d00;
   border-radius: 2px;
-  box-shadow: 0 0 10px var(--accent-secondary);
+  box-shadow: 0 0 10px #ff3d00;
 }
 
 .premium-3d-text {

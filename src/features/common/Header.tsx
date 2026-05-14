@@ -33,8 +33,18 @@ export function Header({ tab, t, tracker }: Props) {
               <Dumbbell size={22} strokeWidth={3} className="pulse-elite" />
             </div>
             <span style={{ color: '#ff3d00' }}>GRID</span>
+            <span style={{ 
+              fontSize: '10px', 
+              background: '#ff3d00', 
+              color: '#000', 
+              padding: '2px 6px', 
+              borderRadius: '6px', 
+              marginLeft: '8px',
+              verticalAlign: 'middle',
+              fontWeight: '900'
+            }}>V2.5</span>
           </h1>
-          <div className="subtitle-text logo-underline" style={{ width: 'fit-content', letterSpacing: '4px', opacity: 1, color: 'var(--text-secondary)', fontWeight: '900', fontSize: '10px' }}>{t('premiumSystem')}</div>
+          <div className="subtitle-text logo-underline" style={{ width: 'fit-content', letterSpacing: '4px', opacity: 1, color: '#ff3d00', fontWeight: '900', fontSize: '10px' }}>{t('premiumSystem')}</div>
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', transform: 'translateZ(30px)' }}>

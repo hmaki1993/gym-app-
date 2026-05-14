@@ -6,10 +6,10 @@ import { Flame, Activity, Award, History as HistoryIcon, Calendar, Clock } from 
 import gsap from 'gsap';
 import { TransparentImage } from '../workout/components/TransparentImage';
 
-interface Props {
+interface DashboardProps {
   tracker: ReturnType<typeof useGymTracker>;
   onStartWorkout: () => void;
-  onTabSwitch: (tab: 'home' | 'history' | 'progress' | 'settings') => void;
+  onTabSwitch: (tab: 'home' | 'history' | 'progress' | 'nutrition' | 'settings') => void;
 }
 
 function formatTime(timeStr: string, lang: 'ar' | 'en') {
@@ -25,7 +25,7 @@ function formatDate(iso: string, lang: 'ar' | 'en') {
   return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
+export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout, onTabSwitch }) => {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,14 +91,13 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
     const d = String(now.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   })();
-  
+
   const hasWorkoutToday = tracker.logs.some(log => {
-    // Check both ISO format (UTC) and local date format
     const logDate = new Date(log.date);
     const logLocalDate = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
     return logLocalDate === todayStr || log.date.startsWith(todayStr);
   });
-  
+
   const workoutWords = (hasWorkoutToday 
     ? (lang === 'ar' ? 'تكملة التمرين' : 'RESUME WORKOUT') 
     : (lang === 'ar' ? 'بدء التمرين' : 'START WORKOUT')
@@ -118,7 +117,8 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
 
       {/* 1. TOP: Stats (Enlarged and Lowered) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '5px', marginTop: '45px', padding: '0 16px' }}>
-        {[
+
+{[
           { label: t('thisWeek'), val: weeklyCount, target: 'history' as const, icon: <Activity size={32} />, color: '#b8906a' },
           { label: 'PRs', val: tracker.prs.length, target: 'progress' as const, icon: <Award size={32} />, color: '#b8906a' },
           { label: t('allTime'), val: tracker.logs.length, target: 'history' as const, icon: <HistoryIcon size={32} />, color: '#b8906a' }
@@ -225,7 +225,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                 )}
               </div>
             </div>
- 
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -260,7 +260,7 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
                   </div>
                 </div>
               </div>
-              
+
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{ fontSize: '18px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit, sans-serif', lineHeight: 1 }}>
                   {totalVolume.toFixed(0)} <span style={{ fontSize: '10px', opacity: 0.6 }}> {t(unit as any)}</span>
@@ -279,4 +279,4 @@ export function Dashboard({ tracker, onStartWorkout, onTabSwitch }: Props) {
       </div>
     </div>
   );
-}
+};
