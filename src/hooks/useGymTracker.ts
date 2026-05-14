@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS: GymSettings = {
   language: 'en',
   accentColor: THEME_COLORS[0].hex,
   accentSecondary: THEME_COLORS[0].secondary,
-  themeMode: 'light',
+  themeMode: 'dark',
   defaultRestSeconds: 90,
   soundEnabled: true,
   dailyCalorieGoal: 2500,

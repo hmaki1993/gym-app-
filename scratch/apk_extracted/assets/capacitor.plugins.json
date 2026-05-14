@@ -1,0 +1,14 @@
+[
+	{
+		"pkg": "@capacitor-community/camera-preview",
+		"classpath": "com.ahm.capacitor.camera.preview.CameraPreview"
+	},
+	{
+		"pkg": "@capacitor-mlkit/barcode-scanning",
+		"classpath": "io.capawesome.capacitorjs.plugins.mlkit.barcodescanning.BarcodeScannerPlugin"
+	},
+	{
+		"pkg": "@capacitor/camera",
+		"classpath": "com.capacitorjs.plugins.camera.CameraPlugin"
+	}
+]

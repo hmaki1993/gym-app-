@@ -42,7 +42,6 @@ export const SetRow: React.FC<Props> = ({
       </div>
       <div style={{ width: '1.5px', height: '20px', background: 'rgba(var(--theme-rgb), 0.15)', marginRight: '12px' }} />
       
-      {/* Weight Input */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
         <input
           type="number"
@@ -94,7 +93,6 @@ export const SetRow: React.FC<Props> = ({
 
       <div style={{ width: '1.5px', height: '24px', background: 'rgba(var(--theme-rgb), 0.15)' }} />
       
-      {/* Reps Input */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
         <input
           type="number"

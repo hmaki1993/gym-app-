@@ -4,7 +4,7 @@ import { translations } from './translations';
 import { Dashboard } from './features/dashboard/Dashboard';
 import WorkoutSession from './features/workout/WorkoutSession';
 import { HistoryPage } from './features/history/HistoryPage';
-import ProgressPage from './features/progress/ProgressPage';
+import { ProgressPage } from './features/progress/ProgressPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { OnboardingModal } from './features/common/OnboardingModal';
 import { BottomNav } from './features/common/BottomNav';
@@ -104,6 +104,14 @@ export default function App() {
       return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '50, 97, 68';
     };
     
+    // Force-sync theme colors to match GitHub version if they differ
+    if (tracker.settings.accentColor !== '#326144') {
+      tracker.setSettings({ 
+        accentColor: '#326144', 
+        accentSecondary: '#ff5e00' 
+      });
+    }
+
     root.style.setProperty('--accent-rgb', hexToRgb(accent));
     
     // Update theme data-attribute

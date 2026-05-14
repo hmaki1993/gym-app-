@@ -1,127 +1,173 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
-import { translations } from '../../translations';
-import { 
-  ChevronLeft, ChevronRight, History as HistoryIcon, 
-  Flame, Clock, Trash2, ChevronDown, Award, Calendar
-} from 'lucide-react';
-import { TransparentImage } from '../workout/components/TransparentImage';
+import type { WorkoutLog } from '../../types';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
+import { translations } from '../../translations';
+import { Dumbbell, Calendar, Trash2, Clock, ChevronDown, Flame } from 'lucide-react';
+import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface HistoryPageProps {
   tracker: ReturnType<typeof useGymTracker>;
 }
 
+function formatDate(iso: string, lang: 'ar' | 'en') {
+  const d = new Date(iso);
+  return d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatTime(iso: string, lang: 'ar' | 'en') {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function formatDuration(mins: number, t: (k: any) => string) {
+  if (mins < 60) return `${mins} ${t('minutes')}`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
 export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   const lang = tracker.settings.language;
-  const t = (key: string) => (translations[lang] as any)[key] ?? key;
-  const weightUnit = tracker.settings.weightUnit;
-  
-  const [activeLogId, setActiveLogId] = useState<string | null>(null);
-  
+  const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
+  const unit = tracker.settings.weightUnit;
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+
+  // Auto-scroll to expanded log
   useEffect(() => {
-    if (activeLogId) {
+    if (expandedLogId) {
       setTimeout(() => {
-        const el = document.getElementById(`log-${activeLogId}`);
-        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const element = document.getElementById(`log-${expandedLogId}`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
       }, 300);
     }
-  }, [activeLogId]);
+  }, [expandedLogId]);
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [viewDate, setViewDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-  const daysInMonth = getDaysInMonth(year, month);
-  const firstDay = getFirstDayOfMonth(year, month);
+  const currentYear = viewDate.getFullYear();
+  const currentMonth = viewDate.getMonth();
+  const totalDays = daysInMonth(currentYear, currentMonth);
+  const startOffset = firstDayOfMonth(currentYear, currentMonth);
 
-  const monthLabel = currentMonth.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { month: 'long', year: 'numeric' });
+  const monthName = viewDate.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { month: 'long', year: 'numeric' });
 
-  const hasLogOnDay = (day: number) => tracker.logs.some(log => {
-    const d = new Date(log.date);
-    return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
-  });
+  const hasWorkout = (day: number) => {
+    return tracker.logs.some(l => {
+      const d = new Date(l.date);
+      return d.getFullYear() === currentYear &&
+             d.getMonth() === currentMonth &&
+             d.getDate() === day;
+    });
+  };
 
-  const isSelected = (day: number) => selectedDate ? 
-    selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === day : false;
+  const isSelected = (day: number) => {
+    if (!selectedDate) return false;
+    return selectedDate.getFullYear() === currentYear &&
+           selectedDate.getMonth() === currentMonth &&
+           selectedDate.getDate() === day;
+  };
 
-  const dayLogs = selectedDate ? tracker.logs.filter(log => {
-    const d = new Date(log.date);
-    return d.getFullYear() === selectedDate.getFullYear() && 
-           d.getMonth() === selectedDate.getMonth() && 
-           d.getDate() === selectedDate.getDate();
-  }) : [];
+  const filteredLogs = selectedDate 
+    ? tracker.logs.filter(l => {
+        const d = new Date(l.date);
+        return d.getFullYear() === selectedDate.getFullYear() &&
+               d.getMonth() === selectedDate.getMonth() &&
+               d.getDate() === selectedDate.getDate();
+      })
+    : [];
 
   const changeMonth = (offset: number) => {
-    setCurrentMonth(new Date(year, month + offset, 1));
+    const d = new Date(currentYear, currentMonth + offset, 1);
+    setViewDate(d);
   };
 
-  const formatDate = (dateStr: string, language: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' });
-  };
-
-  const formatTime = (timeStr: string, language: string) => {
-    const d = new Date(timeStr);
-    return d.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
+  const onDeleteWorkout = (id: string) => {
+    tracker.deleteWorkout(id);
   };
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingBottom: '120px' }}>
-      
-      {/* 1. CALENDAR SECTION */}
-      <div style={{ padding: '5px 0 15px', animation: 'fadeIn 0.6s ease' }}>
+      {/* Weightless Elite Calendar - Compact */}
+      <div style={{ 
+        padding: '5px 0 15px', 
+        transformStyle: 'preserve-3d',
+        animation: 'fadeIn 0.6s ease'
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '0 20px' }}>
           <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: '6px' }}>
-            <ChevronLeft size={16} />
+            <Calendar size={16} />
           </button>
-          <h2 style={{ margin: 0, fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'Outfit, sans-serif' }}>
-            {monthLabel}
+          <h2 style={{ 
+            margin: 0, 
+            fontSize: '15px', 
+            fontWeight: '950', 
+            color: 'rgba(255,255,255,0.85)', 
+            textTransform: 'uppercase', 
+            letterSpacing: '2px',
+            fontFamily: 'Outfit, sans-serif',
+          }}>
+            {monthName}
           </h2>
           <button onClick={() => changeMonth(1)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: '6px' }}>
-            <ChevronRight size={16} />
+            <Calendar size={16} />
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', textAlign: 'center' }}>
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-            <div key={`${d}-${i}`} style={{ fontSize: '13px', fontWeight: '950', color: 'var(--accent-color)', opacity: 1, letterSpacing: '1px' }}>{d}</div>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(7, 1fr)', 
+          gap: '6px', 
+          textAlign: 'center' 
+        }}>
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
+            <div key={`${d}-${idx}`} style={{ fontSize: '13px', fontWeight: '950', color: 'var(--accent-color)', opacity: 1, letterSpacing: '1px' }}>{d}</div>
           ))}
-          {Array.from({ length: firstDay }).map((_, i) => <div key={`off-${i}`} />)}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const dayNum = i + 1;
-            const hasLog = hasLogOnDay(dayNum);
-            const active = isSelected(dayNum);
-            const today = new Date();
-            const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === dayNum;
-            const isPast = new Date(year, month, dayNum) < new Date(new Date().setHours(0,0,0,0));
+
+          {Array.from({ length: startOffset }).map((_, i) => (
+            <div key={`off-${i}`} />
+          ))}
+
+          {Array.from({ length: totalDays }).map((_, i) => {
+            const day = i + 1;
+            const worked = hasWorkout(day);
+            const active = isSelected(day);
+            const now = new Date();
+            const isToday = now.getFullYear() === currentYear && now.getMonth() === currentMonth && now.getDate() === day;
+            const isPast = new Date(currentYear, currentMonth, day) < new Date(new Date().setHours(0,0,0,0));
 
             return (
               <div 
-                key={dayNum}
-                onClick={() => setSelectedDate(new Date(year, month, dayNum))}
-                style={{ 
+                key={day}
+                onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
+                style={{
                   height: '40px', width: '40px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '16px', fontWeight: active || isToday ? '950' : '800',
-                  color: active || isToday ? 'var(--accent-color)' : hasLog ? 'var(--text-primary)' : isPast ? 'rgba(var(--theme-rgb), 0.3)' : 'rgba(var(--theme-rgb), 0.5)',
+                  fontSize: '16px', fontWeight: active ? '950' : (isToday ? '950' : '800'),
+                  color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
                   cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                  background: active ? 'var(--accent-color-alpha)' : isToday ? 'rgba(var(--theme-rgb), 0.05)' : (isPast && !hasLog) ? 'rgba(var(--theme-rgb), 0.02)' : 'transparent',
+                  background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (isPast && !worked ? 'rgba(255, 94, 0, 0.12)' : 'transparent')),
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  border: active ? '1.5px solid var(--accent-color)' : isToday ? '1.5px solid var(--accent-color-alpha)' : '1px solid transparent',
+                  border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : '1px solid transparent'),
                   transform: active ? 'scale(1.1)' : 'scale(1)',
-                  boxShadow: active ? '0 0 15px var(--accent-color-alpha)' : isToday ? '0 0 10px var(--accent-color-alpha)' : 'none'
+                  boxShadow: active ? '0 0 15px var(--accent-color-alpha)' : (isToday ? '0 0 10px var(--accent-color-alpha)' : 'none'),
+                  animation: isToday ? 'pulseToday 2s infinite' : 'none'
                 }}
               >
-                {dayNum}
+                {day}
                 {isToday && !active && (
-                  <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px var(--accent-color)' }} />
+                   <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px var(--accent-color)' }} />
                 )}
-                {hasLog && !active && !isToday && (
+                {worked && !active && !isToday && (
                   <div style={{ position: 'absolute', bottom: '2px', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)', boxShadow: '0 0 8px var(--accent-color)' }} />
                 )}
               </div>
@@ -130,263 +176,226 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
         </div>
       </div>
 
-      {/* 2. LOGS LIST */}
+      {/* Selected Day Logs */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {dayLogs.length === 0 ? (
+        {filteredLogs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', opacity: 0.7, color: 'var(--text-secondary)' }}>
-            <HistoryIcon size={40} style={{ marginBottom: '16px' }} />
+            <Dumbbell size={40} style={{ marginBottom: '16px' }} />
             <div style={{ fontSize: '11px', fontWeight: '950', letterSpacing: '3px' }}>{t('noHistory').toUpperCase()}</div>
           </div>
         ) : (
-          dayLogs.map(log => {
-            const muscles = new Set<string>();
-            log.exercises.forEach(ex => {
-              let mg = (ex as any).muscleGroup;
-              if (!mg) {
-                for (const [group, list] of Object.entries(DEFAULT_EXERCISES)) {
-                  if (list.includes(ex.name)) { mg = group; break; }
-                }
-              }
-              muscles.add(mg || log.muscleGroup);
+          filteredLogs.map((log: WorkoutLog) => {
+            const exerciseToMuscle: Record<string, string> = {};
+            Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+              exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
             });
 
-            const muscleLabel = Array.from(muscles).sort().map(m => MUSCLE_GROUPS.find(g => g.key === m)?.[lang === 'ar' ? 'ar' : 'en'] ?? m).join(' & ');
-            const logVolume = tracker.getTotalVolume(log);
-            const totalSets = log.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+            const involvedGroups = new Set<string>();
+            log.exercises.forEach(ex => {
+              const group = (ex as any).muscleGroup || exerciseToMuscle[ex.name];
+              if (group) involvedGroups.add(group);
+              else involvedGroups.add(log.muscleGroup);
+            });
+
+            const sortedGroups = Array.from(involvedGroups).sort();
+            const displayTitle = sortedGroups.map(g => {
+              const mg = MUSCLE_GROUPS.find(m => m.key === g);
+              return mg?.[lang === 'ar' ? 'ar' : 'en'] ?? g;
+            }).join(' & ');
+
+            const volume = tracker.getTotalVolume(log);
+            const totalSets = log.exercises.reduce((s, ex) => s + ex.sets.length, 0);
 
             return (
               <div 
-                key={log.id} id={`log-${log.id}`} 
-                onClick={() => setActiveLogId(activeLogId === log.id ? null : log.id)}
+                key={log.id} id={`log-${log.id}`}
+                onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
                 role="button"
                 style={{ 
-                  padding: '24px 20px', cursor: 'pointer',
+                  padding: '24px 16px 24px 32px', cursor: 'pointer',
                   background: tracker.settings.themeMode === 'dark' ? '#0a0a0a' : '#ffffff',
-                  border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--accent-rgb), 0.15)' : '1px solid rgba(0,0,0,0.06)',
-                  borderRadius: '28px', margin: '0 12px 12px', position: 'relative',
+                  border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 61, 0, 0.3)' : '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '20px', margin: '0 0px 12px 0px', position: 'relative',
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: activeLogId === log.id ? '0 20px 40px rgba(0,0,0,0.3)' : '0 10px 20px rgba(0,0,0,0.1)'
                 }}
               >
-                <div style={{ position: 'absolute', left: 0, top: '20px', bottom: '20px', width: '3px', background: 'var(--accent-secondary, var(--accent-color))', borderRadius: '0 4px 4px 0', boxShadow: '0 0 15px var(--accent-color-alpha)' }} />
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingLeft: '8px' }}>
-                  <Flame size={12} color="var(--accent-secondary, var(--accent-color))" fill="var(--accent-secondary, var(--accent-color))" />
-                  <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-secondary, var(--accent-color))', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'Outfit, sans-serif' }}>
-                    {t('session').toUpperCase()}
-                  </span>
+                <div style={{ position: 'absolute', left: 0, top: '15%', bottom: '15%', width: '4px', background: '#ff3d00', borderRadius: '0 2px 2px 0', boxShadow: '0 0 15px rgba(255, 61, 0, 0.6)', zIndex: 10 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <Flame size={12} color="var(--accent-secondary)" fill="var(--accent-secondary)" />
+                  <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'Outfit, sans-serif' }}>{t('session')}</span>
                 </div>
- 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingLeft: '8px' }}>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <div style={{ opacity: 0.9 }}>
-                      {Array.from(muscles).sort().slice(0, 1).map(mKey => {
-                        const mInfo = MUSCLE_GROUPS.find(mg => mg.key === mKey);
-                        return mInfo?.icon ? (
-                          <TransparentImage key={mKey} src={mInfo.icon} alt="" width={56} height={56} threshold={45} style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.3)' : 'grayscale(1) brightness(0.7)' }} />
-                        ) : <span key={mKey} style={{ fontSize: '32px' }}>💪</span>;
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: expandedLogId === log.id ? '15px' : '0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'none' }}>
+                      {Array.from(involvedGroups).sort().map(g => {
+                        const mg = MUSCLE_GROUPS.find(m => m.key === g);
+                        return mg?.icon ? (
+                          <TransparentImage key={g} src={mg.icon} alt="" width={42} height={42} threshold={45} style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.2)' : 'grayscale(1) brightness(0.8)' }} />
+                        ) : <span key={g} style={{ fontSize: '24px' }}>💪</span>;
                       })}
                     </div>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '28px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', letterSpacing: '-1px', fontFamily: 'Outfit, sans-serif', lineHeight: 1 }}>{muscleLabel}</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                           <Calendar size={11} color="var(--accent-secondary, var(--accent-color))" />
-                           <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '900', opacity: 0.6 }}>{formatDate(log.date, lang)} {new Date(log.date).getFullYear()}</span>
-                         </div>
-                         {log.startTime && (
-                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                             <div style={{ width: '1px', height: '10px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
-                             <Clock size={11} color="var(--accent-secondary, var(--accent-color))" />
-                             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '900', opacity: 0.6 }}>{formatTime(log.startTime, lang)}</span>
-                           </div>
-                         )}
+                      <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', letterSpacing: '-0.5px' }}>{displayTitle}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar size={10} color="var(--accent-color)" />
+                          <span style={{ fontSize: '12px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '900' }}>{formatDate(log.date, lang)}</span>
+                        </div>
+                        {log.startTime && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '1.5px', height: '10px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
+                            <Clock size={10} color="var(--accent-color)" />
+                            <span style={{ fontSize: '10px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '900', opacity: 1 }}>{formatTime(log.startTime, lang)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button onClick={(e) => { e.stopPropagation(); tracker.deleteWorkout(log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.4)', padding: '8px' }}>
-                      <Trash2 size={20} />
-                    </button>
-                    <ChevronDown size={22} color="var(--text-secondary)" style={{ transform: activeLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s ease', opacity: 0.4 }} />
+                    <button onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.6)', padding: '8px', marginRight: '-4px' }}><Trash2 size={18} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}><ChevronDown size={20} strokeWidth={2.5} /></button>
                   </div>
                 </div>
- 
-                {/* Always visible stats row if not expanded, or different view? 
-                    In the screenshot, the stats row is part of the collapsed view too. */}
-                <div style={{ paddingTop: '24px', borderTop: '1px solid rgba(var(--theme-rgb), 0.05)', marginTop: '20px' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-                      {[
-                        { label: 'EXERCISES', value: log.exercises.length },
-                        { label: 'TOTAL SETS', value: totalSets },
-                        { label: 'TOTAL VOLUME', value: `${logVolume.toFixed(0)}`, unit: t(weightUnit) },
-                        { label: 'DURATION', value: `${log.durationMinutes}`, unit: 'min' }
-                      ].map((item, idx) => (
-                        <React.Fragment key={item.label}>
-                          {idx > 0 && <div style={{ width: '1px', height: '30px', background: 'rgba(var(--theme-rgb), 0.08)' }} />}
-                          <div style={{ flex: 1, textAlign: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '2px' }}>
-                              <span style={{ fontSize: '24px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{item.value}</span>
-                              {item.unit && <span style={{ fontSize: '12px', fontWeight: '950', color: 'var(--text-primary)', opacity: 0.8 }}>{item.unit}</span>}
-                            </div>
-                            <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: '950', letterSpacing: '1.5px', marginTop: '4px', textTransform: 'uppercase', opacity: 0.5 }}>{item.label}</div>
-                          </div>
-                        </React.Fragment>
-                      ))}
-                   </div>
-                </div>
- 
-                {/* Collapsible Details */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateRows: activeLogId === log.id ? '1fr' : '0fr', 
-                  transition: 'grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1)', 
-                  overflow: 'hidden' 
-                }}>
+
+                <div style={{ display: 'grid', gridTemplateRows: expandedLogId === log.id ? '1fr' : '0fr', transition: 'grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1)', overflow: 'hidden' }}>
                   <div style={{ minHeight: 0 }}>
-                    <div style={{ paddingTop: '24px' }}>
-                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {(() => {
-                             const grouped: Record<string, any[]> = {};
-                             log.exercises.forEach(ex => {
-                               let mg = (ex as any).muscleGroup;
-                               if (!mg) {
-                                 for (const [group, list] of Object.entries(DEFAULT_EXERCISES)) {
-                                   if (list.includes(ex.name)) { mg = group; break; }
-                                 }
-                               }
-                               mg ||= log.muscleGroup;
-                               if (!grouped[mg]) grouped[mg] = [];
-                               grouped[mg].push(ex);
-                             });
+                    <div style={{ paddingTop: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)', borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)', marginBottom: '24px', gap: '4px', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.4s ease' }}>
+                        {[
+                          { label: t('exercises'), value: log.exercises.length },
+                          { label: t('totalSets'), value: totalSets },
+                          { label: t('totalVolume'), value: `${volume.toFixed(0)} ${t(unit as any)}` },
+                          { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
+                        ].map((stat, idx) => (
+                          <React.Fragment key={stat.label}>
+                            {idx > 0 && <div style={{ width: '1px', height: '24px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />}
+                            <div style={{ flex: 1, textAlign: 'center' }}>
+                              <div style={{ fontSize: '20px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: 'Outfit, sans-serif' }}>{stat.value}</div>
+                              <div style={{ fontSize: '10px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                            </div>
+                          </React.Fragment>
+                        ))}
+                      </div>
 
-                             const sortedGroups = Object.keys(grouped).sort();
-                             let totalIdx = 0;
-                             
-                             return sortedGroups.map(groupKey => (
-                               <div key={groupKey} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                 {grouped[groupKey].map((ex, idx) => {
-                                    const currentIdx = totalIdx++;
-                                    const bestSet = ex.sets.reduce((prev: any, curr: any) => curr.weight > prev.weight ? curr : prev, ex.sets[0] || { weight: 0, reps: 0 });
-                                    const isPR = tracker.getExercisePR(ex.name)?.weight === bestSet.weight;
-                                    const mInfo = MUSCLE_GROUPS.find(g => g.key === groupKey);
-                                    const mLabel = lang === 'ar' ? mInfo?.ar : mInfo?.en;
-
-                                    return (
-                                      <div key={`${ex.name}-${idx}`} style={{ 
-                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                                        background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)', 
-                                        padding: '16px 20px', borderRadius: '18px',
-                                        border: '1px solid rgba(var(--theme-rgb), 0.05)',
-                                        borderLeft: idx === 0 ? '3px solid var(--accent-color)' : '1px solid rgba(var(--theme-rgb), 0.05)',
-                                        opacity: activeLogId === log.id ? 1 : 0,
-                                        transform: activeLogId === log.id ? 'translateX(0)' : 'translateX(-10px)',
-                                        transition: `all 0.4s ease ${0.1 + currentIdx * 0.05}s`
-                                      }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-secondary, var(--accent-color))', boxShadow: '0 0 10px var(--accent-secondary, var(--accent-color))' }} />
-                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                             <span style={{ fontSize: '17px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{ex.name}</span>
-                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '9px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.4 }}>{mLabel}</span>
-                                                {isPR && (
-                                                  <span style={{ 
-                                                    fontSize: '8px', fontWeight: '950', color: '#000', 
-                                                    background: 'var(--accent-secondary, var(--accent-color))', 
-                                                    padding: '1px 6px', borderRadius: '4px', width: 'fit-content'
-                                                  }}>PR</span>
-                                                )}
-                                             </div>
-                                          </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                           <div style={{ textAlign: 'right' }}>
-                                              <span style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{ex.sets.length}</span>
-                                              <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', marginLeft: '4px', opacity: 0.5 }}>SETS</span>
-                                           </div>
-                                           <div style={{ width: '1px', height: '20px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
-                                           <div style={{ textAlign: 'right' }}>
-                                              <span style={{ fontSize: '20px', fontWeight: '950', color: 'var(--accent-secondary, var(--accent-color))', fontFamily: 'Outfit, sans-serif' }}>{bestSet.weight}</span>
-                                              <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-secondary, var(--accent-color))', marginLeft: '4px', opacity: 0.8 }}>{t(weightUnit)}</span>
-                                           </div>
-                                        </div>
-                                      </div>
-                                    );
-                                 })}
-                               </div>
-                             ));
-                          })()}
-                       </div>
-
-                       {/* Daily Nutrition Integration (Missing piece from APK) */}
-                       {(() => {
-                          const logDate = new Date(log.date);
-                          const nutritionForDay = tracker.nutritionLogs.filter(n => {
-                            const d = new Date(n.date);
-                            return d.getFullYear() === logDate.getFullYear() && d.getMonth() === logDate.getMonth() && d.getDate() === logDate.getDate();
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '0' }}>
+                        {(() => {
+                          const groups: Record<string, typeof log.exercises> = {};
+                          log.exercises.forEach(ex => {
+                            const mgKey = (ex as any).muscleGroup || exerciseToMuscle[ex.name] || log.muscleGroup;
+                            if (!groups[mgKey]) groups[mgKey] = [];
+                            groups[mgKey].push(ex);
                           });
 
-                          if (nutritionForDay.length === 0) return null;
+                          const sortedExercises: (typeof log.exercises[0] & { groupKey: string, isFirstInGroup: boolean })[] = [];
+                          Object.keys(groups).sort().forEach(groupKey => {
+                            groups[groupKey].forEach((ex, idx) => {
+                              sortedExercises.push({ ...ex, groupKey, isFirstInGroup: idx === 0 });
+                            });
+                          });
 
-                          const totals = nutritionForDay.reduce((acc, n) => ({
-                            kcal: acc.kcal + n.calories,
-                            protein: acc.protein + n.protein,
-                            carbs: acc.carbs + n.carbs,
-                            fats: acc.fats + n.fats
-                          }), { kcal: 0, protein: 0, carbs: 0, fats: 0 });
-
-                          return (
-                            <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid rgba(var(--theme-rgb), 0.1)', opacity: activeLogId === log.id ? 1 : 0, transform: activeLogId === log.id ? 'translateY(0)' : 'translateY(10px)', transition: 'all 0.4s ease 0.2s' }}>
-                               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                                  <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '4px', textTransform: 'uppercase', opacity: 0.8, marginBottom: '8px' }}>Daily Nutrition Log</div>
-                                  <div style={{ width: '30px', height: '2px', background: 'var(--accent-color)', margin: '0 auto', opacity: 0.3, borderRadius: '2px' }} />
-                               </div>
-
-                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', gap: '4px' }}>
-                                  {[
-                                    { label: 'KCAL', value: Math.round(totals.kcal) },
-                                    { label: 'PROTEIN', value: `${Math.round(totals.protein)}g` },
-                                    { label: 'CARBS', value: `${Math.round(totals.carbs)}g` },
-                                    { label: 'FATS', value: `${Math.round(totals.fats)}g` }
-                                  ].map((stat, idx) => (
-                                    <React.Fragment key={stat.label}>
-                                      {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(var(--theme-rgb), 0.1)' }} />}
-                                      <div style={{ flex: 1, textAlign: 'center' }}>
-                                        <div style={{ fontSize: '15px', fontWeight: '950', color: idx === 0 ? 'var(--accent-color)' : 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>{stat.value}</div>
-                                        <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
-                                      </div>
-                                    </React.Fragment>
-                                  ))}
-                               </div>
-
-                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  {nutritionForDay.map((n, idx) => (
-                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(var(--theme-rgb), 0.02)', padding: '10px 14px', borderRadius: '12px' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--accent-color)' }} />
-                                        <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', opacity: 0.9 }}>{lang === 'ar' ? (n as any).nameAr || n.name : n.name}</span>
-                                        {n.servingSize && <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.5 }}>x{n.servingSize}</span>}
-                                      </div>
-                                      <div style={{ textAlign: 'right' }}>
-                                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{Math.round(n.calories)}</span>
-                                        <span style={{ fontSize: '9px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}>KCAL</span>
-                                      </div>
+                          return sortedExercises.map((ex, exIdx) => {
+                            const bestSet = ex.sets.reduce((best, s) => s.weight > best.weight ? s : best, ex.sets[0] ?? { weight: 0, reps: 0 });
+                            const isPR = tracker.getExercisePR(ex.name)?.weight === bestSet.weight;
+                            const mg = MUSCLE_GROUPS.find(m => m.key === ex.groupKey);
+                            
+                            return (
+                              <React.Fragment key={`${ex.name}-${exIdx}`}>
+                                {ex.isFirstInGroup && exIdx > 0 && (
+                                  <div style={{ height: '8px' }} />
+                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)', transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`, background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: '10px 12px', borderRadius: '12px', borderLeft: ex.isFirstInGroup ? '2px solid var(--accent-color)' : 'none' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                      <span style={{ fontSize: '15px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.name}</span>
+                                      <span style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px' }}>{lang === 'ar' ? mg?.ar : mg?.en}</span>
                                     </div>
-                                  ))}
-                               </div>
+                                    {isPR && (
+                                      <div style={{ fontSize: '8px', fontWeight: '950', color: '#ff3d00', background: 'rgba(255, 61, 0, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>PR</div>
+                                    )}
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div style={{ textAlign: 'right' }}>
+                                      <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.sets.length}</span>
+                                      <span style={{ fontSize: '10px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginLeft: '4px' }}>SETS</span>
+                                    </div>
+                                    <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                                    <div style={{ textAlign: 'right' }}>
+                                      <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
+                                      <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t(unit as any)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </React.Fragment>
+                            );
+                          });
+                        })() }
+                      </div>
+
+                      {(() => {
+                        const logDate = new Date(log.date);
+                        const dayNutrition = tracker.nutritionLogs.filter((l: any) => {
+                          const d = new Date(l.date);
+                          return d.getFullYear() === logDate.getFullYear() && d.getMonth() === logDate.getMonth() && d.getDate() === logDate.getDate();
+                        });
+                        
+                        if (dayNutrition.length === 0) return null;
+
+                        const totalCal = dayNutrition.reduce((sum: number, l: any) => sum + l.calories, 0);
+                        const totalPro = dayNutrition.reduce((sum: number, l: any) => sum + l.protein, 0);
+                        const totalCarb = dayNutrition.reduce((sum: number, l: any) => sum + l.carbs, 0);
+                        const totalFat = dayNutrition.reduce((sum: number, l: any) => sum + l.fats, 0);
+
+                        return (
+                          <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(10px)', transition: 'all 0.4s ease 0.2s' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '4px', textTransform: 'uppercase', opacity: 0.8, marginBottom: '8px' }}>Daily Nutrition Log</div>
+                              <div style={{ width: '30px', height: '2px', background: 'var(--accent-color)', margin: '0 auto', opacity: 0.3, borderRadius: '2px' }} />
                             </div>
-                          );
-                       })()}
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', gap: '4px' }}>
+                              {[
+                                { label: 'KCAL', value: totalCal },
+                                { label: 'PROTEIN', value: `${totalPro.toFixed(0)}g` },
+                                { label: 'CARBS', value: `${totalCarb.toFixed(0)}g` },
+                                { label: 'FATS', value: `${totalFat.toFixed(0)}g` },
+                              ].map((stat, idx) => (
+                                <React.Fragment key={stat.label}>
+                                  {idx > 0 && <div style={{ width: '1px', height: '16px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />}
+                                  <div style={{ flex: 1, textAlign: 'center' }}>
+                                    <div style={{ fontSize: '15px', fontWeight: '950', color: idx === 0 ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : '#000'), fontFamily: 'Inter, sans-serif' }}>{stat.value}</div>
+                                    <div style={{ fontSize: '10px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                                  </div>
+                                </React.Fragment>
+                              ))}
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0 10px 0' }}>
+                              {dayNutrition.map((food: any, fIdx: number) => (
+                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: '8px 12px', borderRadius: '10px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#ff3d00' }} />
+                                    <span style={{ fontSize: '14px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', opacity: 0.9 }}>{food.nameAr || food.name}</span>
+                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>x{food.servingSize}</span>}
+                                  </div>
+                                  <div style={{ textAlign: 'right', minWidth: '60px' }}>
+                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{food.calories}</span>
+                                    <span style={{ fontSize: '9px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px', opacity: 1 }}>KCAL</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
- 
               </div>
             );
           })
         )}
       </div>
-
     </div>
   );
-};
+}

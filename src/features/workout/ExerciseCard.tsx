@@ -36,7 +36,7 @@ const SetRow = ({ index, weight, reps, restTime, activeUnit, isResting, canRemov
     <div style={{ width: 24, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: 'Outfit, sans-serif' }}>{index + 1}</div>
     <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 12 }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'var(--glass-bg)', border: '1.5px solid rgba(var(--theme-rgb), 0.3)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '4px 0', borderRadius: 8, fontFamily: 'Outfit, sans-serif' }} />
+      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: 'Outfit, sans-serif', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.2)' }} />
       <div onClick={onCycleUnit} style={{ fontSize: 11, fontWeight: 950, color: '#666', textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', minWidth: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, sans-serif', lineHeight: 1, transition: 'transform 0.2s ease' }} onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.9)')} onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
         {t(activeUnit)}
         <div style={{ width: 12, height: 2, background: '#666', marginTop: 3, borderRadius: 1 }} />
@@ -44,7 +44,7 @@ const SetRow = ({ index, weight, reps, restTime, activeUnit, isResting, canRemov
     </div>
     <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'var(--glass-bg)', border: '1.5px solid rgba(var(--theme-rgb), 0.3)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '4px 0', borderRadius: 8, fontFamily: 'Outfit, sans-serif' }} />
+      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: 'Outfit, sans-serif', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.2)' }} />
       <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif' }}>{t('reps')}</div>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -232,16 +232,23 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
 
         {/* PR bar */}
         <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '8px 20px 12px' }}>
-          {pr && (
-            <div style={{ background: 'rgba(var(--theme-rgb), 0.03)', borderRadius: 12, padding: '6px 14px', color: 'var(--text-primary)', fontSize: 13, fontWeight: 800, fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-              <span style={{ color: 'var(--accent-color)', fontSize: 9, fontWeight: 900, letterSpacing: 1, opacity: 0.8 }}>LAST:</span>
-              <span style={{ fontWeight: 900 }}>{pr.reps} Reps</span>
-              <div style={{ width: '1px', height: 10, background: 'rgba(var(--theme-rgb), 0.1)', margin: '0 4px' }} />
-              <span style={{ fontWeight: 950, fontSize: 15, color: 'var(--accent-color)' }}>{pr.weight}</span>
-              <span style={{ fontSize: 10, opacity: 0.6 }}>{t(pr.unit || weightUnit)}</span>
-              <span style={{ fontSize: 16, marginLeft: 4, filter: 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.3))' }}>🏆</span>
-            </div>
-          )}
+          {(() => {
+            const lastSession = tracker.getLastSession(exerciseName);
+            if (!lastSession) return null;
+            const bestSet = lastSession.bestSet;
+            return (
+              <div style={{ background: 'rgba(var(--theme-rgb), 0.03)', borderRadius: 12, padding: '6px 14px', color: 'var(--text-primary)', fontSize: 13, fontWeight: 800, fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                <span style={{ color: 'var(--accent-color)', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, opacity: 0.9 }}>LAST:</span>
+                <span style={{ fontWeight: 900, fontSize: 15 }}>{lastSession.sets.length} <span style={{ fontSize: 10, opacity: 0.8 }}>SETS</span></span>
+                <span style={{ opacity: 0.4, fontSize: 10 }}>×</span>
+                <span style={{ fontWeight: 900, fontSize: 15 }}>{bestSet.reps} <span style={{ fontSize: 10, opacity: 0.8 }}>REPS</span></span>
+                <div style={{ width: '1px', height: 12, background: 'rgba(var(--theme-rgb), 0.15)', margin: '0 6px' }} />
+                <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{bestSet.weight}</span>
+                <span style={{ fontSize: 11, opacity: 0.7, color: 'var(--accent-color)', fontWeight: 900 }}>{t(bestSet.unit || weightUnit)}</span>
+                <span style={{ fontSize: 16, marginLeft: 6, filter: 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.3))' }}>🏆</span>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
@@ -273,11 +280,11 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
           </div>
           <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
             <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>{maxWeight} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
           </div>
         </div>
-        <button onClick={handleDone} disabled={saving || !isDirtyRef || sets.every(s => !Number(s.reps))} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: 16, fontWeight: 800, padding: '4px 8px', width: 'fit-content', cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer', pointerEvents: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'auto', textTransform: 'uppercase', letterSpacing: saving ? '4px' : '12px', outline: 'none', animation: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'pulse-glow 2.5s ease-in-out infinite', opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.6 : 1, fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation', transition: 'all 0.2s ease' }}>
+        <button onClick={handleDone} disabled={saving || !isDirtyRef || sets.every(s => !Number(s.reps))} style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: 16, fontWeight: 800, padding: '4px 8px', width: 'fit-content', cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer', pointerEvents: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'auto', textTransform: 'uppercase', letterSpacing: saving ? '4px' : '12px', outline: 'none', animation: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'pulse-glow 2.5s ease-in-out infinite', opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.6 : 1, fontFamily: 'Syne, sans-serif', transform: 'translateZ(15px)', touchAction: 'manipulation', transition: 'all 0.2s ease' }}>
           {saving ? (lang === 'ar' ? 'جاري الحفظ...' : 'SAVING...') : t('done')}
         </button>
       </div>

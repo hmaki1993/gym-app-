@@ -129,7 +129,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     return (
       <div key={name} data-index={idx} ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} style={{ display: 'flex', flexDirection: 'column', zIndex: isDragging ? 100 : 1, opacity: isDragging ? 0.7 : 1, transition: isDragging ? 'none' : 'opacity 0.2s ease', boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.4)' : 'none' }}>
-        <div onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} className="exercise-select-btn" role="button" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 12px 12px 20px', background: isActive ? 'rgba(255, 61, 0, 0.06)' : 'transparent', border: 'none', borderBottom: `1px solid ${isActive ? 'rgba(255, 61, 0, 0.2)' : 'rgba(var(--theme-rgb), 0.06)'}`, borderLeft: isActive ? '3px solid #ff3d00' : '3px solid transparent', width: '100%', cursor: 'pointer', borderRadius: 0, transition: 'all 0.2s ease', touchAction: 'manipulation' }}>
+        <div onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} className="exercise-select-btn" role="button" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 12px 12px 20px', background: isActive ? 'rgba(255, 61, 0, 0.06)' : 'transparent', border: 'none', borderBottom: `1px solid ${isActive ? 'rgba(255, 61, 0, 0.1)' : 'transparent'}`, borderLeft: isActive ? '3px solid #ff3d00' : '3px solid transparent', width: '100%', cursor: 'pointer', borderRadius: 0, transition: 'all 0.2s ease', touchAction: 'manipulation', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
           <div onTouchStart={e => { e.stopPropagation(); setDraggingIndex(idx); }} style={{ touchAction: 'none', padding: 8, marginRight: isRtl ? 0 : 4, color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', opacity: isDragging ? 1 : 0.3 }}>
             <GripVertical size={20} />
           </div>
@@ -198,12 +198,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               </div>
             )}
           </div>
-          <div ref={searchResultsRef} className="hide-scroll" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div ref={searchResultsRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {searchFiltered.map(name => {
               const isActive = activeExercises.includes(name);
               const lastSession = tracker.getLastSession(name);
               return (
-                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name, null); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(255,61,0,0.1)' : 'rgba(255,255,255,0.04)', border: isActive ? '1px solid rgba(255,61,0,0.3)' : '1px solid rgba(255,255,255,0.06)', borderLeft: isActive ? '3px solid #ff3d00' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease' }}>
+                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name, null); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(255,61,0,0.1)' : 'rgba(255,255,255,0.04)', border: isActive ? '1px solid rgba(255,61,0,0.3)' : '1px solid rgba(255,255,255,0.06)', borderLeft: isActive ? '3px solid #ff3d00' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#ff3d00' : '#fff', fontFamily: 'Outfit, sans-serif' }}>{name}</div>
                     {lastSession && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontWeight: 800, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
@@ -240,10 +240,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       </div>
 
       {/* Exercise list */}
-      <div className="hide-scroll" style={{ flex: 1, overflowY: draggingIndex === null ? 'auto' : 'hidden', display: 'flex', flexDirection: 'column', gap: 4 }} onTouchMove={handleTouchMove} onTouchEnd={() => setDraggingIndex(null)}>
+      <div className="hide-scrollbar" style={{ flex: 1, overflowY: draggingIndex === null ? 'auto' : 'hidden', display: 'flex', flexDirection: 'column', gap: 4 }} onTouchMove={handleTouchMove} onTouchEnd={() => setDraggingIndex(null)}>
         {recentNames.length > 0 && (
           <>
-            <div style={{ padding: '16px 12px 8px', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,61,0,0.03)' }}>
+            <div style={{ padding: '16px 12px 8px', display: 'flex', alignItems: 'center', gap: 8, background: 'transparent' }}>
               <RotateCcw size={14} color="#ff3d00" strokeWidth={3} />
               <span style={{ fontSize: 11, fontWeight: 900, color: '#ff3d00', letterSpacing: 1, textTransform: 'uppercase' }}>{isRtl ? 'تمارينك السابقة' : 'My Recent Exercises'}</span>
             </div>

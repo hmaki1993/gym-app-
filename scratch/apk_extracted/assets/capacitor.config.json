@@ -1,0 +1,10 @@
+{
+	"appId": "com.antigravity.gymlog",
+	"appName": "GYMLOG-NEW",
+	"webDir": "dist",
+	"plugins": {
+		"CapacitorHttp": {
+			"enabled": true
+		}
+	}
+}
