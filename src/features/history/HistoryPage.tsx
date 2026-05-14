@@ -62,14 +62,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
   const monthName = viewDate.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { month: 'long', year: 'numeric' });
 
-  const hasWorkout = (day: number) => {
-    return tracker.logs.some(l => {
-      const d = new Date(l.date);
-      return d.getFullYear() === currentYear &&
-             d.getMonth() === currentMonth &&
-             d.getDate() === day;
-    });
-  };
 
   const monthDayMuscles = React.useMemo(() => {
     const map: Record<number, string[]> = {};
