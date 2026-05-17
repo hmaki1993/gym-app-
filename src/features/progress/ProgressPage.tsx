@@ -8,7 +8,7 @@ interface Props {
   tracker: ReturnType<typeof useGymTracker>;
 }
 
-function MiniChart({ data, color, title, accentColor }: { data: { date: string; value: number }[]; color: string, title: string, accentColor: string }) {
+function MiniChart({ data, color, title }: { data: { date: string; value: number }[]; color: string, title: string }) {
   if (data.length < 2) return null;
   // Limit to last 8 sessions for an elite visual density
   const recentData = data.slice(-8);
@@ -386,7 +386,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
                           )}
                         </div>
                       </div>
-                      <MiniChart data={history} color="var(--accent-color)" title={name} accentColor={tracker.settings.accentColor} />
+                      <MiniChart data={history} color="var(--accent-color)" title={name} />
                     </div>
                   );
                 }).filter(Boolean);

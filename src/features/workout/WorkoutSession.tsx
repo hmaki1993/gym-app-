@@ -5,7 +5,7 @@ import { DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
 import { ExerciseCard } from './ExerciseCard';
 import {
-  Clock, Play
+  Play
 } from 'lucide-react';
 import gsap from 'gsap';
 

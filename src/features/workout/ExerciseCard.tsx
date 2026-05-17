@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { Clock, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../hooks/useGymTracker';
 
@@ -246,11 +246,6 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
     if (idx !== undefined) setRestingSetIndex(idx);
   };
 
-  const totalVolume = sets.reduce((sum, s) => {
-    const convertedWeight = tracker.convertWeight(Number(s.weight) || 0, s.unit || activeUnit, activeUnit);
-    return sum + convertedWeight * (Number(s.reps) || 0);
-  }, 0);
-  const maxWeight = Math.max(...sets.map(s => tracker.convertWeight(Number(s.weight) || 0, s.unit || activeUnit, activeUnit)), 0);
 
   const handleDone = () => {
     if (saving) return;

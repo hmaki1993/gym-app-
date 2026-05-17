@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Trash2, Scan, RefreshCw } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { GeminiService } from '../../services/gemini';
-import { ChevronDown, Check, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { FatSecretService } from '../../services/fatsecret';
 import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 

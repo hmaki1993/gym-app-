@@ -1,5 +1,5 @@
 import React from 'react';
-import { GripVertical, Check } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import type { SetLog } from '../../../types';
 import { DEFAULT_EXERCISES } from '../../../data/exercises';
 
@@ -22,7 +22,7 @@ const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: numbe
 interface Props {
   activeExercises: string[];
   loggedData: Record<string, SetLog[]>;
-  weightUnit: string;
+  weightUnit?: string;
   onOpenExercise: (name: string) => void;
   onSave: () => void;
   handleTouchStart: (index: number) => void;
@@ -34,11 +34,9 @@ interface Props {
 }
 
 export function SessionLogger({
-  activeExercises, loggedData, weightUnit, onOpenExercise, onSave,
+  activeExercises, loggedData, onOpenExercise, onSave,
   handleTouchStart, handleTouchMove, handleTouchEnd, draggingIndex, customExercises, t
 }: Props) {
-  const loggedCount = Object.keys(loggedData).filter(k => activeExercises.includes(k)).length;
-  const totalVolume = Object.values(loggedData).flat().reduce((s, set) => s + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0 }}>
