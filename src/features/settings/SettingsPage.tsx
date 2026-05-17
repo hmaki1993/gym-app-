@@ -45,7 +45,7 @@ export function SettingsPage({ tracker }: Props) {
   const labelStyle: React.CSSProperties = {
     fontSize: '11px',
     fontWeight: '900',
-    color: '#ff3d00',
+    color: 'var(--accent-color)',
     letterSpacing: '2.5px',
     textTransform: 'uppercase',
     marginBottom: '8px',
@@ -59,10 +59,7 @@ export function SettingsPage({ tracker }: Props) {
     background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)',
     borderRadius: '16px',
     padding: '16px',
-    borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
-    borderLeft: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
-    borderRight: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)',
-    borderBottom: '3px solid rgba(255, 61, 0, 0.3)',
+    border: '1px solid var(--glass-border)',
     transition: 'all 0.3s ease',
     display: 'flex',
     flexDirection: 'column',
@@ -87,8 +84,7 @@ export function SettingsPage({ tracker }: Props) {
             className="antigravity-card" 
             style={{
               maxWidth: '320px', width: '100%', padding: '40px 24px',
-              textAlign: 'center', border: 'none',
-              boxShadow: '0 0 80px rgba(255,0,0,0.3)',
+              textAlign: 'center', border: '1px solid var(--glass-border)',
               background: 'rgba(10, 0, 0, 0.98)', position: 'relative',
               animation: 'elite-expand 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
               borderRadius: '28px',
@@ -96,7 +92,7 @@ export function SettingsPage({ tracker }: Props) {
             }}
           >
             <div style={{ color: '#ff0000', marginBottom: '20px' }}>
-              <Target size={52} style={{ filter: 'drop-shadow(0 0 15px #ff0000)' }} />
+              <Target size={52} />
             </div>
             <h2 className="heading-font logo-underline" style={{ color: '#fff', fontSize: '26px', marginBottom: '16px' }}>
               {lang === 'ar' ? 'تصفير المصنع؟' : 'FACTORY RESET?'}
@@ -105,7 +101,7 @@ export function SettingsPage({ tracker }: Props) {
               {lang === 'ar' ? '⚠️ سيتم مسح كل بياناتك نهائياً!' : '⚠️ This will permanently delete all your data!'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <button onClick={() => tracker.resetAllData()} style={{ background: '#ff0000', color: '#fff', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '950', fontSize: '13px', letterSpacing: '2px', cursor: 'pointer', boxShadow: '0 15px 30px rgba(255,0,0,0.4)', transition: 'all 0.3s ease' }}>
+              <button onClick={() => tracker.resetAllData()} style={{ background: '#ff0000', color: '#fff', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '950', fontSize: '13px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
                 {lang === 'ar' ? 'تأكيد المسح' : 'CONFIRM RESET'}
               </button>
               <button onClick={() => setShowResetConfirm(false)} style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: 'none', padding: '14px', borderRadius: '18px', fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
@@ -119,28 +115,28 @@ export function SettingsPage({ tracker }: Props) {
       <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', padding: '20px 20px 100px', gap: '20px', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>{t('accountProfile')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={inputRowStyle} className="elite-input-wrapper">
               <div style={{ fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>NICKNAME</div>
-              <input style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }} value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })} />
+              <input style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })} />
             </div>
             <div style={inputRowStyle} className="elite-input-wrapper">
               <div style={{ fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>EMAIL</div>
-              <input type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }} value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })} />
+              <input type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })} />
             </div>
             <div style={inputRowStyle} className="elite-input-wrapper">
               <div style={{ fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>{t('password').toUpperCase()}</div>
-              <input type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }} value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })} />
+              <input type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })} />
             </div>
           </div>
         </div>
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>Body Composition</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -152,7 +148,7 @@ export function SettingsPage({ tracker }: Props) {
               <div key={f.key} style={{ ...inputRowStyle, padding: '10px 12px' }} className="elite-input-wrapper">
                 <div style={{ fontSize: '10px', fontWeight: '900', opacity: 0.6, color: 'var(--text-primary)' }}>{f.label.toUpperCase()}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
-                  <input type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[f.key] || 0} onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [f.key]: Number(e.target.value) } as any })} style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }} />
+                  <input type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[f.key] || 0} onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [f.key]: Number(e.target.value) } as any })} style={{ background: 'none', border: 'none', fontSize: '16px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} />
                   <span style={{ fontSize: '8px', fontWeight: '900', opacity: 0.3 }}>{f.unit}</span>
                 </div>
               </div>
@@ -162,7 +158,7 @@ export function SettingsPage({ tracker }: Props) {
             <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px', marginBottom: '8px', paddingLeft: '8px' }}>BIOLOGICAL GENDER</div>
             <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
               {(['male', 'female'] as const).map(g => (
-                <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.nutritionProfile?.gender === g ? '#ff3d00' : 'transparent', color: tracker.settings.nutritionProfile?.gender === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+                <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.nutritionProfile?.gender === g ? 'var(--accent-color)' : 'transparent', color: tracker.settings.nutritionProfile?.gender === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
               ))}
             </div>
           </div>
@@ -170,17 +166,17 @@ export function SettingsPage({ tracker }: Props) {
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>Fitness Strategy</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
             {(['lose', 'maintain', 'gain'] as const).map(g => (
-              <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any })} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.nutritionProfile?.goal === g ? '#ff3d00' : 'transparent', color: tracker.settings.nutritionProfile?.goal === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+              <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any })} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.nutritionProfile?.goal === g ? 'var(--accent-color)' : 'transparent', color: tracker.settings.nutritionProfile?.goal === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
             ))}
           </div>
-          <div style={{ marginTop: '8px', padding: '24px', background: 'transparent', borderBottom: '2px solid #ff3d00', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 10px 20px -10px rgba(255, 61, 0, 0.2)' }}>
-            <div style={{ fontSize: '9px', fontWeight: '900', color: '#ff3d00', letterSpacing: '3px', marginBottom: '4px', opacity: 0.6 }}>DAILY TARGET</div>
-            <div style={{ fontSize: '48px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: 'Outfit', letterSpacing: '-2px' }}>
+          <div style={{ marginTop: '8px', padding: '24px', background: 'transparent', borderBottom: '2px solid var(--accent-color)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', marginBottom: '4px', opacity: 0.6 }}>DAILY TARGET</div>
+            <div style={{ fontSize: '48px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-2px' }}>
               {(() => {
                 const p = tracker.settings.nutritionProfile;
                 if (!p?.weight || !p?.height || !p?.age) return '0';
@@ -197,19 +193,19 @@ export function SettingsPage({ tracker }: Props) {
 
         <div style={{ ...cardStyle, gap: '15px' }}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>Appearance</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '4px', width: '100%', border: '1px solid rgba(255,255,255,0.05)' }}>
             {(['dark', 'light'] as const).map(mode => (
-              <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.themeMode === mode ? '#ff3d00' : 'transparent', color: tracker.settings.themeMode === mode ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
+              <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.themeMode === mode ? 'var(--accent-color)' : 'transparent', color: tracker.settings.themeMode === mode ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
             ))}
           </div>
         </div>
       </div>
 
       <div style={{ marginTop: '60px', paddingBottom: '60px', display: 'flex', justifyContent: 'center', width: '100%' }}>
-        <button onClick={() => setShowResetConfirm(true)} style={{ background: 'rgba(255, 0, 0, 0.05)', border: '1.5px solid #ff0000', color: '#ff0000', padding: '8px 20px', borderRadius: '12px', fontSize: '10px', fontWeight: '950', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer', boxShadow: '0 0 15px rgba(255, 0, 0, 0.1)', transition: 'all 0.3s ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#ff0000'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 0, 0, 0.05)'; e.currentTarget.style.color = '#ff0000'; }}>
+        <button onClick={() => setShowResetConfirm(true)} style={{ background: 'rgba(255, 0, 0, 0.05)', border: '1.5px solid #ff0000', color: '#ff0000', padding: '8px 20px', borderRadius: '12px', fontSize: '10px', fontWeight: '950', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#ff0000'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 0, 0, 0.05)'; e.currentTarget.style.color = '#ff0000'; }}>
           {lang === 'ar' ? 'تصفير المصنع' : 'FACTORY RESET'}
         </button>
       </div>

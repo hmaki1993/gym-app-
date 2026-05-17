@@ -33,10 +33,10 @@ function playStart() {
 // SetRow component (Ka from bundle)
 const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCycleUnit, onRemove, isCardio, lang }: any) => (
   <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)', gap: 8, transformStyle: 'preserve-3d' }}>
-    <div style={{ width: 24, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: 'Outfit, sans-serif' }}>{index + 1}</div>
+    <div style={{ width: 24, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif" }}>{index + 1}</div>
     <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 12 }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: 'Outfit, sans-serif', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.2)' }} />
+      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
       <div 
         onClick={onCycleUnit} 
         style={{ 
@@ -52,7 +52,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
           flexDirection: 'column', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          fontFamily: 'Outfit, sans-serif', 
+          fontFamily: "'Montserrat', sans-serif", 
           lineHeight: 1, 
           transition: 'all 0.2s ease',
           background: 'transparent',
@@ -78,7 +78,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
     </div>
     <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: 'Outfit, sans-serif', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.2)' }} />
+      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
       <div style={{ 
         fontSize: 10, 
         fontWeight: 950, 
@@ -86,7 +86,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
         textTransform: 'uppercase', 
         opacity: 0.9, 
         letterSpacing: '1px', 
-        fontFamily: 'Outfit, sans-serif',
+        fontFamily: "'Montserrat', sans-serif",
         width: 48,
         height: 48,
         display: 'flex',
@@ -277,7 +277,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
             {elapsedSeconds !== undefined && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px', minWidth: 75, justifyContent: 'center', flexShrink: 0 }}>
                 <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} />
-                <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 17, fontWeight: 900, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsedSeconds)}</span>
+                <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 17, fontWeight: 900, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsedSeconds)}</span>
               </div>
             )}
             <button onClick={onClose} onPointerDown={e => e.stopPropagation()} style={{ background: 'none', border: 'none', padding: 0, width: 32, height: 32, borderRadius: '50%', color: '#ff3366', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -300,7 +300,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                 color: 'var(--text-primary)', 
                 fontSize: 13, 
                 fontWeight: 800, 
-                fontFamily: 'Outfit, sans-serif', 
+                fontFamily: "'Montserrat', sans-serif", 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: 6, 
@@ -314,7 +314,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                 <div style={{ width: '1px', height: 12, background: 'rgba(255, 255, 255, 0.15)', margin: '0 6px' }} />
                 <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{bestSet.weight}</span>
                 <span style={{ fontSize: 11, opacity: 0.7, color: 'var(--accent-color)', fontWeight: 900 }}>{t(bestSet.unit || weightUnit)}</span>
-                <span style={{ fontSize: 16, marginLeft: 6, filter: 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.3))' }}>🏆</span>
+                <img src="/assets/trophy-custom.png" style={{ width: 18, height: 18, marginLeft: 6, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }} alt="Trophy" />
               </div>
             );
           })()}
@@ -328,12 +328,12 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
             <SetRow key={i} index={i} weight={s.weight} reps={s.reps} restTime={s.restTime} activeUnit={activeUnit} isResting={restingSetIndex === i} canRemove={sets.length > 1} t={t} onUpdate={(field: string, val: any) => updateSet(i, field, val)} onCycleUnit={cycleUnit} onStartRest={() => startRest(i)} onRemove={() => { const updated = sets.filter((_, j) => j !== i); setSets(updated); onChange && onChange(updated, true); }} isCardio={muscleGroup === 'cardio'} lang={lang} />
           ))}
         </div>
-        <button onClick={() => { const updated = [...sets, { weight: '', reps: '', unit: activeUnit }]; setSets(updated); onChange && onChange(updated, true); }} style={{ width: '100%', padding: 14, background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: 16, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', marginTop: 12, fontFamily: 'Outfit, sans-serif' }}>
+        <button onClick={() => { const updated = [...sets, { weight: '', reps: '', unit: activeUnit }]; setSets(updated); onChange && onChange(updated, true); }} style={{ width: '100%', padding: 14, background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: 16, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', marginTop: 12, fontFamily: "'Montserrat', sans-serif" }}>
           <Plus size={16} color="var(--accent-color)" /> {t('addSet')}
         </button>
         {sets.length <= 1 && (
           <div style={{ padding: '20px 0', opacity: 0.65, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: 30 }}>
-            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: 2, textTransform: 'uppercase', lineHeight: 1.4, fontFamily: 'Outfit, sans-serif' }}>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: 2, textTransform: 'uppercase', lineHeight: 1.4, fontFamily: "'Montserrat', sans-serif" }}>
               STAY FOCUSED<br />{tracker.settings.userName.toUpperCase()}
             </div>
           </div>
@@ -344,13 +344,13 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
       <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', background: 'var(--primary-bg)', borderTop: '2px solid rgba(var(--theme-rgb), 0.25)', transformStyle: 'preserve-3d' }}>
         <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center', gap: 40, padding: '4px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: 'Outfit, sans-serif' }}>{t('totalVolume')}</div>
-            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>{totalVolume.toFixed(0)} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: "'Montserrat', sans-serif" }}>{t('totalVolume')}</div>
+            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: "'Montserrat', sans-serif" }}>{totalVolume.toFixed(0)} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
           </div>
           <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: 'Outfit, sans-serif' }}>Max Today</div>
-            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>{maxWeight} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: "'Montserrat', sans-serif" }}>Max Today</div>
+            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: "'Montserrat', sans-serif" }}>{maxWeight} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
           </div>
         </div>
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px 0' }}>
@@ -371,15 +371,15 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
               letterSpacing: '4px', 
               outline: 'none', 
               opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.3 : 1, 
-              fontFamily: 'Syne, sans-serif', 
+              fontFamily: "'Montserrat', sans-serif", 
               position: 'relative',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               clipPath: 'polygon(0% 15%, 5% 0%, 95% 0%, 100% 15%, 100% 85%, 95% 100%, 5% 100%, 0% 85%, 0% 50%)',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              boxShadow: '0 0 25px var(--accent-color-alpha), inset 0 0 10px var(--accent-color-alpha)',
-              textShadow: '0 0 10px var(--accent-color)'
+              
+              
             }}
             onMouseDown={e => {
               e.currentTarget.style.transform = 'scale(0.94)';
@@ -414,7 +414,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                   }}>S E T   S A</span>
                   
                   <div style={{ display: 'inline-flex', transform: 'translateY(-1px)' }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent-color)" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 8px var(--accent-color))' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent-color)" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{  }}>
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
                   </div>

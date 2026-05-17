@@ -58,6 +58,13 @@ function loadState(): GymState {
       })),
     }));
 
+    // --- COLOR MIGRATION: Eradicate dark green #326144 and replace with neon green #00E676 ---
+    if (parsed.settings) {
+      if (parsed.settings.accentColor === '#326144' || !parsed.settings.accentColor) {
+        parsed.settings.accentColor = '#00E676';
+      }
+    }
+
 
     return {
       ...DEFAULT_STATE,

@@ -25,7 +25,7 @@ const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, muscl
               <span style={{ fontSize: 12, fontWeight: 950, color: isActive ? 'var(--accent-color)' : hasExercises ? 'var(--accent-secondary)' : 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>
                 {(mg as any)[lang] || mg.en}
               </span>
-              {isActive && <div style={{ width: 16, height: 2, borderRadius: 1, background: 'var(--accent-color)', marginTop: 4, boxShadow: '0 0 10px var(--accent-color)' }} />}
+              {isActive && <div style={{ width: 16, height: 2, borderRadius: 1, background: 'var(--accent-color)', marginTop: 4,  }} />}
             </button>
           );
         })}

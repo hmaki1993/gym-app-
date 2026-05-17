@@ -9,7 +9,6 @@ import { SettingsPage } from './features/settings/SettingsPage';
 import { OnboardingModal } from './features/common/OnboardingModal';
 import { BottomNav } from './features/common/BottomNav';
 import { NutritionPage } from './features/nutrition/NutritionPage';
-import { TrendingUp, History, Settings, Home, Utensils } from 'lucide-react';
 import gsap from 'gsap';
 import './index.css';
 import { preWarmImages } from './features/workout/components/TransparentImage';
@@ -94,20 +93,20 @@ export default function App() {
   // ── Dynamic Theme Synchronization ──
   useEffect(() => {
     const root = document.documentElement;
-    const accent = tracker.settings.accentColor || '#326144';
+    const accent = tracker.settings.accentColor || '#00E676';
     root.style.setProperty('--accent-color', accent);
     
     // Convert hex to RGB for transparency effects (like borders)
     const hexToRgb = (hex: string) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '50, 97, 68';
+      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 230, 118';
     };
     
     // Force-sync theme colors to match GitHub version if they differ
-    if (tracker.settings.accentColor !== '#326144') {
+    if (tracker.settings.accentColor !== '#00E676') {
       tracker.setSettings({ 
-        accentColor: '#326144', 
-        accentSecondary: '#ff5e00' 
+        accentColor: '#00E676', 
+        accentSecondary: '#E67E22' 
       });
     }
 
@@ -154,11 +153,121 @@ export default function App() {
 
 
   const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
-    { key: 'home', icon: <Home size={26} strokeWidth={2} />, label: lang === 'ar' ? 'الرئيسية' : 'Home' },
-    { key: 'history', icon: <History size={26} strokeWidth={2} />, label: t('history') },
-    { key: 'nutrition', icon: <Utensils size={26} strokeWidth={2} />, label: t('nutrition') },
-    { key: 'progress', icon: <TrendingUp size={26} strokeWidth={2} />, label: t('progress') },
-    { key: 'settings', icon: <Settings size={26} strokeWidth={2} />, label: t('settings') },
+    { 
+      key: 'home', 
+      icon: (
+        <div 
+          style={{ 
+            width: '24px', 
+            height: '24px', 
+            backgroundColor: 'currentColor', 
+            maskImage: "url('/assets/home-custom.png')", 
+            WebkitMaskImage: "url('/assets/home-custom.png')", 
+            maskSize: 'contain', 
+            WebkitMaskSize: 'contain', 
+            maskRepeat: 'no-repeat', 
+            WebkitMaskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskPosition: 'center',
+            display: 'inline-block',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }} 
+        />
+      ), 
+      label: lang === 'ar' ? 'الرئيسية' : 'Home' 
+    },
+    { 
+      key: 'history', 
+      icon: (
+        <div 
+          style={{ 
+            width: '24px', 
+            height: '24px', 
+            backgroundColor: 'currentColor', 
+            maskImage: "url('/assets/history-custom.png')", 
+            WebkitMaskImage: "url('/assets/history-custom.png')", 
+            maskSize: 'contain', 
+            WebkitMaskSize: 'contain', 
+            maskRepeat: 'no-repeat', 
+            WebkitMaskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskPosition: 'center',
+            display: 'inline-block',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }} 
+        />
+      ), 
+      label: t('history') 
+    },
+    { 
+      key: 'nutrition', 
+      icon: (
+        <div 
+          style={{ 
+            width: '24px', 
+            height: '24px', 
+            backgroundColor: 'currentColor', 
+            maskImage: "url('/assets/nutrition-custom.png')", 
+            WebkitMaskImage: "url('/assets/nutrition-custom.png')", 
+            maskSize: 'contain', 
+            WebkitMaskSize: 'contain', 
+            maskRepeat: 'no-repeat', 
+            WebkitMaskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskPosition: 'center',
+            display: 'inline-block',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }} 
+        />
+      ), 
+      label: t('nutrition') 
+    },
+    { 
+      key: 'progress', 
+      icon: (
+        <div 
+          style={{ 
+            width: '24px', 
+            height: '24px', 
+            backgroundColor: 'currentColor', 
+            maskImage: "url('/assets/progress-custom.png')", 
+            WebkitMaskImage: "url('/assets/progress-custom.png')", 
+            maskSize: 'contain', 
+            WebkitMaskSize: 'contain', 
+            maskRepeat: 'no-repeat', 
+            WebkitMaskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskPosition: 'center',
+            display: 'inline-block',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }} 
+        />
+      ), 
+      label: t('progress') 
+    },
+    { 
+      key: 'settings', 
+      icon: (
+        <div 
+          style={{ 
+            width: '24px', 
+            height: '24px', 
+            backgroundColor: 'currentColor', 
+            maskImage: "url('/assets/settings-custom.png')", 
+            WebkitMaskImage: "url('/assets/settings-custom.png')", 
+            maskSize: 'contain', 
+            WebkitMaskSize: 'contain', 
+            maskRepeat: 'no-repeat', 
+            WebkitMaskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskPosition: 'center',
+            display: 'inline-block',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }} 
+        />
+      ), 
+      label: t('settings') 
+    },
   ];
 
   return (

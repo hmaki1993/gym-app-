@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
-import { Dumbbell } from 'lucide-react';
 import { THEME_COLORS } from '../../data/exercises';
 import gsap from 'gsap';
 
@@ -87,8 +86,8 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
   };
 
   const cardStyle: React.CSSProperties = { width: '100%', maxWidth: '400px', background: 'transparent', display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '35px' };
-  const labelStyle: React.CSSProperties = { fontSize: '11px', fontWeight: '900', color: '#ff3d00', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px', padding: '0 8px' };
-  const inputRowStyle: React.CSSProperties = { background: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)', borderRadius: '16px', padding: '16px', borderTop: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)', borderLeft: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)', borderRight: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)', borderBottom: '3px solid rgba(255, 61, 0, 0.3)', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', gap: '6px' };
+  const labelStyle: React.CSSProperties = { fontSize: '11px', fontWeight: '900', color: '#E67E22', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px', padding: '0 8px' };
+  const inputRowStyle: React.CSSProperties = { background: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)', borderRadius: '16px', padding: '16px', borderTop: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)', borderLeft: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)', borderRight: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.1)', borderBottom: '3px solid rgba(230, 126, 34, 0.3)', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', gap: '6px' };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!name.trim()) return;
@@ -117,41 +116,51 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
           <div style={{ display: 'inline-block', transformStyle: 'preserve-3d', transition: 'transform 0.1s ease-out' }}>
             <h1 className="heading-font" style={{ margin: 0, fontSize: '38px', letterSpacing: '-1px', textTransform: 'uppercase', fontWeight: 950, lineHeight: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(30px)' }}>
               <span style={{ color: '#a0a0a0' }}>POWER</span>
-              <div style={{ margin: '0 10px', color: '#ff3d00', filter: 'drop-shadow(0 0 12px rgba(255, 61, 0, 0.4))', display: 'flex', alignItems: 'center', transform: 'translateZ(20px)' }}>
-                <Dumbbell size={28} strokeWidth={3} className="pulse-elite" />
+              <div style={{ margin: '0 10px', color: '#E67E22',  display: 'flex', alignItems: 'center', transform: 'translateZ(20px)' }}>
+                <div 
+                  className="pulse-elite"
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    backgroundColor: 'currentColor',
+                    WebkitMask: 'url(/assets/dumbbell-custom.png) no-repeat center / contain',
+                    mask: 'url(/assets/dumbbell-custom.png) no-repeat center / contain',
+                    display: 'inline-block'
+                  }} 
+                />
               </div>
-              <span style={{ color: '#ff3d00' }}>GRID</span>
+              <span style={{ color: '#E67E22' }}>GRID</span>
             </h1>
-            <div style={{ fontSize: '13px', color: '#ff3d00', fontWeight: '950', letterSpacing: '8px', marginTop: '16px', textTransform: 'uppercase', opacity: 1 }}>{language === 'ar' ? 'الإعداد الذكي' : 'SMART SETUP'}</div>
+            <div style={{ fontSize: '13px', color: '#E67E22', fontWeight: '950', letterSpacing: '8px', marginTop: '16px', textTransform: 'uppercase', opacity: 1 }}>{language === 'ar' ? 'الإعداد الذكي' : 'SMART SETUP'}</div>
           </div>
         </div>
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
             <span style={{ fontSize: '14px', fontWeight: '950' }}>{language === 'ar' ? 'اللغة' : 'LANGUAGE'}</span>
           </div>
           <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '14px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
             {(['ar', 'en'] as const).map(lg => (
-              <button key={lg} onClick={() => setLanguage(lg)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: language === lg ? '#ff3d00' : 'transparent', color: language === lg ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'), transition: 'all 0.3s ease' }}>{lg === 'ar' ? 'عربي' : 'ENGLISH'}</button>
+              <button key={lg} onClick={() => setLanguage(lg)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: language === lg ? '#E67E22' : 'transparent', color: language === lg ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'), transition: 'all 0.3s ease' }}>{lg === 'ar' ? 'عربي' : 'ENGLISH'}</button>
             ))}
           </div>
         </div>
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
             <span style={{ fontSize: '13px', fontWeight: '950' }}>{language === 'ar' ? 'الاسم الشخصي' : 'PROFILE IDENTITY'}</span>
           </div>
           <div style={inputRowStyle}>
             <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', color: themeMode === 'dark' ? '#fff' : '#000' }}>NICKNAME</div>
-            <input style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }} value={name} onChange={e => setName(e.target.value)} />
+            <input style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={name} onChange={e => setName(e.target.value)} />
           </div>
         </div>
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
             <span>Body Metrics</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
@@ -163,7 +172,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
               <div key={f.label} style={{ ...inputRowStyle, padding: '14px 12px' }}>
                 <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1px', color: themeMode === 'dark' ? '#fff' : '#000' }}>{f.label.toUpperCase()}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
-                  <input type="number" value={f.val} onChange={e => f.set(e.target.value)} style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: 'Outfit' }} />
+                  <input type="number" value={f.val} onChange={e => f.set(e.target.value)} style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} />
                   <span style={{ fontSize: '11px', fontWeight: '950', opacity: 0.6, color: themeMode === 'dark' ? '#fff' : '#000' }}>{f.unit}</span>
                 </div>
               </div>
@@ -173,7 +182,7 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
             <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', marginBottom: '10px', paddingLeft: '4px', color: themeMode === 'dark' ? '#fff' : '#000' }}>GENDER</div>
             <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '14px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
               {(['male', 'female'] as const).map(g => (
-                <button key={g} onClick={() => setGender(g)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: gender === g ? '#ff3d00' : 'transparent', color: gender === g ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+                <button key={g} onClick={() => setGender(g)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: gender === g ? '#E67E22' : 'transparent', color: gender === g ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
               ))}
             </div>
           </div>
@@ -181,30 +190,30 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
             <span style={{ fontSize: '14px', fontWeight: '950' }}>Fitness Goal</span>
           </div>
           <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '16px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
             {(['lose', 'maintain', 'gain'] as const).map(g => (
-              <button key={g} onClick={() => setGoal(g)} style={{ flex: 1, padding: '14px 0', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: goal === g ? '#ff3d00' : 'transparent', color: goal === g ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+              <button key={g} onClick={() => setGoal(g)} style={{ flex: 1, padding: '14px 0', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: goal === g ? '#E67E22' : 'transparent', color: goal === g ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
             ))}
           </div>
           {targets && (
-            <div style={{ marginTop: '12px', padding: '30px 20px', background: 'transparent', borderBottom: '4px solid #ff3d00', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 15px 30px -15px rgba(255, 61, 0, 0.3)' }}>
-              <div style={{ fontSize: '12px', fontWeight: '950', color: '#ff3d00', letterSpacing: '4px', marginBottom: '4px', opacity: 1 }}>DAILY TARGET</div>
-              <div style={{ fontSize: '56px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', fontFamily: 'Outfit', letterSpacing: '-3px' }}>{targets.calories}<span style={{ fontSize: '16px', fontWeight: '900', opacity: 0.3, marginLeft: '8px', letterSpacing: '1px' }}>KCAL</span></div>
+            <div style={{ marginTop: '12px', padding: '30px 20px', background: 'transparent', borderBottom: '4px solid #E67E22', display: 'flex', flexDirection: 'column', alignItems: 'center',  }}>
+              <div style={{ fontSize: '12px', fontWeight: '950', color: '#E67E22', letterSpacing: '4px', marginBottom: '4px', opacity: 1 }}>DAILY TARGET</div>
+              <div style={{ fontSize: '56px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : '#000', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-3px' }}>{targets.calories}<span style={{ fontSize: '16px', fontWeight: '900', opacity: 0.3, marginLeft: '8px', letterSpacing: '1px' }}>KCAL</span></div>
             </div>
           )}
         </div>
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 8px #ff3d00' }} />
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
             <span style={{ fontSize: '14px', fontWeight: '950' }}>Visual Theme</span>
           </div>
           <div style={{ display: 'flex', background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)', borderRadius: '18px', padding: '5px', width: '100%', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
             {(['dark', 'light'] as const).map(mode => (
-              <button key={mode} onClick={() => setThemeMode(mode)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '14px', fontSize: '11px', fontWeight: '900', cursor: 'pointer', background: themeMode === mode ? '#ff3d00' : 'transparent', color: themeMode === mode ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
+              <button key={mode} onClick={() => setThemeMode(mode)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '14px', fontSize: '11px', fontWeight: '900', cursor: 'pointer', background: themeMode === mode ? '#E67E22' : 'transparent', color: themeMode === mode ? '#fff' : (themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
             ))}
           </div>
         </div>
@@ -213,9 +222,9 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
           <div onClick={handleFinalSubmit} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ cursor: name.trim() ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', transformStyle: 'preserve-3d', textAlign: 'center', padding: '30px', width: '100%', maxWidth: '300px', opacity: name.trim() ? 1 : 0.3, transition: 'opacity 0.4s ease' }}>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', transform: 'translateZ(50px)' }}>
               <div className="premium-title" style={{ fontSize: '24px', lineHeight: '1', color: themeMode === 'dark' ? '#fff' : '#000', fontWeight: '950', letterSpacing: '-1px' }}>START</div>
-              <div className="premium-title" style={{ fontSize: '24px', lineHeight: '1', color: '#ff3d00', fontWeight: '950', letterSpacing: '-1px' }}>JOURNEY</div>
+              <div className="premium-title" style={{ fontSize: '24px', lineHeight: '1', color: '#E67E22', fontWeight: '950', letterSpacing: '-1px' }}>JOURNEY</div>
             </div>
-            <div style={{ marginTop: '16px', fontSize: '10px', fontWeight: '950', color: '#ff3d00', letterSpacing: '5px', textTransform: 'uppercase', opacity: 0.8, transform: 'translateZ(25px)' }}>{language === 'ar' ? 'اضغط للبدء' : 'TAP TO BEGIN'}</div>
+            <div style={{ marginTop: '16px', fontSize: '10px', fontWeight: '950', color: '#E67E22', letterSpacing: '5px', textTransform: 'uppercase', opacity: 0.8, transform: 'translateZ(25px)' }}>{language === 'ar' ? 'اضغط للبدء' : 'TAP TO BEGIN'}</div>
           </div>
         </div>
       </div>

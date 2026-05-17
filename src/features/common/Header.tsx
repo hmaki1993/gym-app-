@@ -16,7 +16,7 @@ export function Header({ tab, t, tracker }: Props) {
             height: '24px', 
             background: 'var(--accent-color)', 
             borderRadius: '2px',
-            boxShadow: '0 0 15px var(--accent-color-alpha)'
+            
           }} />
           <h1 className="heading-font logo-underline" style={{ 
             margin: 0, 
@@ -41,10 +41,9 @@ export function Header({ tab, t, tracker }: Props) {
             {(['ar', 'en'] as const).map(lg => (
               <button key={lg} onClick={() => tracker.setSettings({ language: lg })} style={{
                 padding: '6px 14px', border: 'none', borderRadius: '9px', fontSize: '10px', fontWeight: '950', cursor: 'pointer',
-                background: tracker.settings.language === lg ? '#ff3d00' : 'transparent',
+                background: tracker.settings.language === lg ? 'var(--accent-color)' : 'transparent',
                 color: tracker.settings.language === lg ? '#000' : 'rgba(255, 255, 255, 0.3)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: tracker.settings.language === lg ? '0 0 15px rgba(255, 61, 0, 0.3)' : 'none'
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}>{lg.toUpperCase()}</button>
             ))}
           </div>

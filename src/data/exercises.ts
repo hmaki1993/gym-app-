@@ -150,5 +150,5 @@ export const EXERCISE_DETAILS: Record<string, { en: string; ar: string }> = {
 };
 
 export const THEME_COLORS = [
-  { name: 'Fusion',   hex: '#326144', secondary: '#ff5e00' },
+  { name: 'Fusion',   hex: '#00E676', secondary: '#E67E22' },
 ];

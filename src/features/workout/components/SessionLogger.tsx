@@ -1,5 +1,5 @@
 import React from 'react';
-import { GripVertical, Plus, Trophy, Check } from 'lucide-react';
+import { GripVertical, Plus, Check } from 'lucide-react';
 import type { SetLog } from '../../../types';
 import { DEFAULT_EXERCISES } from '../../../data/exercises';
 
@@ -88,7 +88,7 @@ export function SessionLogger({
                     fontSize: '18px', 
                     fontWeight: '900', 
                     color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)', 
-                    fontFamily: 'Outfit, sans-serif',
+                    fontFamily: "'Montserrat', sans-serif",
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
@@ -100,7 +100,7 @@ export function SessionLogger({
                         background: 'rgba(255, 140, 0, 0.15)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         border: '1px solid #FF8C00',
-                        boxShadow: '0 0 10px rgba(255, 140, 0, 0.4)'
+                        
                       }}>
                         <Check size={14} color="#FF8C00" strokeWidth={4} />
                       </div>
@@ -149,7 +149,7 @@ export function SessionLogger({
         <button 
           onClick={onSave} 
           style={{ 
-            background: 'rgba(var(--accent-rgb, 50, 97, 68), 0.1)',
+            background: 'rgba(var(--accent-rgb, 0, 230, 118), 0.1)',
             border: '1px solid var(--accent-color)',
             color: 'var(--accent-color)',
             padding: '12px 30px',
@@ -160,13 +160,13 @@ export function SessionLogger({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: '0 0 15px var(--accent-color-alpha)',
+            
             cursor: 'pointer',
-            fontFamily: 'Outfit, sans-serif',
+            fontFamily: "'Montserrat', sans-serif",
             touchAction: 'manipulation'
           }}
         >
-          <Trophy size={16} strokeWidth={3} /> 
+          <img src="/assets/trophy-custom.png" style={{ width: 16, height: 16, objectFit: 'contain' }} alt="Trophy" />
           {t('finishSession').toUpperCase()}
         </button>
       </div>

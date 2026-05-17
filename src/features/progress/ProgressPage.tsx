@@ -104,7 +104,7 @@ function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: 
                         <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
                         <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{groupName}</span>
                       </div>
-                      <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: 'Outfit, sans-serif' }}>{pr.weight} {t((pr.unit || unit) as any)} × {pr.reps}</span>
+                      <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>{pr.weight} {t((pr.unit || unit) as any)} × {pr.reps}</span>
                     </div>
                   ))}
                 </React.Fragment>
@@ -144,7 +144,6 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
 
   const totalWorkouts = filteredLogs.length;
   const weeklyCount = tracker.getWeeklyCount();
-  const totalVolume = filteredLogs.reduce((s, l) => s + tracker.getTotalVolume(l, unit), 0);
 
   const loggedMuscles = React.useMemo(() => {
     const muscles = new Set<string>();
@@ -230,17 +229,16 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
         {selectedDay && (
           <button onClick={() => setSelectedDay(null)} style={{ position: 'absolute', top: '-15px', right: '0', background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '10px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'عرض الكل ✓' : 'SHOW ALL ✓'}</button>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px', background: 'rgba(var(--theme-rgb), 0.02)', borderRadius: '24px', border: '1.5px solid rgba(var(--theme-rgb), 0.12)', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px', background: 'rgba(var(--theme-rgb), 0.02)', borderRadius: '24px', border: '1.5px solid rgba(var(--theme-rgb), 0.12)',  }}>
           {[
-            { label: selectedDay ? (lang === 'ar' ? 'تمارين اليوم' : 'DAY LOGS') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: '📅' },
-            { label: selectedDay ? (lang === 'ar' ? 'تاريخ اليوم' : 'LOG DATE') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: '🏆' },
-            { label: t('totalVolume'), value: totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}T` : `${totalVolume.toFixed(0)}`, sub: t(unit as any), icon: '📈' },
+            { label: selectedDay ? (lang === 'ar' ? 'تمارين اليوم' : 'DAY LOGS') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: <img src="/assets/calendar-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="Calendar" /> },
+            { label: selectedDay ? (lang === 'ar' ? 'تاريخ اليوم' : 'LOG DATE') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: <img src="/assets/trophy-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="Trophy" /> },
           ].map((card, index) => (
             <div key={card.label} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
-              <div style={{ fontSize: '20px', marginBottom: '8px' }}>{card.icon}</div>
-              <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: '1', letterSpacing: '-0.5px', fontFamily: 'Outfit, sans-serif' }}>{card.value}</div>
+              <div style={{ fontSize: '20px', marginBottom: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '24px' }}>{card.icon}</div>
+              <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: '1', letterSpacing: '-0.5px', fontFamily: "'Montserrat', sans-serif" }}>{card.value}</div>
               <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '8px' }}>{card.label}</div>
-              {index < 2 && <div style={{ position: 'absolute', right: 0, top: '15%', bottom: '15%', width: '1.5px', background: 'rgba(var(--theme-rgb), 0.2)' }} />}
+              {index < 1 && <div style={{ position: 'absolute', right: 0, top: '15%', bottom: '15%', width: '1.5px', background: 'rgba(var(--theme-rgb), 0.2)' }} />}
             </div>
           ))}
         </div>
@@ -278,16 +276,25 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
             const [isMasterOpen, setIsMasterOpen] = useState(hasWinsToday);
             return (
               <div style={{ position: 'relative' }}>
-                <div onClick={() => setIsMasterOpen(!isMasterOpen)} style={{ background: hasWinsToday ? 'linear-gradient(135deg, rgba(255, 149, 0, 0.15) 0%, rgba(255, 61, 0, 0.1) 100%)' : 'rgba(var(--theme-rgb), 0.03)', borderRadius: '20px', padding: '18px 20px', border: hasWinsToday ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(var(--theme-rgb), 0.1)', boxShadow: hasWinsToday ? '0 10px 30px rgba(255, 149, 0, 0.1)' : 'none', cursor: 'pointer', animation: hasWinsToday ? 'pulse-glow 2s infinite' : 'none', transition: 'all 0.3s ease' }}>
+                <div onClick={() => setIsMasterOpen(!isMasterOpen)} style={{ background: hasWinsToday ? 'linear-gradient(135deg, rgba(255, 149, 0, 0.15) 0%, rgba(230, 126, 34, 0.1) 100%)' : 'rgba(var(--theme-rgb), 0.03)', borderRadius: '20px', padding: '18px 20px', border: hasWinsToday ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(var(--theme-rgb), 0.1)', boxShadow: hasWinsToday ? '0 10px 30px rgba(255, 149, 0, 0.1)' : 'none', cursor: 'pointer', animation: hasWinsToday ? 'pulse-glow 2s infinite' : 'none', transition: 'all 0.3s ease' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Award size={20} color={hasWinsToday ? "#ff9500" : "var(--accent-color)"} />
                       <div>
-                        <div style={{ fontSize: '11px', fontWeight: '950', color: hasWinsToday ? '#ff3d00' : 'var(--text-primary)', letterSpacing: '2px', textTransform: 'uppercase' }}>{hasWinsToday ? (lang === 'ar' ? 'إنجازات اليوم! 🔥' : "TODAY'S WINS! 🔥") : t('personalRecord')}</div>
+                        <div style={{ fontSize: '11px', fontWeight: '950', color: hasWinsToday ? '#E67E22' : 'var(--text-primary)', letterSpacing: '2px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {hasWinsToday ? (
+                            lang === 'ar' ? 'إنجازات اليوم! 🔥' : "TODAY'S WINS! 🔥"
+                          ) : (
+                            <>
+                              {t('personalRecord')}
+                              <img src="/assets/trophy-custom.png" style={{ width: 14, height: 14, objectFit: 'contain' }} alt="Trophy" />
+                            </>
+                          )}
+                        </div>
                         {!hasWinsToday && <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: '800', marginTop: '2px' }}>{lang === 'ar' ? 'اضغط لعرض الأرقام القياسية' : 'TAP TO VIEW ALL RECORDS'}</div>}
                       </div>
                     </div>
-                    <div style={{ transform: isMasterOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease', color: hasWinsToday ? '#ff3d00' : 'var(--accent-color)', opacity: 1 }}>▼</div>
+                    <div style={{ transform: isMasterOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease', color: hasWinsToday ? '#E67E22' : 'var(--accent-color)', opacity: 1 }}>▼</div>
                   </div>
                 </div>
                 {isMasterOpen && (

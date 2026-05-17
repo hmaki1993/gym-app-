@@ -511,7 +511,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             height: '32px', 
             background: 'var(--accent-color)', 
             borderRadius: '3px',
-            boxShadow: '0 0 15px var(--accent-color-alpha)',
+            
             flexShrink: 0
           }} />
           <h1 className="heading-font" style={{ 
@@ -554,7 +554,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             }}>
               <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} />
               <span style={{ 
-                fontFamily: 'Outfit, sans-serif', 
+                fontFamily: "'Montserrat', sans-serif", 
                 fontSize: '17px', 
                 fontWeight: '900', 
                 color: 'var(--text-primary)',
@@ -636,9 +636,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   alignItems: 'center',
                   gap: '8px',
                   opacity: activeExercises.length === 0 ? 0.3 : 1,
-                  boxShadow: '0 0 15px var(--accent-color-alpha)',
+                  
                   cursor: 'pointer',
-                  fontFamily: 'Outfit, sans-serif',
+                  fontFamily: "'Montserrat', sans-serif",
                   touchAction: 'manipulation'
                 }}
               >

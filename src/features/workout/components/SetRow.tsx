@@ -37,7 +37,7 @@ export const SetRow: React.FC<Props> = ({
       gap: '8px',
       transformStyle: 'preserve-3d'
     }}>
-      <div style={{ width: '24px', fontSize: '14px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8, fontFamily: 'Outfit, sans-serif' }}>
+      <div style={{ width: '24px', fontSize: '14px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif" }}>
         {index + 1}
       </div>
       <div style={{ width: '1.5px', height: '20px', background: 'rgba(var(--theme-rgb), 0.15)', marginRight: '12px' }} />
@@ -59,8 +59,8 @@ export const SetRow: React.FC<Props> = ({
             width: '65px',
             padding: '4px 0',
             borderRadius: '8px',
-            fontFamily: 'Outfit, sans-serif',
-            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
+            fontFamily: "'Montserrat', sans-serif",
+            
           }}
         />
         <div
@@ -77,7 +77,7 @@ export const SetRow: React.FC<Props> = ({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontFamily: 'Outfit, sans-serif',
+            fontFamily: "'Montserrat', sans-serif",
             filter: 'none',
             lineHeight: '1',
             transition: 'transform 0.2s ease'
@@ -110,18 +110,18 @@ export const SetRow: React.FC<Props> = ({
             width: '65px',
             padding: '4px 0',
             borderRadius: '8px',
-            fontFamily: 'Outfit, sans-serif',
-            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
+            fontFamily: "'Montserrat', sans-serif",
+            
           }}
         />
-        <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif' }}>
+        <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.5px', fontFamily: "'Montserrat', sans-serif" }}>
           {t('reps')}
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         {restTime ? (
-          <div style={{ fontSize: '10px', color: 'var(--accent-color)', fontWeight: '900', background: 'rgba(0,229,160,0.1)', padding: '2px 4px', borderRadius: '4px', fontFamily: 'Outfit, sans-serif' }}>
+          <div style={{ fontSize: '10px', color: 'var(--accent-color)', fontWeight: '900', background: 'rgba(0,229,160,0.1)', padding: '2px 4px', borderRadius: '4px', fontFamily: "'Montserrat', sans-serif" }}>
             {restTime}s
           </div>
         ) : (

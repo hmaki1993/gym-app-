@@ -30,19 +30,19 @@ export function ConfirmModal({ title, message, confirmLabel, cancelLabel, onConf
         textAlign: 'center', 
         borderRadius: '32px',
         background: 'rgba(10, 10, 12, 0.95)',
-        border: '1.5px solid rgba(255, 61, 0, 0.4)',
-        boxShadow: '0 20px 80px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 61, 0, 0.1)',
+        border: '1.5px solid rgba(230, 126, 34, 0.4)',
+        
         position: 'relative',
         animation: 'elite-expand 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
       }}>
-        <div style={{ fontSize: '48px', marginBottom: '20px', filter: 'drop-shadow(0 0 15px rgba(255, 61, 0, 0.6))' }}>⚠️</div>
+        <div style={{ fontSize: '48px', marginBottom: '20px',  }}>⚠️</div>
         <h2 className="heading-font logo-underline" style={{ fontSize: '28px', marginBottom: '16px', color: '#fff', textAlign: 'center', letterSpacing: '-0.5px' }}>
           {title.toUpperCase()}
         </h2>
         <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.7)', marginBottom: '36px', lineHeight: '1.6', fontWeight: '500' }}>{message}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button onClick={onConfirm} style={{ 
-            background: 'rgba(255, 61, 0, 0.1)', color: '#ff3366', border: '1px solid rgba(255, 61, 0, 0.5)', padding: '12px', borderRadius: '14px', fontWeight: '950', fontSize: '11px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' 
+            background: 'rgba(230, 126, 34, 0.1)', color: '#ff3366', border: '1px solid rgba(230, 126, 34, 0.5)', padding: '12px', borderRadius: '14px', fontWeight: '950', fontSize: '11px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' 
           }}>{confirmLabel}</button>
           <button onClick={onCancel} style={{ 
             background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '14px', fontWeight: '800', fontSize: '10px', cursor: 'pointer', transition: 'all 0.3s ease' 
