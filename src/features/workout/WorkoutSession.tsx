@@ -5,7 +5,7 @@ import { DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
 import { ExerciseCard } from './ExerciseCard';
 import {
-  Clock, Play, X, ArrowLeft
+  Clock, Play
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -24,15 +24,54 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   // const isRtl = lang === 'ar';
 
-  const [phase, setPhase] = useState<'exercises' | 'logging'>('exercises');
-  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>('chest');
-  const [activeExercises, setActiveExercises] = useState<string[]>([]);
-  const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>({});
+  // Synchronously compute today's session logs on initial render to prevent UI flickering
+  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted } = React.useMemo(() => {
+    const today = tracker.getLocalDateStr();
+    const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
+    
+    if (todayLogs.length > 0) {
+      const latestLog = todayLogs[0];
+      const muscle = (latestLog.muscleGroup as MuscleGroup) || 'chest';
+      
+      const allExerciseNames: string[] = [];
+      const logged: Record<string, SetLog[]> = {};
+      
+      todayLogs.forEach(log => {
+        log.exercises.forEach(e => {
+          if (!logged[e.name]) {
+            allExerciseNames.push(e.name);
+            logged[e.name] = e.sets;
+          }
+        });
+      });
+      
+      return {
+        initialPhase: 'logging' as const,
+        initialMuscle: muscle,
+        initialActiveExercises: allExerciseNames,
+        initialLoggedData: logged,
+        initialStarted: true
+      };
+    }
+    
+    return {
+      initialPhase: 'exercises' as const,
+      initialMuscle: 'chest' as MuscleGroup,
+      initialActiveExercises: [] as string[],
+      initialLoggedData: {} as Record<string, SetLog[]>,
+      initialStarted: false
+    };
+  }, [tracker.logs]);
+
+  const [phase, setPhase] = useState<'exercises' | 'logging'>(initialPhase);
+  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>(initialMuscle);
+  const [activeExercises, setActiveExercises] = useState<string[]>(initialActiveExercises);
+  const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>(initialLoggedData);
   const [draftData, setDraftData] = useState<Record<string, any[]>>({});
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [hasStartedSession, setHasStartedSession] = useState(false);
+  const [hasStartedSession, setHasStartedSession] = useState(initialStarted);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
@@ -85,35 +124,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     ].filter(p => p !== null);
     return parts.join(':');
   };
-
-  // Restore today's session on mount — aggregate ALL of today's logs
-  useEffect(() => {
-    const today = tracker.getLocalDateStr();
-    const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
-    
-    if (todayLogs.length > 0 && activeExercises.length === 0) {
-      // Use the most recent log's muscle group
-      const latestLog = todayLogs[0];
-      if (latestLog.muscleGroup) {
-        setSelectedMuscle(latestLog.muscleGroup as MuscleGroup);
-      }
-      // Aggregate ALL exercises from ALL of today's logs
-      const allExerciseNames: string[] = [];
-      const initialLogged: Record<string, SetLog[]> = {};
-      todayLogs.forEach(log => {
-        log.exercises.forEach(e => {
-          if (!initialLogged[e.name]) {
-            allExerciseNames.push(e.name);
-            initialLogged[e.name] = e.sets;
-          }
-        });
-      });
-      setActiveExercises(allExerciseNames);
-      setLoggedData(initialLogged);
-      setHasStartedSession(true);
-      setPhase('logging');
-    }
-  }, []);
 
   const prevOpenExRef = useRef<string | null>(null);
   useEffect(() => {
@@ -337,27 +347,27 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       if (xPercent > 15) {
         if (currentIdx > 0) handleSwipeTransition('right', activeExercises[currentIdx - 1]);
         else {
-          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power3.out', onComplete: () => { touchState.current.isAnimating = false; } });
+          gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.1, ease: 'power3.out', onComplete: () => { touchState.current.isAnimating = false; } });
         }
       } else {
         if (currentIdx < activeExercises.length - 1) handleSwipeTransition('left', activeExercises[currentIdx + 1]);
         else handleSwipeTransition('left', activeExercises[0]);
       }
     } else {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.15, ease: 'power3.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.1, ease: 'power3.out' });
     }
   };
 
   const handleOverlayPointerCancel = () => {
     if (swipeContainerRef.current) {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.2, ease: 'power2.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.1, ease: 'power2.out' });
       touchState.current.isAnimating = false;
     }
   };
 
   const handleSwipeTransition = (direction: 'left' | 'right', nextEx: string) => {
     if (!swipeContainerRef.current || !nextEx) {
-      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.1, ease: 'power2.out' });
+      gsap.to(swipeContainerRef.current, { xPercent: 0, opacity: 1, duration: 0.05, ease: 'power2.out' });
       touchState.current.isAnimating = false;
       return;
     }
@@ -366,7 +376,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     gsap.to(swipeContainerRef.current, {
       xPercent: xDist,
       opacity: 0,
-      duration: 0.15,
+      duration: 0.06,
       ease: 'power2.in',
       force3D: true,
       onComplete: () => {
@@ -374,7 +384,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         // Instant reset and slide in
         gsap.fromTo(swipeContainerRef.current,
           { xPercent: direction === 'left' ? 100 : -100, opacity: 0 },
-          { xPercent: 0, opacity: 1, duration: 0.25, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
+          { xPercent: 0, opacity: 1, duration: 0.1, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
         );
       }
     });
@@ -488,117 +498,176 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         </div>
       )}
 
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        marginBottom: '32px', 
-        transformStyle: 'preserve-3d',
-        position: 'relative',
-        width: '100%',
-        boxSizing: 'border-box'
-      }}>
+      {phase === 'exercises' ? (
+        // Exercises Phase: Absolute Header Layout to give Title maximum width without shrinking
         <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '10px', 
-          transform: 'translateZ(20px)',
-          flex: 1,
-          minWidth: 0
+          position: 'relative',
+          width: '100%',
+          minHeight: '48px',
+          marginBottom: '32px', 
+          transformStyle: 'preserve-3d',
+          boxSizing: 'border-box',
+          display: 'flex',
+          alignItems: 'center'
         }}>
           <div style={{ 
-            width: '6px', 
-            height: '32px', 
-            background: 'var(--accent-color)', 
-            borderRadius: '3px',
-            
-            flexShrink: 0
-          }} />
-          <h1 className="heading-font" style={{ 
-            margin: 0, 
-            fontSize: 'min(32px, 8vw)', 
-            background: 'linear-gradient(to bottom, var(--text-primary) 50%, var(--accent-color) 150%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '-1px',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            lineHeight: 1.1,
-            flex: 1
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px', 
+            transform: 'translateZ(20px)',
+            paddingRight: '60px',
+            boxSizing: 'border-box',
+            width: '100%'
           }}>
-            {phase === 'exercises' ? t('startWorkout') : t('finishSession')}
-          </h1>
-        </div>
-
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '4px', 
-          flexShrink: 0,
-          background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)',
-          border: '1px solid rgba(var(--theme-rgb), 0.1)',
-          borderRadius: '10px',
-          padding: '6px 10px',
-        }}>
-          {phase === 'logging' && (
-            <div ref={timerRef} style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              padding: '0 8px',
-              minWidth: '75px',
-              justifyContent: 'center',
+            <div style={{ 
+              width: '6px', 
+              height: '32px', 
+              background: 'var(--accent-color)', 
+              borderRadius: '3px',
+              flexShrink: 0
+            }} />
+            <h1 className="heading-font" style={{ 
+              margin: 0, 
+              fontSize: 'min(32px, 8vw)', 
+              color: 'var(--text-primary)',
+              letterSpacing: '-1px',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              lineHeight: 1.1,
               flexShrink: 0
             }}>
-              <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} />
-              <span style={{ 
-                fontFamily: "'Montserrat', sans-serif", 
-                fontSize: '17px', 
-                fontWeight: '900', 
-                color: 'var(--text-primary)',
-                fontVariantNumeric: 'tabular-nums'
-              }}>
-                {formatElapsed(elapsedSeconds)}
-              </span>
-            </div>
-          )}
+              {t('startWorkout')}
+            </h1>
+          </div>
 
-          {phase === 'logging' && (
-            <button 
-              onClick={() => {
-                const now = Date.now();
-                const currentSessionSeconds = Math.floor((now - sessionStartTimeRef.current) / 1000);
-                savedElapsedRef.current = baseSecondsRef.current + currentSessionSeconds;
-                setPhase('exercises');
-              }} 
-              style={{ 
-                width: '32px', height: '32px', borderRadius: '50%',
-                background: 'none', border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', cursor: 'pointer',
-                flexShrink: 0,
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <ArrowLeft size={18} strokeWidth={2.5} />
-            </button>
-          )}
-          
           <button 
             onClick={onClose} 
             style={{ 
-              width: '32px', height: '32px', borderRadius: '50%', 
-              background: 'none', border: 'none',
+              position: 'absolute',
+              top: '50%',
+              right: '0px',
+              transform: 'translateY(-50%) translateZ(20px)',
+              width: '48px', height: '48px', borderRadius: '50%', 
+              background: 'none', border: 'none', padding: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#ff0000', cursor: 'pointer', flexShrink: 0,
               transition: 'all 0.2s ease'
             }}
           >
-            <X size={20} strokeWidth={3} />
+            <img src="/assets/close-custom.png" alt="Close" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
           </button>
         </div>
-      </div>
+      ) : (
+        // Logging Phase: Multi-Row Column Layout with Centered Dashed Controls Container below
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          gap: '12px',
+          marginBottom: '24px', 
+          transformStyle: 'preserve-3d',
+          position: 'relative',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
+          {/* Row 1: Title */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px', 
+            transform: 'translateZ(20px)',
+            width: '100%'
+          }}>
+            <div style={{ 
+              width: '6px', 
+              height: '32px', 
+              background: 'var(--accent-color)', 
+              borderRadius: '3px',
+              flexShrink: 0
+            }} />
+            <h1 className="heading-font" style={{ 
+              margin: 0, 
+              fontSize: 'min(32px, 8vw)', 
+              color: 'var(--text-primary)',
+              letterSpacing: '-1px',
+              textTransform: 'uppercase',
+              lineHeight: 1.1,
+            }}>
+              {t('finishSession')}
+            </h1>
+          </div>
+
+          {/* Row 2: Controls Container */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center',
+            width: '100%',
+            transform: 'translateZ(20px)'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '4px', 
+              flexShrink: 0,
+              background: 'transparent',
+              border: '1.5px dashed rgba(var(--theme-rgb), 0.2)',
+              borderRadius: '10px',
+              padding: '6px 10px',
+            }}>
+              <div ref={timerRef} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                padding: '0 8px',
+                minWidth: '75px',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <img src="/assets/clock-custom.png" alt="timer" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                <span style={{ 
+                  fontFamily: "'Montserrat', sans-serif", 
+                  fontSize: '17px', 
+                  fontWeight: '900', 
+                  color: 'var(--text-primary)',
+                  fontVariantNumeric: 'tabular-nums'
+                }}>
+                  {formatElapsed(elapsedSeconds)}
+                </span>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const now = Date.now();
+                  const currentSessionSeconds = Math.floor((now - sessionStartTimeRef.current) / 1000);
+                  savedElapsedRef.current = baseSecondsRef.current + currentSessionSeconds;
+                  setPhase('exercises');
+                }} 
+                 style={{ 
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: 'none', border: 'none', padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <img src="/assets/arrow-custom.png" alt="Back" style={{ width: '26px', height: '26px', objectFit: 'contain', transform: 'rotate(180deg)' }} />
+              </button>
+              
+              <button 
+                onClick={onClose} 
+                style={{ 
+                  width: '40px', height: '40px', borderRadius: '50%', 
+                  background: 'none', border: 'none', padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#ff0000', cursor: 'pointer', flexShrink: 0,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <img src="/assets/close-custom.png" alt="Close" style={{ width: '34px', height: '34px', objectFit: 'contain' }} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
         {phase === 'exercises' && (

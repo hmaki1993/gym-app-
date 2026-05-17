@@ -3,7 +3,7 @@ import { useGymTracker } from '../../hooks/useGymTracker';
 import type { WorkoutLog } from '../../types';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
-import { Trash2, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface HistoryPageProps {
@@ -147,7 +147,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', padding: '0 10px' }}>
           <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ChevronLeft size={24} />
+            <img src="/assets/arrow-custom.png" alt="Previous" style={{ width: '28px', height: '28px', objectFit: 'contain', transform: 'rotate(180deg)' }} />
           </button>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -196,8 +196,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
               }
               return (
                 <div style={{ 
-                  display: 'flex', gap: '16px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', 
-                  padding: '6px 16px', borderRadius: '24px', border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)'
+                  display: 'flex', gap: '16px', background: 'transparent', 
+                  padding: '6px 16px', borderRadius: '12px', border: '1.5px dashed rgba(var(--theme-rgb), 0.3)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <img 
@@ -230,7 +230,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           </div>
 
           <button onClick={() => changeMonth(1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ChevronRight size={24} />
+            <img src="/assets/arrow-custom.png" alt="Next" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
           </button>
         </div>
 
@@ -338,7 +338,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                        position: 'absolute', inset: '-2px', borderRadius: '50%', 
                        border: '2px solid var(--accent-color)', 
                        
-                       animation: 'pulseToday 2s infinite ease-in-out'
                      }} />
                   )}
                 </div>
@@ -439,7 +438,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                       minWidth: '45px'
                     }}>
                       <span style={{ fontSize: '9px', fontWeight: '950', opacity: isThisWeek ? 1 : 0.4, marginBottom: '4px', letterSpacing: '1.5px', color: isThisWeek ? 'var(--accent-color)' : 'var(--text-primary)' }}>{week.label}</span>
-                      <span style={{ fontSize: '20px', fontWeight: '950', color: isThisWeek ? 'var(--accent-color)' : (week.count > 0 ? 'var(--text-primary)' : 'rgba(150,150,150,0.3)'), fontFamily: "'Montserrat', sans-serif", textShadow: isThisWeek && tracker.settings.themeMode === 'dark' ? '0 0 15px rgba(var(--accent-rgb),0.6)' : 'none', lineHeight: 1 }}>{week.count}</span>
+                      <span style={{ fontSize: '20px', fontWeight: '950', color: isThisWeek ? 'var(--accent-color)' : (week.count > 0 ? 'var(--text-primary)' : 'rgba(150,150,150,0.3)'), fontFamily: "'Montserrat', sans-serif", lineHeight: 1 }}>{week.count}</span>
                       
                       {/* Rest Days Indicator */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
@@ -531,7 +530,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 }}>
                   <button onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.6)', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={16} /></button>
                   <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
-                  <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}><ChevronDown size={18} strokeWidth={2.5} /></button>
+                  <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                    <img src="/assets/arrow-custom.png" alt="Toggle" style={{ width: '22px', height: '22px', objectFit: 'contain', transform: 'rotate(90deg)' }} />
+                  </button>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: expandedLogId === log.id ? '15px' : '0' }}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import { X, Clock, Plus, Trash2 } from 'lucide-react';
+import { Clock, Trash2 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../hooks/useGymTracker';
 
@@ -29,6 +29,22 @@ function playStart() {
     o.start(); o.stop(ctx.currentTime + 0.15);
   } catch {}
 }
+
+const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: number; color?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+  >
+    <line x1="12" y1="5" x2="12" y2="19" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+  </svg>
+);
 
 // SetRow component (Ka from bundle)
 const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCycleUnit, onRemove, isCardio, lang }: any) => (
@@ -65,13 +81,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
         onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')} 
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <span style={{
-          background: 'linear-gradient(90deg, var(--accent-color) 0%, #fff 50%, var(--accent-color) 100%)',
-          backgroundSize: '200% auto',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          animation: 'text-shimmer 3s linear infinite'
-        }}>
+        <span style={{ color: 'var(--text-primary)' }}>
           {isCardio ? (lang === 'ar' ? 'مستوى' : 'LEVEL') : t(activeUnit)}
         </span>
       </div>
@@ -265,24 +275,42 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
     <div ref={cardRef} className={fullPage ? '' : inline ? 'antigravity-card' : 'glass-card antigravity-card'} style={wrapStyle}>
       {/* Header */}
       <div style={{ flexShrink: 0, transformStyle: 'preserve-3d' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 4px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, paddingLeft: 4 }}>
-            <h2 ref={titleRef} className="heading-font" style={{ margin: 0, fontSize: 'clamp(18px, 5.5vw, 28px)', fontWeight: 950, color: 'var(--text-primary)', letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.1, paddingRight: 10 }}>
-              {exerciseName.split(' ').map((word, i) => (
-                <span key={i} className="title-word" style={{ display: 'inline-block', whiteSpace: 'nowrap', marginRight: '0.3em' }}>{word}</span>
-              ))}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '12px',
+          padding: '16px 20px 4px' 
+        }}>
+          {/* Row 1: Full-Width Left-Aligned Exercise Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: 4, width: '100%' }}>
+            <div style={{ 
+              width: '28px', height: '28px', 
+              backgroundColor: 'var(--accent-color)', 
+              maskImage: "url('/assets/exercise-title-arrow.png')", 
+              WebkitMaskImage: "url('/assets/exercise-title-arrow.png')", 
+              maskSize: 'contain', WebkitMaskSize: 'contain', 
+              maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat', 
+              maskPosition: 'center', WebkitMaskPosition: 'center',
+              flexShrink: 0
+            }} />
+            <h2 ref={titleRef} className="heading-font" style={{ margin: 0, fontSize: 'clamp(20px, 6vw, 30px)', fontWeight: 950, color: 'var(--text-primary)', letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+              {exerciseName}
             </h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, background: 'rgba(var(--theme-rgb), 0.05)', border: '1px dashed rgba(var(--theme-rgb), 0.2)', borderRadius: 10, padding: '6px 10px', backdropFilter: 'blur(10px)', marginTop: -4 }}>
-            {elapsedSeconds !== undefined && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px', minWidth: 75, justifyContent: 'center', flexShrink: 0 }}>
-                <Clock size={14} color="var(--accent-color)" strokeWidth={2.5} />
-                <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 17, fontWeight: 900, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsedSeconds)}</span>
-              </div>
-            )}
-            <button onClick={onClose} onPointerDown={e => e.stopPropagation()} style={{ background: 'none', border: 'none', padding: 0, width: 32, height: 32, borderRadius: '50%', color: '#ff3366', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <X size={20} strokeWidth={3} />
-            </button>
+
+          {/* Row 2: Centered Controls Container */}
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, background: 'transparent', border: '1.5px dashed rgba(var(--theme-rgb), 0.2)', borderRadius: 10, padding: '6px 10px', backdropFilter: 'blur(10px)' }}>
+              {elapsedSeconds !== undefined && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px', minWidth: 75, justifyContent: 'center', flexShrink: 0 }}>
+                  <img src="/assets/clock-custom.png" alt="timer" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                  <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 17, fontWeight: 900, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsedSeconds)}</span>
+                </div>
+              )}
+              <button onClick={onClose} onPointerDown={e => e.stopPropagation()} style={{ background: 'none', border: 'none', padding: 0, width: 40, height: 40, borderRadius: '50%', color: '#ff3366', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/assets/close-custom.png" alt="Close" style={{ width: '34px', height: '34px', objectFit: 'contain' }} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -290,13 +318,21 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
         <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '8px 20px 12px' }}>
           {(() => {
             const lastSession = tracker.getLastSession(exerciseName);
-            if (!lastSession) return null;
-            const bestSet = lastSession.bestSet;
+            if (!lastSession || !lastSession.sets || lastSession.sets.length === 0) return null;
+            
+            const sets = lastSession.sets;
+            const maxWeight = Math.max(...sets.map(s => Number(s.weight) || 0));
+            const maxWeightSets = sets.filter(s => (Number(s.weight) || 0) === maxWeight);
+            const setsAtMaxWeight = maxWeightSets.length;
+            const maxRepsAtMaxWeight = Math.max(...maxWeightSets.map(s => Number(s.reps) || 0));
+            const bestSet = maxWeightSets[0];
+            const displayUnit = bestSet.unit || weightUnit;
+
             return (
               <div style={{ 
                 background: 'transparent', 
                 borderRadius: 12, 
-                padding: '8px 16px', 
+                padding: '4px 0', 
                 color: 'var(--text-primary)', 
                 fontSize: 13, 
                 fontWeight: 800, 
@@ -305,15 +341,15 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                 alignItems: 'center', 
                 gap: 6, 
                 whiteSpace: 'nowrap',
-                border: '1.5px dashed rgba(255, 255, 255, 0.35)',
+                border: 'none',
               }}>
                 <span style={{ color: 'var(--accent-color)', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, opacity: 0.9 }}>LAST:</span>
-                <span style={{ fontWeight: 900, fontSize: 15 }}>{lastSession.sets.length} <span style={{ fontSize: 10, opacity: 0.8 }}>SETS</span></span>
+                <span style={{ fontWeight: 900, fontSize: 15 }}>{setsAtMaxWeight} <span style={{ fontSize: 10, opacity: 0.8 }}>SETS</span></span>
                 <span style={{ opacity: 0.4, fontSize: 10 }}>×</span>
-                <span style={{ fontWeight: 900, fontSize: 15 }}>{bestSet.reps} <span style={{ fontSize: 10, opacity: 0.8 }}>REPS</span></span>
+                <span style={{ fontWeight: 900, fontSize: 15 }}>{maxRepsAtMaxWeight} <span style={{ fontSize: 10, opacity: 0.8 }}>REPS</span></span>
                 <div style={{ width: '1px', height: 12, background: 'rgba(255, 255, 255, 0.15)', margin: '0 6px' }} />
-                <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{bestSet.weight}</span>
-                <span style={{ fontSize: 11, opacity: 0.7, color: 'var(--accent-color)', fontWeight: 900 }}>{t(bestSet.unit || weightUnit)}</span>
+                <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{maxWeight}</span>
+                <span style={{ fontSize: 11, opacity: 0.7, color: 'var(--accent-color)', fontWeight: 900 }}>{t(displayUnit)}</span>
                 <img src="/assets/trophy-custom.png" style={{ width: 18, height: 18, marginLeft: 6, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }} alt="Trophy" />
               </div>
             );
@@ -329,7 +365,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
           ))}
         </div>
         <button onClick={() => { const updated = [...sets, { weight: '', reps: '', unit: activeUnit }]; setSets(updated); onChange && onChange(updated, true); }} style={{ width: '100%', padding: 14, background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: 16, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', marginTop: 12, fontFamily: "'Montserrat', sans-serif" }}>
-          <Plus size={16} color="var(--accent-color)" /> {t('addSet')}
+          <CustomPlus size={16} color="var(--accent-color)" /> {t('addSet')}
         </button>
         {sets.length <= 1 && (
           <div style={{ padding: '20px 0', opacity: 0.65, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: 30 }}>
@@ -342,17 +378,6 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
 
       {/* Footer */}
       <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', background: 'var(--primary-bg)', borderTop: '2px solid rgba(var(--theme-rgb), 0.25)', transformStyle: 'preserve-3d' }}>
-        <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center', gap: 40, padding: '4px 0' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: "'Montserrat', sans-serif" }}>{t('totalVolume')}</div>
-            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: "'Montserrat', sans-serif" }}>{totalVolume.toFixed(0)} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
-          </div>
-          <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2, fontFamily: "'Montserrat', sans-serif" }}>Max Today</div>
-            <div style={{ fontSize: 22, color: 'var(--text-primary)', fontWeight: 900, fontFamily: "'Montserrat', sans-serif" }}>{maxWeight} <span style={{ fontSize: 12, marginLeft: 3, color: 'var(--accent-color)', opacity: 0.7 }}>{t(weightUnit)}</span></div>
-          </div>
-        </div>
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px 0' }}>
           <button 
             onClick={handleDone} 
@@ -378,8 +403,6 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              
-              
             }}
             onMouseDown={e => {
               e.currentTarget.style.transform = 'scale(0.94)';
@@ -404,28 +427,20 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                 <>
                   <span style={{ 
                     letterSpacing: '3px',
-                    background: 'linear-gradient(90deg, var(--accent-color) 20%, #fff 50%, var(--accent-color) 80%)',
-                    backgroundSize: '200% auto',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    animation: 'text-shimmer 2s linear infinite',
+                    color: 'var(--accent-color)',
                     fontWeight: 900,
                     fontSize: 16
                   }}>S E T   S A</span>
                   
                   <div style={{ display: 'inline-flex', transform: 'translateY(-1px)' }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent-color)" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{  }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent-color)" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
                   </div>
                   
                   <span style={{ 
                     letterSpacing: '3px',
-                    background: 'linear-gradient(90deg, var(--accent-color) 20%, #fff 50%, var(--accent-color) 80%)',
-                    backgroundSize: '200% auto',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    animation: 'text-shimmer 2s linear infinite',
+                    color: 'var(--accent-color)',
                     fontWeight: 900,
                     fontSize: 16
                   }}>E D</span>

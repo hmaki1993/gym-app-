@@ -7,6 +7,22 @@ import { ChevronDown, Check, Search } from 'lucide-react';
 import { FatSecretService } from '../../services/fatsecret';
 import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 
+const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: number; color?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+  >
+    <line x1="12" y1="5" x2="12" y2="19" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+  </svg>
+);
+
 function EliteSelect({ id, defaultValue, options }: { id: string, defaultValue: string, options: { value: string, label: string }[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(options.find(o => o.value === defaultValue) || options[0]);
@@ -24,7 +40,7 @@ function EliteSelect({ id, defaultValue, options }: { id: string, defaultValue: 
         }}
       >
         {selected.label}
-        <ChevronDown size={18} style={{ opacity: 0.5, transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
+        <img src="/assets/arrow-custom.png" alt="Expand" style={{ width: '22px', height: '22px', objectFit: 'contain', opacity: 0.5, transform: isOpen ? 'rotate(270deg)' : 'rotate(90deg)', transition: 'transform 0.3s ease' }} />
       </div>
 
       {isOpen && (
@@ -50,7 +66,7 @@ function EliteSelect({ id, defaultValue, options }: { id: string, defaultValue: 
                 }}
               >
                 {opt.label}
-                {selected.value === opt.value && <Check size={14} color="var(--accent-color)" />}
+                {selected.value === opt.value && <img src="/assets/check-custom.png" style={{ width: 18, height: 18, objectFit: 'contain' }} alt="Check" />}
               </div>
             ))}
           </div>
@@ -427,9 +443,14 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 </div>
                 <button 
                   onClick={() => setServingSize(servingSize + 0.5)}
-                  style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#ffffff', fontSize: '20px', fontWeight: '900' }}
+                  style={{ 
+                    width: '36px', height: '36px', borderRadius: '12px', 
+                    background: 'rgba(255,255,255,0.1)', border: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
                 >
-                  +
+                  <CustomPlus size={16} color="#ffffff" />
                 </button>
               </div>
 
@@ -878,12 +899,11 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                             <button 
                               onClick={(e) => { e.stopPropagation(); updateLogQuantity(meal.id, 1); }}
                               style={{ 
-                                background: 'none', border: 'none', color: 'var(--text-primary)', 
-                                fontSize: '20px', fontWeight: '900', padding: '0 4px',
+                                background: 'none', border: 'none', padding: '0 4px',
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 1
                               }}
                             >
-                              +
+                              <CustomPlus size={14} color="var(--text-primary)" />
                             </button>
                           </div>
                         </div>
@@ -895,7 +915,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                                 <div style={{ fontSize: '10px', opacity: 0.6, fontWeight: '900', letterSpacing: '1px' }}>FAT</div>
                             </div>
                           )}
-                          <ChevronDown size={14} style={{ opacity: 0.8, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
+                          <img src="/assets/arrow-custom.png" alt="Expand" style={{ width: '18px', height: '18px', objectFit: 'contain', opacity: 0.8, transform: isExpanded ? 'rotate(270deg)' : 'rotate(90deg)', transition: 'transform 0.3s ease' }} />
                         </div>
                       </div>
 
@@ -983,7 +1003,11 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                   onMouseEnter={(e) => { if(!scanning) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.1)'; } }}
                   onMouseLeave={(e) => { if(!scanning) { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; } }}
                 >
-                  {scanning ? <div style={{ width: '20px', height: '20px', border: '2px solid transparent', borderTopColor: '#E67E22', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} /> : '+'}
+                  {scanning ? (
+                    <div style={{ width: '20px', height: '20px', border: '2px solid transparent', borderTopColor: '#E67E22', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+                  ) : (
+                    <CustomPlus size={24} color="#E67E22" />
+                  )}
                 </button>
               </div>
             </div>

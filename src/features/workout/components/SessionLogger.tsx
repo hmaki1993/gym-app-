@@ -1,7 +1,23 @@
 import React from 'react';
-import { GripVertical, Plus, Check } from 'lucide-react';
+import { GripVertical, Check } from 'lucide-react';
 import type { SetLog } from '../../../types';
 import { DEFAULT_EXERCISES } from '../../../data/exercises';
+
+const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: number; color?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+  >
+    <line x1="12" y1="5" x2="12" y2="19" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+  </svg>
+);
 
 interface Props {
   activeExercises: string[];
@@ -26,20 +42,7 @@ export function SessionLogger({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0 }}>
-      <div style={{ padding: '14px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            <div className="section-label" style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '1.5px', marginBottom: '4px' }}>{t('todaySummary')}</div>
-            <div style={{ fontSize: '22px', fontWeight: '900' }}>{loggedCount}/{activeExercises.length}</div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div className="section-label" style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '1.5px', marginBottom: '4px' }}>{t('totalVolume')}</div>
-            <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-color)' }}>
-              {totalVolume.toFixed(0)} {t(weightUnit as any)}
-            </div>
-          </div>
-        </div>
-      </div>
+
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {activeExercises.map((name, index) => {
           const isDragging = draggingIndex === index;
@@ -95,32 +98,20 @@ export function SessionLogger({
                     position: 'relative'
                   }}>
                     {loggedData[name] && (
-                      <div style={{
-                        width: '22px', height: '22px', borderRadius: '50%',
-                        background: 'rgba(255, 140, 0, 0.15)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: '1px solid #FF8C00',
-                        
-                      }}>
-                        <Check size={14} color="#FF8C00" strokeWidth={4} />
-                      </div>
+                      <img src="/assets/check-custom.png" alt="Done" style={{ width: 26, height: 26, objectFit: 'contain' }} />
                     )}
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={loggedData[name] ? {
-                        WebkitBackgroundClip: 'text',
-                        backgroundImage: 'linear-gradient(90deg, var(--accent-color) 0%, #fff 50%, var(--accent-color) 100%)',
-                        backgroundSize: '200% auto',
-                        WebkitTextFillColor: 'transparent',
-                        animation: 'text-shimmer 4s linear infinite',
+                        color: 'var(--accent-color)',
                         opacity: 0.9
-                      } : {}}>
+                      } : { color: 'var(--text-primary)' }}>
                         {name}
                       </span>
                       <div style={{ 
                         fontSize: '10px', 
                         fontWeight: '900', 
-                        color: 'var(--accent-color)', 
-                        opacity: 0.5, 
+                        color: 'var(--text-secondary)', 
+                        opacity: 0.7, 
                         textTransform: 'uppercase', 
                         letterSpacing: '1px',
                         marginTop: '2px',
@@ -139,7 +130,7 @@ export function SessionLogger({
                     </div>
                   </div>
                 </div>
-                <Plus size={16} color="var(--text-secondary)" />
+                <CustomPlus size={16} color="#FF8C00" />
               </button>
             </div>
           );

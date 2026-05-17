@@ -1,10 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Search, Plus, X, GripVertical, RotateCcw, Trash2, Pen } from 'lucide-react';
+import { Search, GripVertical, RotateCcw, Trash2, Pen } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../../hooks/useGymTracker';
 import { DEFAULT_EXERCISES, EXERCISE_TRANSLATIONS } from '../../../data/exercises';
 import type { MuscleGroup } from '../../../types';
+
+const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: number; color?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+  >
+    <line x1="12" y1="5" x2="12" y2="19" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke="rgba(61, 61, 61, 0.95)" strokeWidth="7.5" strokeLinecap="round" />
+    <line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
+  </svg>
+);
 
 interface Props {
   search: string;
@@ -162,7 +178,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             )}
             {isActive && (
               <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 900, opacity: 0.7 }}>
-                <X size={11} strokeWidth={3} /> Remove
+                <img src="/assets/close-custom.png" alt="Remove" style={{ width: '16px', height: '16px', objectFit: 'contain' }} /> Remove
               </button>
             )}
           </div>
@@ -183,8 +199,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       {/* Search overlay portal */}
       {showSearch && ReactDOM.createPortal(
         <div ref={overlayRef} style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(env(safe-area-inset-top) + 24px)' }}>
-          <button onClick={closeSearch} style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top) + 20px)', right: 20, background: 'rgba(255,0,0,0.15)', border: '1.5px solid rgba(255,0,0,0.35)', borderRadius: '50%', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff4444', zIndex: 1 }}>
-            <X size={18} strokeWidth={3} />
+          <button onClick={closeSearch} style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top) + 20px)', right: 20, background: 'rgba(255,0,0,0.15)', border: '1.5px solid rgba(255,0,0,0.35)', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff4444', zIndex: 1 }}>
+            <img src="/assets/close-custom.png" alt="Close" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
           </button>
           <div style={{ padding: '0 20px 20px' }}>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -198,7 +214,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             </div>
             {search.trim() && filteredExercises.length === 0 && (
               <div onClick={() => { const n = search.trim(); tracker.addCustomExercise(muscleGroup as MuscleGroup, n); onToggle(n); closeSearch(); }} style={{ marginTop: 12, padding: '14px 18px', background: 'rgba(var(--accent-rgb, 0, 230, 118), 0.15)', border: '1px dashed var(--accent-color)', borderRadius: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Plus size={18} color="var(--accent-color)" strokeWidth={3} />
+                <CustomPlus size={18} color="var(--accent-color)" />
                 <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>Add "{search.trim()}" as custom exercise</span>
               </div>
             )}
@@ -218,12 +234,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#E67E22',  }} />
                       <button onClick={e => { e.stopPropagation(); onToggle(name); }} style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.25)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', fontSize: 10, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <X size={10} strokeWidth={3} /> Remove
+                        <img src="/assets/close-custom.png" alt="Remove" style={{ width: '16px', height: '16px', objectFit: 'contain' }} /> Remove
                       </button>
                     </div>
                   ) : (
                     <div style={{ width: 28, height: 28, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Plus size={14} color="rgba(255,255,255,0.5)" strokeWidth={2.5} />
+                      <CustomPlus size={14} color="rgba(255,255,255,0.5)" />
                     </div>
                   )}
                 </div>
@@ -254,7 +270,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-secondary)', letterSpacing: '1.5px', textTransform: 'uppercase', opacity: 0.6 }}>{t('exercises') || 'Exercises'}</div>
         </div>
         <button onClick={() => setShowSearch(true)} style={{ background: 'rgba(230, 126, 34,0.08)', border: '1.5px solid rgba(230, 126, 34,0.3)', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E67E22',  transition: 'all 0.2s ease' }}>
-          <Plus size={18} strokeWidth={3} />
+          <CustomPlus size={18} color="#E67E22" />
         </button>
       </div>
 
@@ -404,12 +420,12 @@ const RenameSheet: React.FC<{ name: string; onSave: (n: string) => void; onClose
               style={{
                 position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                 background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%',
-                width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', cursor: 'pointer', opacity: 0.6,
                 zIndex: 1
               }}
             >
-              <X size={14} strokeWidth={3} />
+              <img src="/assets/close-custom.png" alt="Clear" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
             </button>
           )}
         </div>

@@ -12,23 +12,25 @@ export function Header({ tab, t, tracker }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', transform: 'translateZ(30px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: '4px' }}>
           <div style={{ 
-            width: '4px', 
-            height: '24px', 
-            background: 'var(--accent-color)', 
-            borderRadius: '2px',
-            
+            width: '44px', 
+            height: '28px', 
+            backgroundColor: 'var(--accent-color)', 
+            maskImage: "url('/assets/label-custom.png')", 
+            WebkitMaskImage: "url('/assets/label-custom.png')", 
+            maskSize: 'contain', 
+            WebkitMaskSize: 'contain', 
+            maskRepeat: 'no-repeat', 
+            WebkitMaskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskPosition: 'center',
+            flexShrink: 0
           }} />
           <h1 className="heading-font logo-underline" style={{ 
             margin: 0, 
             fontSize: '32px',
             display: 'inline-block',
             width: 'fit-content',
-            backgroundImage: tracker.settings.themeMode === 'light'
-              ? 'linear-gradient(135deg, #000 0%, #333 100%)'
-              : 'linear-gradient(135deg, #fff 0%, #aaa 100%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: 'var(--text-primary)',
             letterSpacing: '-1.5px',
             textTransform: 'uppercase'
           }}>

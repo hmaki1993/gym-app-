@@ -161,17 +161,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             maxWidth: '230px',
             margin: '0 auto',
             userSelect: 'none',
-            WebkitUserSelect: 'none'
+            WebkitUserSelect: 'none',
+            position: 'relative'
           }}
         >
           <img 
-            src="/assets/stopwatch-ultra-clean-v3.png" 
+            src={hasWorkoutToday ? "/assets/stopwatch-stop.png" : "/assets/stopwatch-ultra-clean-v3.png"}
             alt={hasWorkoutToday ? "Resume" : "Start"} 
             style={{ 
               width: '100%', 
               height: 'auto', 
               objectFit: 'contain',
-              willChange: 'transform, filter'
+              willChange: 'transform, filter',
+              display: 'block'
             }} 
           />
         </div>
