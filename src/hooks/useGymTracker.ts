@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS: GymSettings = {
   defaultRestSeconds: 90,
   soundEnabled: true,
   dailyCalorieGoal: 2500,
+  n8nWebhookUrl: '',
 };
 
 const DEFAULT_STATE: GymState = {
@@ -43,14 +44,26 @@ function loadState(): GymState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw) as GymState;
+
+    // --- DATA MIGRATION: Backfill missing 'unit' field on old set logs ---
+    const savedUnit = parsed.settings?.weightUnit || DEFAULT_SETTINGS.weightUnit;
+    const migratedLogs = (parsed.logs || []).map(log => ({
+      ...log,
+      exercises: log.exercises.map(ex => ({
+        ...ex,
+        sets: ex.sets.map(set => ({
+          ...set,
+          unit: set.unit || savedUnit,
+        })),
+      })),
+    }));
+
+
     return {
       ...DEFAULT_STATE,
       ...parsed,
+      logs: migratedLogs,
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
-      customExercises: { ...DEFAULT_STATE.customExercises, ...parsed.customExercises },
-      hiddenExercises: { ...DEFAULT_STATE.hiddenExercises, ...parsed.hiddenExercises },
-      exerciseOrder: { ...DEFAULT_STATE.exerciseOrder, ...parsed.exerciseOrder },
-      customTranslations: { ...DEFAULT_STATE.customTranslations, ...parsed.customTranslations },
     };
   } catch {
     return DEFAULT_STATE;
@@ -127,11 +140,15 @@ export function convertWeight(weight: number, from: WeightUnit | undefined, to: 
 
 export function useGymTracker() {
   const [state, setState] = useState<GymState>(loadState);
+  const [lastDeletedLog, setLastDeletedLog] = useState<WorkoutLog | null>(null);
+  const [logToDelete, setLogToDelete] = useState<string | null>(null);
+
   
   // Use state for sessionStartTime to ensure reactivity
   const [sessionStartTime, setSessionStartTimeState] = useState<number>(() => {
     const initialState = loadState();
     const today = getLocalDateStr();
+    // Only resume if there's a log from EXACTLY today
     const todayLogs = initialState.logs.filter(l => isLogFromLocalDate(l.date, today));
     if (todayLogs.length > 0) {
       return Math.min(...todayLogs.map(l => new Date(l.startTime || l.date).getTime()));
@@ -232,6 +249,10 @@ export function useGymTracker() {
         ...prev.hiddenExercises,
         [muscle]: (prev.hiddenExercises[muscle] || []).filter(e => e !== name),
       },
+      deletedExercises: {
+        ...(prev as any).deletedExercises || {},
+        [muscle]: ((prev as any).deletedExercises?.[muscle] || []).filter((e: string) => e !== name)
+      }
     }));
   }, []);
 
@@ -259,17 +280,58 @@ export function useGymTracker() {
   }, []);
 
   const renameExercise = useCallback((muscle: MuscleGroup, oldName: string, newName: string) => {
-    setState(prev => ({
-      ...prev,
-      customExercises: {
-        ...prev.customExercises,
-        [muscle]: prev.customExercises[muscle].map(e => e === oldName ? newName : e),
-      },
-      customTranslations: {
-        ...(prev.customTranslations || {}),
-        [newName]: (prev.customTranslations || {})[oldName] || ''
+    setState(prev => {
+      const isDefault = (DEFAULT_EXERCISES[muscle] || []).includes(oldName);
+      
+      let newCustom = [...(prev.customExercises[muscle] || [])];
+      let newHidden = [...(prev.hiddenExercises?.[muscle] || [])];
+      let newDeleted = { ...((prev as any).deletedExercises || {}) };
+      let muscleDeleted = [...(newDeleted[muscle] || [])];
+
+      if (isDefault) {
+        if (!newHidden.includes(oldName)) newHidden.push(oldName);
+        if (!newCustom.includes(newName)) newCustom.push(newName);
+        // Move to deleted list so it skips the Archive section
+        if (!muscleDeleted.includes(oldName)) muscleDeleted.push(oldName);
+      } else {
+        newCustom = newCustom.map(e => e === oldName ? newName : e);
+        newHidden = newHidden.map(e => e === oldName ? newName : e);
       }
-    }));
+
+      const newLogs = prev.logs.map(log => ({
+        ...log,
+        exercises: log.exercises.map(ex => ex.name === oldName ? { ...ex, name: newName } : ex)
+      }));
+
+      const newOrder = prev.exerciseOrder?.[muscle] 
+        ? prev.exerciseOrder[muscle].map(e => e === oldName ? newName : e) 
+        : [];
+
+      return {
+        ...prev,
+        logs: newLogs,
+        customExercises: {
+          ...prev.customExercises,
+          [muscle]: newCustom,
+        },
+        hiddenExercises: {
+          ...prev.hiddenExercises,
+          [muscle]: newHidden
+        },
+        deletedExercises: {
+          ...newDeleted,
+          [muscle]: muscleDeleted
+        },
+        exerciseOrder: {
+          ...prev.exerciseOrder,
+          [muscle]: newOrder
+        },
+        customTranslations: {
+          ...(prev.customTranslations || {}),
+          [newName]: (prev.customTranslations || {})[oldName] || ''
+        }
+      };
+    });
   }, []);
 
   const reorderExercises = useCallback((muscle: MuscleGroup, newOrder: string[]) => {
@@ -286,11 +348,11 @@ export function useGymTracker() {
     for (const log of state.logs) {
       const ex = log.exercises.find(e => e.name === exerciseName);
       if (ex && ex.sets.length > 0) {
-        // Find the BEST set in this specific session to display on the picker
+        // Find the BEST set in this specific session using normalized weight for comparison
         const bestSet = ex.sets.reduce((prev, curr) => {
-          const prevW = prev.weight || 0;
-          const currW = curr.weight || 0;
-          return (currW > prevW || (currW === prevW && curr.reps > prev.reps)) ? curr : prev;
+          const prevInKg = convertWeight(prev.weight || 0, prev.unit || 'kg', 'kg');
+          const currInKg = convertWeight(curr.weight || 0, curr.unit || 'kg', 'kg');
+          return (currInKg > prevInKg || (currInKg === prevInKg && curr.reps > prev.reps)) ? curr : prev;
         }, ex.sets[0]);
         
         return { sets: ex.sets, date: log.date, bestSet: { ...bestSet, unit: bestSet.unit || 'kg' } };
@@ -298,6 +360,16 @@ export function useGymTracker() {
     }
     return null;
   }, [state.logs]);
+
+  const getLastUsedUnit = useCallback((exerciseName: string): WeightUnit => {
+    for (const log of state.logs) {
+      const ex = log.exercises.find(e => e.name === exerciseName);
+      if (ex && ex.sets.length > 0 && ex.sets[0].unit) {
+        return ex.sets[0].unit;
+      }
+    }
+    return state.settings.weightUnit;
+  }, [state.logs, state.settings.weightUnit]);
 
   const getExercisesByMuscle = useCallback((muscle: MuscleGroup) => {
     const defaults = (DEFAULT_EXERCISES[muscle] || []).map(name => ({ name, isCustom: false }));
@@ -312,25 +384,34 @@ export function useGymTracker() {
       .slice(0, 5)
       .map(p => ({
         name: p.exerciseName,
-        bestSet: { weight: p.weight, reps: p.reps, unit: state.settings.weightUnit }
+        bestSet: { weight: p.weight, reps: p.reps, unit: p.unit || 'kg' }
       }));
   }, [state.prs, state.settings.weightUnit]);
 
   const syncPRsFromLogs = useCallback((logs: WorkoutLog[], customExercises: Record<MuscleGroup, string[]>) => {
     const prMap: Record<string, PersonalRecord> = {};
     
-    // Create a reverse mapping of exercise name to muscle group
-    const exerciseToMuscle: Record<string, string> = {};
+    const mapping: Record<string, string> = {};
     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { exerciseToMuscle[ex.toLowerCase()] = group; });
+      exercises.forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
     });
-    Object.entries(customExercises).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { exerciseToMuscle[ex.toLowerCase()] = group; });
+    // Include all custom, hidden and deleted exercises for robust mapping
+    const allCustomSources = [
+      customExercises,
+      (state as any).hiddenExercises || {},
+      (state as any).deletedExercises || {}
+    ];
+    allCustomSources.forEach(source => {
+      Object.entries(source).forEach(([group, exercises]) => {
+        (exercises as string[]).forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
+      });
     });
 
     // Process from oldest to newest to ensure we get the best record
     [...logs].reverse().forEach(log => {
       log.exercises.forEach(ex => {
+        const exNameClean = ex.name.trim();
+        const exNameKey = exNameClean.toLowerCase();
         if (!ex.sets || ex.sets.length === 0) return;
         
         let bestSet = ex.sets[0];
@@ -344,17 +425,17 @@ export function useGymTracker() {
           }
         });
 
-        const existing = prMap[ex.name];
+        const existing = prMap[exNameClean];
         const existingValInKg = existing ? convertWeight(existing.weight, (existing.unit as any) || 'kg', 'kg') : 0;
 
-        if (!existing || bestValInKg > existingValInKg || (bestValInKg === existingValInKg && bestSet.reps > existing.reps)) {
-          prMap[ex.name] = { 
-            exerciseName: ex.name, 
+        if (!existing || bestValInKg > existingValInKg || (bestValInKg === existingValInKg && bestSet.reps >= existing.reps)) {
+          prMap[exNameClean] = { 
+            exerciseName: exNameClean, 
             weight: bestSet.weight, 
             reps: bestSet.reps, 
             unit: bestSet.unit || 'kg',
             date: log.date,
-            muscleGroup: exerciseToMuscle[ex.name.toLowerCase()] || log.muscleGroup
+            muscleGroup: (ex as any).muscleGroup || mapping[exNameKey] || log.muscleGroup
           };
         }
       });
@@ -371,20 +452,30 @@ export function useGymTracker() {
     const start = sessionStartTime;
 
     setState(prev => {
-      const today = getLocalDateStr();
+      // FIX: Use the SESSION START TIME to determine the workout date, 
+      // not the current time (which might be past midnight).
+      const sessionDate = new Date(start);
+      const today = getLocalDateStr(sessionDate);
       const existingLogIndex = prev.logs.findIndex(l => isLogFromLocalDate(l.date, today));
 
       let updatedLogs;
       if (existingLogIndex !== -1) {
-        // MERGE: Update the existing log for today
+        // MERGE: Update the existing log for the day the session started
         updatedLogs = [...prev.logs];
         const oldLog = updatedLogs[existingLogIndex];
 
         const mergedExercises = [...oldLog.exercises];
         log.exercises.forEach(newEx => {
           const exIdx = mergedExercises.findIndex(e => e.name === newEx.name);
-          if (exIdx !== -1) mergedExercises[exIdx] = newEx;
-          else mergedExercises.push(newEx);
+          if (exIdx !== -1) {
+            // APPEND sets instead of overwriting
+            mergedExercises[exIdx] = {
+              ...mergedExercises[exIdx],
+              sets: [...mergedExercises[exIdx].sets, ...newEx.sets]
+            };
+          } else {
+            mergedExercises.push(newEx);
+          }
         });
 
         // Use elapsedSeconds from component if provided, otherwise keep old duration
@@ -399,12 +490,13 @@ export function useGymTracker() {
           durationSeconds: totalDurationSeconds,
         };
       } else {
-        // CREATE: First workout of the day
+        // CREATE: First workout of the session date
         const durationSeconds = elapsedSeconds ?? Math.floor((now - start) / 1000);
         const newLog: WorkoutLog = {
           ...log,
+          date: today, // Use local date string YYYY-MM-DD
           id: `wl_${now}`,
-          startTime: new Date(start).toISOString(),
+          startTime: sessionDate.toISOString(),
           endTime: new Date(now).toISOString(),
           durationMinutes: Math.round(durationSeconds / 60),
           durationSeconds,
@@ -413,7 +505,19 @@ export function useGymTracker() {
       }
 
       const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises);
-      return { ...prev, logs: updatedLogs, prs: updatedPRs };
+      const newState = { ...prev, logs: updatedLogs, prs: updatedPRs };
+
+      // Trigger n8n Webhook for workout
+      if (newState.settings.n8nWebhookUrl) {
+        const lastLog = updatedLogs[existingLogIndex !== -1 ? existingLogIndex : 0];
+        fetch(newState.settings.n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'workout', workout: lastLog, user: newState.settings.userName })
+        }).catch(err => console.warn('n8n Webhook failed:', err));
+      }
+
+      return newState;
     });
 
     setSessionStartTimeState(Date.now());
@@ -421,6 +525,9 @@ export function useGymTracker() {
 
   const deleteWorkout = useCallback((id: string) => {
     setState(prev => {
+      const logToDelete = prev.logs.find(l => l.id === id);
+      if (logToDelete) setLastDeletedLog(logToDelete);
+      
       const newLogs = prev.logs.filter(l => l.id !== id);
       const newPRs = syncPRsFromLogs(newLogs, prev.customExercises);
       return { 
@@ -430,6 +537,18 @@ export function useGymTracker() {
       };
     });
   }, [syncPRsFromLogs]);
+
+  const restoreLastDeleted = useCallback(() => {
+    if (!lastDeletedLog) return false;
+    setState(prev => {
+      if (prev.logs.find(l => l.id === lastDeletedLog.id)) return prev;
+      const newLogs = [lastDeletedLog, ...prev.logs];
+      const newPRs = syncPRsFromLogs(newLogs, prev.customExercises);
+      return { ...prev, logs: newLogs, prs: newPRs };
+    });
+    setLastDeletedLog(null);
+    return true;
+  }, [lastDeletedLog, syncPRsFromLogs]);
 
   const resetSessionTimer = useCallback(() => {
     setSessionStartTimeState(Date.now());
@@ -445,8 +564,18 @@ export function useGymTracker() {
       ...prev,
       nutritionLogs: [newMeal, ...(prev.nutritionLogs || [])],
     }));
+
+    // Trigger n8n Webhook
+    if (state.settings.n8nWebhookUrl) {
+      fetch(state.settings.n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'nutrition', meal: newMeal, user: state.settings.userName })
+      }).catch(err => console.warn('n8n Webhook failed:', err));
+    }
+
     return newMeal;
-  }, []);
+  }, [state.settings]);
 
   const updateMealLog = useCallback((id: string, updates: Partial<MealLog>) => {
     setState(prev => ({
@@ -464,22 +593,49 @@ export function useGymTracker() {
 
   // Stats
   const getWeeklyCount = useCallback(() => {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return state.logs.filter(l => new Date(l.date) >= weekAgo).length;
+    const now = new Date();
+    // Get the current day (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const day = now.getDay();
+    
+    // Adjust to find the most recent Saturday
+    // In JS: Sun=0, Mon=1, ..., Sat=6. 
+    // To make Sat the start (0), we shift the day index.
+    const diff = now.getDate() - ((day + 1) % 7);
+    const startOfThisWeek = new Date(now.setDate(diff));
+    startOfThisWeek.setHours(0, 0, 0, 0);
+    
+    return state.logs.filter(l => {
+      const logDate = new Date(l.date);
+      logDate.setHours(0, 0, 0, 0);
+      return logDate >= startOfThisWeek;
+    }).length;
   }, [state.logs]);
 
   const getTotalVolume = useCallback((log: WorkoutLog, targetUnit?: WeightUnit) => {
-    // Detect target unit for the total volume
+    // Detect target unit for the total volume display (fallback to first set's unit)
     const finalTargetUnit = targetUnit || log.exercises[0]?.sets[0]?.unit || state.settings.weightUnit || 'kg';
     
     return log.exercises.reduce((total, ex) =>
       total + ex.sets.reduce((s, set) => {
-        const weightInTarget = convertWeight(set.weight, set.unit || 'kg', finalTargetUnit);
-        return s + (weightInTarget * set.reps);
+        // ALWAYS convert to target unit for accurate summation
+        const weightInTarget = convertWeight(Number(set.weight) || 0, set.unit || 'kg', finalTargetUnit);
+        return s + (weightInTarget * (Number(set.reps) || 0));
       }, 0), 0
     );
   }, [state.settings.weightUnit]);
+
+  // CLEANUP: Remove any fake workouts previously generated
+  useEffect(() => {
+    setState(prev => {
+      const hasFake = prev.logs.some(l => l.id.startsWith('fake_'));
+      if (!hasFake) return prev;
+      
+      const filteredLogs = prev.logs.filter(l => !l.id.startsWith('fake_'));
+      const newPRs = syncPRsFromLogs(filteredLogs, prev.customExercises);
+      localStorage.removeItem('gymlog_fake_workouts_generated');
+      return { ...prev, logs: filteredLogs, prs: newPRs };
+    });
+  }, [syncPRsFromLogs]);
 
   return {
     state,
@@ -498,14 +654,38 @@ export function useGymTracker() {
     renameExercise,
     reorderExercises,
     getLastSession,
+    getLastUsedUnit,
     getExercisePR,
     saveWorkout,
+    updateWorkoutUnit: (workoutId: string, newUnit: WeightUnit) => {
+      setState(prev => {
+        const newLogs = prev.logs.map(log => {
+          if (log.id === workoutId) {
+            return {
+              ...log,
+              exercises: log.exercises.map(ex => ({
+                ...ex,
+                sets: ex.sets.map(s => ({ ...s, unit: newUnit }))
+              }))
+            };
+          }
+          return log;
+        });
+        const newPRs = syncPRsFromLogs(newLogs, prev.customExercises);
+        return { ...prev, logs: newLogs, prs: newPRs };
+      });
+    },
     deleteWorkout,
+    restoreLastDeleted,
+    logToDelete,
+    setLogToDelete,
     resetSessionTimer,
     setSessionStartTime: setSessionStartTimeState,
     sessionStartTime,
     getWeeklyCount,
     getTotalVolume,
+    getLocalDateStr,
+    isLogFromLocalDate,
     getExercisesByMuscle,
     getBestExercises,
     addMealLog,

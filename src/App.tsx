@@ -31,7 +31,6 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>('home');
   const [showWorkout, setShowWorkout] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -153,12 +152,6 @@ export default function App() {
 
 
 
-  const confirmDeleteAction = () => {
-    if (confirmDelete) {
-      tracker.deleteWorkout(confirmDelete);
-      setConfirmDelete(null);
-    }
-  };
 
   const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
     { key: 'home', icon: <Home size={26} strokeWidth={2} />, label: lang === 'ar' ? 'الرئيسية' : 'Home' },
@@ -242,14 +235,17 @@ export default function App() {
       )}
 
       {/* Delete Confirm Dialog */}
-      {confirmDelete && (
+      {tracker.logToDelete && (
         <ConfirmModal
-          title={t('deleteWorkout')}
-          message={t('confirmDelete')}
-          confirmLabel={t('confirm')}
-          cancelLabel={t('cancel')}
-          onConfirm={confirmDeleteAction}
-          onCancel={() => setConfirmDelete(null)}
+          title={lang === 'ar' ? 'مسح التمرينة؟' : 'DELETE WORKOUT?'}
+          message={lang === 'ar' ? 'هل أنت متأكد أنك تريد مسح هذه التمرينة نهائياً؟' : 'Are you sure you want to permanently delete this workout?'}
+          confirmLabel={lang === 'ar' ? 'مسح الآن' : 'DELETE NOW'}
+          cancelLabel={lang === 'ar' ? 'إلغاء' : 'CANCEL'}
+          onConfirm={() => {
+            tracker.deleteWorkout(tracker.logToDelete!);
+            tracker.setLogToDelete(null);
+          }}
+          onCancel={() => tracker.setLogToDelete(null)}
         />
       )}
     </div>

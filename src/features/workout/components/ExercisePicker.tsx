@@ -14,9 +14,10 @@ interface Props {
   onToggle: (name: string) => void;
   tracker: ReturnType<typeof useGymTracker>;
   t: (key: string) => string;
+  onRename?: (oldName: string, newName: string) => void;
 }
 
-const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, activeExercises, onToggle, tracker, t }) => {
+const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, activeExercises, onToggle, onRename, tracker, t }) => {
   const lang = tracker.settings.language;
   const isRtl = lang === 'ar';
   const weightUnit = tracker.settings.weightUnit;
@@ -25,7 +26,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const [showSearch, setShowSearch] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [renamingExercise, setRenamingExercise] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string[] | null>(null);
 
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -103,6 +103,14 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         gsap.timeline().to(el, { scale: 0.94, duration: 0.06 }).to(el, { scale: 1.04, duration: 0.12 }).to(el, { scale: 1, duration: 0.2, ease: 'elastic.out(1.2, 0.5)' });
       }
     }
+
+    // If selecting from search and it was hidden/deleted, restore it to main list
+    const isHidden = hiddenExercises.includes(name);
+    const isDeleted = deletedExercises.includes(name);
+    if (isHidden || isDeleted) {
+      tracker.restoreExercise(muscleGroup as MuscleGroup, name);
+    }
+
     onToggle(name);
   };
 
@@ -135,27 +143,23 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           </div>
           <div style={{ textAlign: isRtl ? 'right' : 'left', flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {renamingExercise === name ? (
-                <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)} onBlur={() => { if (renameValue.trim() && renameValue !== name) tracker.renameExercise(muscleGroup as MuscleGroup, name, renameValue.trim()); setRenamingExercise(null); }} onKeyDown={e => { if (e.key === 'Enter') { if (renameValue.trim() && renameValue !== name) tracker.renameExercise(muscleGroup as MuscleGroup, name, renameValue.trim()); setRenamingExercise(null); } if (e.key === 'Escape') setRenamingExercise(null); }} onClick={e => e.stopPropagation()} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid var(--accent-color)', borderRadius: 4, color: '#fff', fontSize: 16, fontWeight: 800, padding: '2px 6px', width: '100%', outline: 'none', fontFamily: 'Outfit, sans-serif' }} />
-              ) : (
-                <>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: isActive ? 'var(--accent-color)' : 'var(--text-primary)', transition: 'color 0.3s ease', fontFamily: 'Outfit, sans-serif' }}>
-                    {isRecent && <RotateCcw size={14} style={{ marginRight: 6, opacity: 0.5, verticalAlign: 'middle' }} />}{name}
-                  </div>
-                  {isActive && !customTranslations[name] && (
-                    <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); setRenameValue(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: 'var(--text-secondary)', opacity: 0.3, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                      <Pen size={14} />
-                    </button>
-                  )}
-                </>
-              )}
+              <div style={{ fontSize: 18, fontWeight: 800, color: isActive ? 'var(--accent-color)' : 'var(--text-primary)', transition: 'color 0.3s ease', fontFamily: 'Outfit, sans-serif' }}>
+                {isRecent && <RotateCcw size={14} style={{ marginRight: 6, opacity: 0.5, verticalAlign: 'middle' }} />}{name}
+              </div>
             </div>
             {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>{EXERCISE_TRANSLATIONS[name]}</div>}
             {customTranslations[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: 'Outfit, sans-serif' }}>{customTranslations[name]}</div>}
             {lastSession && <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, fontWeight: 800, opacity: 0.5, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {isActive && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 6px #ff3d00', flexShrink: 0 }} />}
+            {isActive && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#ff3d00', opacity: 0.5, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                    <Pen size={14} />
+                  </button>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ff3d00', boxShadow: '0 0 6px #ff3d00', flexShrink: 0 }} />
+              </div>
+            )}
             {isActive && (
               <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 900, opacity: 0.7 }}>
                 <X size={11} strokeWidth={3} /> Remove
@@ -190,10 +194,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderBottom: '2px solid var(--accent-color)', borderRadius: 20, padding: '16px 20px' }}>
               <Search size={22} color="var(--accent-color)" strokeWidth={2.5} style={{ flexShrink: 0 }} />
-              <input ref={searchInputRef} value={search} onChange={e => onSearchChange(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && search.trim() && filteredExercises.length === 0) { tracker.addCustomExercise(muscleGroup as MuscleGroup, search.trim()); closeSearch(); } if (e.key === 'Escape') closeSearch(); }} placeholder="" style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'Outfit, sans-serif' }} />
+              <input ref={searchInputRef} value={search} onChange={e => onSearchChange(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && search.trim() && filteredExercises.length === 0) { const n = search.trim(); tracker.addCustomExercise(muscleGroup as MuscleGroup, n); onToggle(n); closeSearch(); } if (e.key === 'Escape') closeSearch(); }} placeholder="" style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'Outfit, sans-serif' }} />
             </div>
             {search.trim() && filteredExercises.length === 0 && (
-              <div onClick={() => { tracker.addCustomExercise(muscleGroup as MuscleGroup, search.trim()); closeSearch(); }} style={{ marginTop: 12, padding: '14px 18px', background: 'rgba(var(--accent-rgb, 50, 97, 68), 0.15)', border: '1px dashed var(--accent-color)', borderRadius: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div onClick={() => { const n = search.trim(); tracker.addCustomExercise(muscleGroup as MuscleGroup, n); onToggle(n); closeSearch(); }} style={{ marginTop: 12, padding: '14px 18px', background: 'rgba(var(--accent-rgb, 50, 97, 68), 0.15)', border: '1px dashed var(--accent-color)', borderRadius: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Plus size={18} color="var(--accent-color)" strokeWidth={3} />
                 <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent-color)', fontFamily: 'Outfit, sans-serif' }}>Add "{search.trim()}" as custom exercise</span>
               </div>
@@ -228,6 +232,19 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Rename Bottom Sheet */}
+      {renamingExercise && (
+        <RenameSheet
+          name={renamingExercise}
+          onSave={(newName) => { 
+            tracker.renameExercise(muscleGroup as MuscleGroup, renamingExercise, newName); 
+            if (onRename) onRename(renamingExercise, newName);
+            setRenamingExercise(null); 
+          }}
+          onClose={() => setRenamingExercise(null)}
+        />
       )}
 
       {/* Header row */}
@@ -270,14 +287,24 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               </div>
             </div>
             {archivedExercises.map(name => (
-              <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px 12px 16px', background: 'rgba(var(--theme-rgb), 0.02)', borderBottom: '1px solid rgba(var(--theme-rgb), 0.04)', borderRadius: 12, transition: 'all 0.2s ease', cursor: 'pointer' }}>
-                <div style={{ flex: 1, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif', opacity: 0.8 }}>{name}</div>
-                <button onClick={() => tracker.restoreExercise(muscleGroup as MuscleGroup, name)} style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(var(--accent-rgb), 0.1)', border: 'none', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <RotateCcw size={18} strokeWidth={2.5} />
-                </button>
-                <button onClick={() => setDeleteConfirm([name])} style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,0,0,0.05)', border: 'none', color: '#ff4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <Trash2 size={18} strokeWidth={2.5} />
-                </button>
+              <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'all 0.2s ease' }}>
+                <div 
+                  onClick={() => tracker.restoreExercise(muscleGroup as MuscleGroup, name)}
+                  style={{ flex: 1, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif', opacity: 0.7, cursor: 'pointer' }}
+                >
+                  {name}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button onClick={(e) => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 6, color: '#ff3d00', opacity: 0.4, cursor: 'pointer' }}>
+                    <Pen size={14} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); tracker.restoreExercise(muscleGroup as MuscleGroup, name); }} style={{ background: 'transparent', border: 'none', padding: 6, color: 'var(--accent-color)', opacity: 0.6, cursor: 'pointer' }}>
+                    <RotateCcw size={16} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm([name]); }} style={{ background: 'transparent', border: 'none', padding: 6, color: '#ff4444', opacity: 0.5, cursor: 'pointer' }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -285,14 +312,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       </div>
 
       {/* Delete confirm modal */}
-      {deleteConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      {deleteConfirm && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ 
             width: '100%', maxWidth: 340, 
             background: 'rgba(255,255,255,0.03)', 
             border: '1px solid rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
             borderRadius: 32, padding: '40px 24px', textAlign: 'center',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 30px rgba(var(--accent-rgb), 0.1)'
           }}>
@@ -304,9 +329,95 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               <button onClick={() => { deleteConfirm.forEach(n => tracker.permanentlyDeleteExercise(muscleGroup as MuscleGroup, n)); setDeleteConfirm(null); }} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(255,50,50,0.2)', border: '1.5px solid rgba(255,50,50,0.4)', color: '#ff5555', fontWeight: 950, cursor: 'pointer', fontSize: 15, fontFamily: 'Outfit, sans-serif', boxShadow: '0 0 20px rgba(255,50,50,0.15)' }}>Yes, Delete</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
+  );
+};
+
+// Premium Rename Bottom Sheet
+const RenameSheet: React.FC<{ name: string; onSave: (n: string) => void; onClose: () => void }> = ({ name, onSave, onClose }) => {
+  const [val, setVal] = React.useState(name);
+  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (sheetRef.current) {
+      gsap.fromTo(sheetRef.current, { y: 200, opacity: 0 }, { y: 0, opacity: 1, duration: 0.18, ease: 'power4.out' });
+    }
+  }, []);
+
+  const handleSave = () => {
+    if (val.trim() && val.trim() !== name) onSave(val.trim());
+    else onClose();
+  };
+
+  const handleClose = () => {
+    if (sheetRef.current) {
+      gsap.to(sheetRef.current, { y: 200, opacity: 0, duration: 0.15, ease: 'power4.in', onComplete: onClose });
+    } else onClose();
+  };
+
+  return ReactDOM.createPortal(
+    <div onClick={handleClose} style={{ position: 'fixed', inset: 0, zIndex: 9500, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end' }}>
+      <div ref={sheetRef} onClick={e => e.stopPropagation()} style={{
+        width: '100%',
+        background: 'rgba(15,15,15,0.4)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        borderRadius: '24px 24px 0 0',
+        padding: '16px 20px',
+        paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+        border: '1px solid rgba(255,255,255,0.05)',
+        borderTop: '1px solid rgba(255,255,255,0.15)',
+        borderBottom: 'none',
+        boxShadow: '0 -10px 40px rgba(0,0,0,0.5)'
+      }}>
+        <div onClick={handleClose} style={{ padding: '8px 0 16px', margin: '-8px 0 0', cursor: 'pointer', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
+        </div>
+        <div style={{ fontSize: 10, fontWeight: 900, color: '#ff3d00', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12, opacity: 0.7, textAlign: 'center' }}>Rename Exercise</div>
+        
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <input
+            ref={inputRef}
+            value={val}
+            dir="auto"
+            onChange={e => setVal(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleClose(); }}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderBottom: '1.5px solid rgba(255,61,0,0.6)',
+              borderRadius: 12, padding: '14px 44px 14px 16px',
+              color: '#fff', fontSize: 18, fontWeight: 800,
+              outline: 'none', fontFamily: 'Outfit, sans-serif',
+              textAlign: 'start',
+              userSelect: 'text', WebkitUserSelect: 'text'
+            }}
+          />
+          {val && (
+            <button 
+              onClick={() => { setVal(''); inputRef.current?.focus(); }}
+              style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%',
+                width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', cursor: 'pointer', opacity: 0.6,
+                zIndex: 1
+              }}
+            >
+              <X size={14} strokeWidth={3} />
+            </button>
+          )}
+        </div>
+
+        <button onClick={handleSave} style={{ width: '100%', height: 48, borderRadius: 12, background: 'rgba(255,61,0,0.08)', border: '1px solid rgba(255,61,0,0.3)', color: '#ff3d00', fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', letterSpacing: 1, textTransform: 'uppercase' }}>Save Name</button>
+      </div>
+    </div>,
+    document.body
   );
 };
 

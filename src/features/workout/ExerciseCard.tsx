@@ -31,27 +31,77 @@ function playStart() {
 }
 
 // SetRow component (Ka from bundle)
-const SetRow = ({ index, weight, reps, restTime, activeUnit, isResting, canRemove, t, onUpdate, onCycleUnit, onStartRest, onRemove }: any) => (
+const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCycleUnit, onRemove, isCardio, lang }: any) => (
   <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)', gap: 8, transformStyle: 'preserve-3d' }}>
     <div style={{ width: 24, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: 'Outfit, sans-serif' }}>{index + 1}</div>
     <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 12 }} />
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
       <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: 'Outfit, sans-serif', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.2)' }} />
-      <div onClick={onCycleUnit} style={{ fontSize: 11, fontWeight: 950, color: '#666', textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', minWidth: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, sans-serif', lineHeight: 1, transition: 'transform 0.2s ease' }} onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.9)')} onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
-        {t(activeUnit)}
-        <div style={{ width: 12, height: 2, background: '#666', marginTop: 3, borderRadius: 1 }} />
+      <div 
+        onClick={onCycleUnit} 
+        style={{ 
+          fontSize: 10, 
+          fontWeight: 950, 
+          color: 'var(--accent-color)', 
+          textTransform: 'uppercase', 
+          letterSpacing: 1, 
+          cursor: 'pointer', 
+          width: 48, 
+          height: 48,
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          fontFamily: 'Outfit, sans-serif', 
+          lineHeight: 1, 
+          transition: 'all 0.2s ease',
+          background: 'transparent',
+          border: '1.5px dashed rgba(var(--theme-rgb), 0.3)',
+          borderRadius: '50%',
+          padding: '0 4px',
+          boxSizing: 'border-box'
+        }} 
+        onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')} 
+        onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')} 
+        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+      >
+        <span style={{
+          background: 'linear-gradient(90deg, var(--accent-color) 0%, #fff 50%, var(--accent-color) 100%)',
+          backgroundSize: '200% auto',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          animation: 'text-shimmer 3s linear infinite'
+        }}>
+          {isCardio ? (lang === 'ar' ? 'مستوى' : 'LEVEL') : t(activeUnit)}
+        </span>
       </div>
     </div>
     <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
       <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: 'Outfit, sans-serif', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.2)' }} />
-      <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif' }}>{t('reps')}</div>
+      <div style={{ 
+        fontSize: 10, 
+        fontWeight: 950, 
+        color: 'var(--text-secondary)', 
+        textTransform: 'uppercase', 
+        opacity: 0.9, 
+        letterSpacing: '1px', 
+        fontFamily: 'Outfit, sans-serif',
+        width: 48,
+        height: 48,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'transparent',
+        border: '1.5px dashed rgba(var(--theme-rgb), 0.3)',
+        borderRadius: '50%',
+        padding: '0 4px',
+        boxSizing: 'border-box'
+      }}>
+        {isCardio ? (lang === 'ar' ? 'دقيقة' : 'MINS') : t('reps')}
+      </div>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      {restTime
-        ? <div style={{ fontSize: 10, color: 'var(--accent-color)', fontWeight: 900, background: 'rgba(0,229,160,0.1)', padding: '2px 4px', borderRadius: 4, fontFamily: 'Outfit, sans-serif' }}>{restTime}s</div>
-        : <button onClick={onStartRest} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: isResting ? 'var(--accent-color)' : '#555', opacity: isResting ? 1 : 0.5, padding: 4 }}><Clock size={16} /></button>
-      }
       {canRemove && (
         <button onClick={onRemove} style={{ background: 'transparent', border: 'none', width: 28, height: 28, cursor: 'pointer', color: 'rgba(255,51,102,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: 0 }}>
           <Trash2 size={16} />
@@ -76,17 +126,20 @@ interface Props {
   isDirty?: boolean;
 }
 
-const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets, onDone, onChange, onClose, fullPage, inline, elapsedSeconds, isDirty }) => {
+const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker, initialSets, onDone, onChange, onClose, fullPage, inline, elapsedSeconds, isDirty }) => {
   const lang = tracker.settings.language;
   const t = (k: string) => (translations[lang] as any)[k] ?? k;
   const weightUnit = tracker.settings.weightUnit;
 
-  const initSets = () => initialSets && initialSets.length > 0
-    ? initialSets.map(s => ({ ...s, unit: (s.unit || weightUnit || 'kg') as any }))
-    : [{ weight: '', reps: '', unit: (weightUnit || 'kg') as any }];
+  const initSets = () => {
+    const lastUnit = tracker.getLastUsedUnit(exerciseName);
+    return initialSets && initialSets.length > 0
+      ? initialSets.map(s => ({ ...s, unit: (s.unit || lastUnit || weightUnit || 'kg') as any }))
+      : [{ weight: '', reps: '', unit: (lastUnit || weightUnit || 'kg') as any }];
+  };
 
   const [sets, setSets] = useState(initSets);
-  const [activeUnit, setActiveUnit] = useState(initialSets?.[0]?.unit || weightUnit || 'kg');
+  const [activeUnit, setActiveUnit] = useState(initialSets?.[0]?.unit || tracker.getLastUsedUnit(exerciseName) || weightUnit || 'kg');
   const [isResting, setIsResting] = useState(false);
   const [restSeconds, setRestSeconds] = useState(tracker.settings.defaultRestSeconds);
   const [restingSetIndex, setRestingSetIndex] = useState<number | null>(null);
@@ -99,9 +152,10 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
 
   // Re-init when exercise changes
   useEffect(() => {
+    const lastUnit = tracker.getLastUsedUnit(exerciseName);
     const s = initSets();
     setSets(s);
-    setActiveUnit(initialSets?.[0]?.unit || weightUnit || 'kg');
+    setActiveUnit(initialSets?.[0]?.unit || lastUnit || weightUnit || 'kg');
     onChange && onChange(s, false);
   }, [exerciseName]);
 
@@ -158,7 +212,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
     const updated = sets.map(s => ({ ...s, unit: next }));
     setSets(updated);
     onChange && onChange(updated, true);
-    tracker.setSettings({ weightUnit: next as any });
+    // Removed global setting update to allow per-exercise persistence
   };
 
   const updateSet = (idx: number, field: string, val: any) => {
@@ -182,8 +236,11 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
     if (idx !== undefined) setRestingSetIndex(idx);
   };
 
-  const totalVolume = sets.reduce((sum, s) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0);
-  const maxWeight = Math.max(...sets.map(s => Number(s.weight) || 0), 0);
+  const totalVolume = sets.reduce((sum, s) => {
+    const convertedWeight = tracker.convertWeight(Number(s.weight) || 0, s.unit || activeUnit, activeUnit);
+    return sum + convertedWeight * (Number(s.reps) || 0);
+  }, 0);
+  const maxWeight = Math.max(...sets.map(s => tracker.convertWeight(Number(s.weight) || 0, s.unit || activeUnit, activeUnit)), 0);
 
   const handleDone = () => {
     if (saving) return;
@@ -236,12 +293,25 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
             if (!lastSession) return null;
             const bestSet = lastSession.bestSet;
             return (
-              <div style={{ background: 'rgba(var(--theme-rgb), 0.03)', borderRadius: 12, padding: '6px 14px', color: 'var(--text-primary)', fontSize: 13, fontWeight: 800, fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+              <div style={{ 
+                background: 'transparent', 
+                borderRadius: 12, 
+                padding: '8px 16px', 
+                color: 'var(--text-primary)', 
+                fontSize: 13, 
+                fontWeight: 800, 
+                fontFamily: 'Outfit, sans-serif', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 6, 
+                whiteSpace: 'nowrap',
+                border: '1.5px dashed rgba(255, 255, 255, 0.35)',
+              }}>
                 <span style={{ color: 'var(--accent-color)', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, opacity: 0.9 }}>LAST:</span>
                 <span style={{ fontWeight: 900, fontSize: 15 }}>{lastSession.sets.length} <span style={{ fontSize: 10, opacity: 0.8 }}>SETS</span></span>
                 <span style={{ opacity: 0.4, fontSize: 10 }}>×</span>
                 <span style={{ fontWeight: 900, fontSize: 15 }}>{bestSet.reps} <span style={{ fontSize: 10, opacity: 0.8 }}>REPS</span></span>
-                <div style={{ width: '1px', height: 12, background: 'rgba(var(--theme-rgb), 0.15)', margin: '0 6px' }} />
+                <div style={{ width: '1px', height: 12, background: 'rgba(255, 255, 255, 0.15)', margin: '0 6px' }} />
                 <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{bestSet.weight}</span>
                 <span style={{ fontSize: 11, opacity: 0.7, color: 'var(--accent-color)', fontWeight: 900 }}>{t(bestSet.unit || weightUnit)}</span>
                 <span style={{ fontSize: 16, marginLeft: 6, filter: 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.3))' }}>🏆</span>
@@ -255,7 +325,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, tracker, initialSets
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 20px 16px', WebkitOverflowScrolling: 'touch', minHeight: 0, maxHeight: 'calc(100dvh - 240px)', transformStyle: 'preserve-3d', touchAction: 'pan-y' }}>
         <div ref={setsRef} style={{ display: 'flex', flexDirection: 'column', gap: 0, transformStyle: 'preserve-3d' }}>
           {sets.map((s, i) => (
-            <SetRow key={i} index={i} weight={s.weight} reps={s.reps} restTime={s.restTime} activeUnit={activeUnit} isResting={restingSetIndex === i} canRemove={sets.length > 1} t={t} onUpdate={(field: string, val: any) => updateSet(i, field, val)} onCycleUnit={cycleUnit} onStartRest={() => startRest(i)} onRemove={() => { const updated = sets.filter((_, j) => j !== i); setSets(updated); onChange && onChange(updated, true); }} />
+            <SetRow key={i} index={i} weight={s.weight} reps={s.reps} restTime={s.restTime} activeUnit={activeUnit} isResting={restingSetIndex === i} canRemove={sets.length > 1} t={t} onUpdate={(field: string, val: any) => updateSet(i, field, val)} onCycleUnit={cycleUnit} onStartRest={() => startRest(i)} onRemove={() => { const updated = sets.filter((_, j) => j !== i); setSets(updated); onChange && onChange(updated, true); }} isCardio={muscleGroup === 'cardio'} lang={lang} />
           ))}
         </div>
         <button onClick={() => { const updated = [...sets, { weight: '', reps: '', unit: activeUnit }]; setSets(updated); onChange && onChange(updated, true); }} style={{ width: '100%', padding: 14, background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: 16, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', marginTop: 12, fontFamily: 'Outfit, sans-serif' }}>

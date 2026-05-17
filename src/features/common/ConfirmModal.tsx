@@ -10,30 +10,43 @@ interface Props {
 
 export function ConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm, onCancel }: Props) {
   return (
-    <div className="modal-overlay" style={{ alignItems: 'center' }}>
+    <div style={{ 
+      position: 'fixed', 
+      inset: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)', 
+      backdropFilter: 'blur(15px)',
+      WebkitBackdropFilter: 'blur(15px)',
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      zIndex: 999999,
+      padding: '20px',
+      animation: 'fadeIn 0.3s ease'
+    }}>
       <div className="glass-panel" style={{ 
-        width: '85%', 
+        width: '100%',
         maxWidth: '340px', 
-        padding: '28px 24px', 
+        padding: '40px 24px', 
         textAlign: 'center', 
-        borderRadius: '24px',
-        background: 'rgba(var(--primary-bg-rgb, 10, 10, 12), 0.85)', // Much more solid
-        backdropFilter: 'blur(35px)', // Stronger blur
-        WebkitBackdropFilter: 'blur(35px)',
-        border: '1px solid rgba(var(--theme-rgb), 0.15)'
+        borderRadius: '32px',
+        background: 'rgba(10, 10, 12, 0.95)',
+        border: '1.5px solid rgba(255, 61, 0, 0.4)',
+        boxShadow: '0 20px 80px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 61, 0, 0.1)',
+        position: 'relative',
+        animation: 'elite-expand 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
       }}>
-        <div style={{ fontSize: '32px', marginBottom: '12px' }}>🗑️</div>
-        <div className="premium-title" style={{ fontSize: '32px', marginBottom: '8px' }}>
+        <div style={{ fontSize: '48px', marginBottom: '20px', filter: 'drop-shadow(0 0 15px rgba(255, 61, 0, 0.6))' }}>⚠️</div>
+        <h2 className="heading-font logo-underline" style={{ fontSize: '28px', marginBottom: '16px', color: '#fff', textAlign: 'center', letterSpacing: '-0.5px' }}>
           {title.toUpperCase()}
-        </div>
-        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>{message}</div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={onCancel} className="glass-button" style={{ 
-            flex: 1, borderRadius: '12px', justifyContent: 'center', height: '48px', padding: 0 
-          }}>{cancelLabel}</button>
-          <button onClick={onConfirm} className="danger-button" style={{ 
-            flex: 1, borderRadius: '12px', justifyContent: 'center', height: '48px', padding: 0 
+        </h2>
+        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.7)', marginBottom: '36px', lineHeight: '1.6', fontWeight: '500' }}>{message}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button onClick={onConfirm} style={{ 
+            background: 'rgba(255, 61, 0, 0.1)', color: '#ff3366', border: '1px solid rgba(255, 61, 0, 0.5)', padding: '12px', borderRadius: '14px', fontWeight: '950', fontSize: '11px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' 
           }}>{confirmLabel}</button>
+          <button onClick={onCancel} style={{ 
+            background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', borderRadius: '14px', fontWeight: '800', fontSize: '10px', cursor: 'pointer', transition: 'all 0.3s ease' 
+          }}>{cancelLabel}</button>
         </div>
       </div>
     </div>

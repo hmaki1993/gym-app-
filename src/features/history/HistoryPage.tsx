@@ -3,7 +3,7 @@ import { useGymTracker } from '../../hooks/useGymTracker';
 import type { WorkoutLog } from '../../types';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
-import { Dumbbell, Calendar, Trash2, Clock, ChevronDown, Flame } from 'lucide-react';
+import { Dumbbell, Calendar, Trash2, Clock, ChevronDown, Flame, Sofa, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface HistoryPageProps {
@@ -29,7 +29,6 @@ function formatDuration(mins: number, t: (k: any) => string) {
 export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
-  const unit = tracker.settings.weightUnit;
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   // Auto-scroll to expanded log
@@ -53,12 +52,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
   const currentYear = viewDate.getFullYear();
   const currentMonth = viewDate.getMonth();
   const totalDays = daysInMonth(currentYear, currentMonth);
-  const startOffset = firstDayOfMonth(currentYear, currentMonth);
 
   const monthName = viewDate.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { month: 'long', year: 'numeric' });
 
@@ -98,12 +95,38 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
   const filteredLogs = selectedDate 
     ? tracker.logs.filter(l => {
+        // Robust check: handles both 'YYYY-MM-DD' and full ISO timestamps
+        const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+        // Direct string prefix match (fastest for YYYY-MM-DD stored dates)
+        if (l.date.startsWith(selectedStr)) return true;
+        // Fallback: parse as local date for ISO timestamps
         const d = new Date(l.date);
-        return d.getFullYear() === selectedDate.getFullYear() &&
-               d.getMonth() === selectedDate.getMonth() &&
-               d.getDate() === selectedDate.getDate();
+        const logStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return logStr === selectedStr;
       })
     : [];
+
+  // Consolidate multiple logs for the same day into one (fixes old split-session bug)
+  const consolidatedLogs = (() => {
+    if (filteredLogs.length <= 1) return filteredLogs;
+    // Merge all logs for this day into one unified log
+    const base = { ...filteredLogs[0] };
+    const mergedExercises = [...base.exercises];
+    for (let i = 1; i < filteredLogs.length; i++) {
+      filteredLogs[i].exercises.forEach(ex => {
+        const existing = mergedExercises.find(e => e.name === ex.name);
+        if (existing) {
+          existing.sets = [...existing.sets, ...ex.sets];
+        } else {
+          mergedExercises.push(ex);
+        }
+      });
+    }
+    base.exercises = mergedExercises;
+    base.durationSeconds = filteredLogs.reduce((sum, l) => sum + (l.durationSeconds || l.durationMinutes * 60), 0);
+    base.durationMinutes = Math.round(base.durationSeconds / 60);
+    return [base];
+  })();
 
   const changeMonth = (offset: number) => {
     const d = new Date(currentYear, currentMonth + offset, 1);
@@ -111,7 +134,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   };
 
   const onDeleteWorkout = (id: string) => {
-    tracker.deleteWorkout(id);
+    (tracker as any).setLogToDelete(id);
   };
 
   return (
@@ -122,88 +145,294 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
         transformStyle: 'preserve-3d',
         animation: 'fadeIn 0.6s ease'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '0 20px' }}>
-          <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: '6px' }}>
-            <Calendar size={16} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', padding: '0 10px' }}>
+          <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronLeft size={24} />
           </button>
-          <h2 style={{ 
-            margin: 0, 
-            fontSize: '15px', 
-            fontWeight: '950', 
-            color: 'rgba(255,255,255,0.85)', 
-            textTransform: 'uppercase', 
-            letterSpacing: '2px',
-            fontFamily: 'Outfit, sans-serif',
-          }}>
-            {monthName}
-          </h2>
-          <button onClick={() => changeMonth(1)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: '6px' }}>
-            <Calendar size={16} />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img 
+                src="/assets/calendar-custom-v2.png" 
+                alt="Calendar" 
+                style={{ 
+                  width: '28px', 
+                  height: '28px', 
+                  objectFit: 'contain'
+                }} 
+              />
+              <h2 style={{ 
+                margin: 0, 
+                fontSize: '16px', 
+                fontWeight: '950', 
+                color: 'var(--text-primary)', 
+                textTransform: 'uppercase', 
+                letterSpacing: '2px',
+                fontFamily: 'Outfit, sans-serif',
+                transform: 'translateY(1px)'
+              }}>
+                {monthName}
+              </h2>
+            </div>
+            
+            {/* Elegant Monthly Summary Pill */}
+            {(() => {
+              const now = new Date();
+              const isCurrentMonth = currentYear === now.getFullYear() && currentMonth === now.getMonth();
+              const isPastMonth = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && currentMonth < now.getMonth());
+              
+              let monthWorkouts = 0;
+              let monthRest = 0;
+              for (let d = 1; d <= totalDays; d++) {
+                if (monthDayMuscles[d]?.length > 0) {
+                  monthWorkouts++;
+                } else {
+                  if (isPastMonth) {
+                    monthRest++;
+                  } else if (isCurrentMonth && d < now.getDate()) {
+                    monthRest++;
+                  }
+                }
+              }
+              return (
+                <div style={{ 
+                  display: 'flex', gap: '16px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', 
+                  padding: '6px 16px', borderRadius: '24px', border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Dumbbell size={14} color="var(--accent-color)" />
+                    <span style={{ fontSize: '13px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{monthWorkouts}</span>
+                  </div>
+                  <div style={{ width: '1px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sofa size={14} color="var(--text-secondary)" />
+                    <span style={{ fontSize: '13px', fontWeight: '950', color: 'var(--text-secondary)', fontFamily: 'Outfit, sans-serif' }}>{monthRest}</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <button onClick={() => changeMonth(1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronRight size={24} />
           </button>
         </div>
 
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(7, 1fr)', 
-          gap: '6px', 
-          textAlign: 'center' 
+          justifyItems: 'center',
+          gap: '16px 6px', 
+          textAlign: 'center',
+          padding: '0 8px', 
+          boxSizing: 'border-box',
+          width: '100%'
         }}>
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
-            <div key={`${d}-${idx}`} style={{ fontSize: '13px', fontWeight: '950', color: 'var(--accent-color)', opacity: 1, letterSpacing: '1px' }}>{d}</div>
+          {/* Clear Headers: Sat, Sun, Mon, Tue, Wed, Thu, Fri */}
+          {['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((d, _idx) => (
+            <div key={`${d}-${_idx}`} style={{ 
+              fontSize: '11px', 
+              fontWeight: '950', 
+              color: 'var(--accent-color)', 
+              opacity: 1, 
+              letterSpacing: '1px' 
+            }}>{d.toUpperCase()}</div>
           ))}
 
-          {Array.from({ length: startOffset }).map((_, i) => (
-            <div key={`off-${i}`} />
-          ))}
+          {(() => {
+            // Use NOON to prevent timezone shifts from moving the day
+            const firstDayDate = new Date(currentYear, currentMonth, 1, 12, 0, 0);
+            const firstDayOfWeek = firstDayDate.getDay(); // 0 (Sun) to 6 (Sat)
+            
+            // Explicit Index: Sat=0, Sun=1, Mon=2, Tue=3, Wed=4, Thu=5, Fri=6
+            const offsetMap: Record<number, number> = {
+              6: 0, // Sat
+              0: 1, // Sun
+              1: 2, // Mon
+              2: 3, // Tue
+              3: 4, // Wed
+              4: 5, // Thu
+              5: 6  // Fri
+            };
+            
+            const satStartOffset = offsetMap[firstDayOfWeek];
+            const dayElements = [];
+            
+            // 1. Initial Padding
+            for (let i = 0; i < satStartOffset; i++) {
+              dayElements.push(<div key={`empty-start-${i}`} />);
+            }
 
-          {Array.from({ length: totalDays }).map((_, i) => {
-            const day = i + 1;
-            const dayMuscles = monthDayMuscles[day] || [];
-            const worked = dayMuscles.length > 0;
-            const active = isSelected(day);
-            const now = new Date();
-            const isToday = now.getFullYear() === currentYear && now.getMonth() === currentMonth && now.getDate() === day;
-            const isPast = new Date(currentYear, currentMonth, day) < new Date(new Date().setHours(0,0,0,0));
+            // 2. Actual Days
+            for (let day = 1; day <= totalDays; day++) {
+              const dayMuscles = monthDayMuscles[day] || [];
+              const worked = dayMuscles.length > 0;
+              const active = isSelected(day);
+              const now = new Date();
+              const isToday = now.getFullYear() === currentYear && now.getMonth() === currentMonth && now.getDate() === day;
+              const isPast = new Date(currentYear, currentMonth, day) < new Date(new Date().setHours(0,0,0,0));
+              
+              dayElements.push(
+                <div 
+                  key={day}
+                  onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
+                  style={{
+                    width: 'clamp(38px, 11vw, 46px)', 
+                    height: 'clamp(38px, 11vw, 46px)', 
+                    margin: '0 auto', 
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 'clamp(14px, 4vw, 17px)', 
+                    fontWeight: active ? '950' : (isToday ? '950' : '800'),
+                    color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
+                    cursor: 'pointer', position: 'relative', borderRadius: '50%',
+                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (worked ? 'rgba(255,255,255,0.03)' : (isPast ? 'rgba(255, 94, 0, 0.05)' : 'transparent'))),
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : (worked ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent')),
+                    transform: active ? 'scale(1.05)' : 'scale(1)',
+                    paddingTop: dayMuscles.length > 0 ? '2px' : '0px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <span style={{ lineHeight: 1 }}>{day}</span>
+                  {dayMuscles.length > 0 ? (
+                    <div style={{ display: 'flex', gap: '1px', marginTop: '1px', height: '16px', alignItems: 'center', justifyContent: 'center' }}>
+                      {dayMuscles.slice(0, 3).map((g, _idx) => {
+                        const mg = MUSCLE_GROUPS.find(m => m.key === g);
+                        return mg?.icon ? (
+                          <TransparentImage key={g} src={mg.icon} alt="" width={16} height={16} threshold={45} style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.2)' : 'grayscale(1) brightness(0.8)' }} />
+                        ) : <span key={g} style={{ fontSize: '12px' }}>•</span>;
+                      })}
+                    </div>
+                  ) : (
+                    isPast && !isToday && (
+                      <div style={{ marginTop: '2px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                        <Sofa size={16} color="var(--text-secondary)" />
+                      </div>
+                    )
+                  )}
+                  {isToday && !active && (
+                     <div style={{ 
+                       position: 'absolute', inset: '-2px', borderRadius: '50%', 
+                       border: '2px solid var(--accent-color)', 
+                       boxShadow: '0 0 15px var(--accent-color-alpha)',
+                       animation: 'pulseToday 2s infinite ease-in-out'
+                     }} />
+                  )}
+                </div>
+              );
+            }
 
-            return (
-              <div 
-                key={day}
-                onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
-                style={{
-                  height: '50px', width: '50px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '16px', fontWeight: active ? '950' : (isToday ? '950' : '800'),
-                  color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
-                  cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                  background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (isPast && !worked ? 'rgba(255, 94, 0, 0.05)' : 'transparent')),
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : '1px solid transparent'),
-                  transform: active ? 'scale(1.1)' : 'scale(1)',
-                  paddingTop: dayMuscles.length > 0 ? '3px' : '0px'
-                }}
-              >
-                <span style={{ lineHeight: 1 }}>{day}</span>
-                {dayMuscles.length > 0 && (
-                  <div style={{ display: 'flex', gap: '2px', marginTop: '2px', height: '16px', alignItems: 'center', justifyContent: 'center' }}>
-                    {dayMuscles.slice(0, 3).map((g, idx) => {
-                      const mg = MUSCLE_GROUPS.find(m => m.key === g);
-                      return mg?.icon ? (
-                        <TransparentImage key={g} src={mg.icon} alt="" width={15} height={15} threshold={45} style={{ filter: 'grayscale(1) brightness(2)', opacity: 1, marginLeft: idx > 0 ? '-3px' : 0 }} />
-                      ) : <span key={g} style={{ fontSize: '10px' }}>•</span>;
-                    })}
-                    {dayMuscles.length > 3 && <div style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: 900 }}>+</div>}
+            return dayElements;
+          })()}
+        </div>
+
+        {/* Premium Training Frequency Card */}
+        {/* Weekly Summary Card */}
+        {/* Weekly Summary Container */}
+        <div style={{ 
+          marginTop: '32px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '4px', height: '14px', borderRadius: '4px', background: 'var(--accent-color)' }} />
+              <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--text-primary)', letterSpacing: '3px' }}>TRAINING FREQUENCY</span>
+            </div>
+          </div>
+          
+          {/* Horizontal Divider */}
+          <div style={{ height: '1px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', width: '100%' }} />
+
+          <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+            {(() => {
+              const weeksData = [];
+              let weekCount = 0;
+              let weekStartDay = 1;
+              
+              for (let d = 1; d <= totalDays; d++) {
+                if (monthDayMuscles[d]?.length > 0) weekCount++;
+                
+                if (d % 7 === 0 || d === totalDays) {
+                  weeksData.push({
+                    label: `W${weeksData.length + 1}`,
+                    count: weekCount,
+                    start: weekStartDay,
+                    end: d
+                  });
+                  weekCount = 0;
+                  weekStartDay = d + 1;
+                }
+              }
+
+              const now = new Date();
+              const isCurrentMonth = currentYear === now.getFullYear() && currentMonth === now.getMonth();
+              const isPastMonth = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && currentMonth < now.getMonth());
+              const isFutureMonth = currentYear > now.getFullYear() || (currentYear === now.getFullYear() && currentMonth > now.getMonth());
+              
+              let displayWeeks = weeksData;
+              if (!isCurrentMonth && !isFutureMonth) {
+                while(displayWeeks.length > 0 && displayWeeks[displayWeeks.length - 1].count === 0 && (displayWeeks[displayWeeks.length - 1].end - displayWeeks[displayWeeks.length - 1].start) < 3) {
+                   displayWeeks.pop();
+                }
+              }
+
+              return displayWeeks.map((week, idx) => {
+                const isThisWeek = isCurrentMonth && now.getDate() >= week.start && now.getDate() <= week.end;
+                
+                // Intelligent Rest Days Calculation
+                let restDays = 0;
+                if (isFutureMonth) {
+                  restDays = 0;
+                } else if (isPastMonth) {
+                  restDays = (week.end - week.start + 1) - week.count;
+                } else {
+                  // isCurrentMonth
+                  if (now.getDate() < week.start) {
+                    restDays = 0; // Future week
+                  } else if (isThisWeek) {
+                    // Current week: only count a day as "rest" if it has fully passed without a workout
+                    let workoutsBeforeToday = 0;
+                    for (let d = week.start; d < now.getDate(); d++) {
+                      if (monthDayMuscles[d]?.length > 0) workoutsBeforeToday++;
+                    }
+                    let elapsed = now.getDate() - week.start;
+                    restDays = elapsed - workoutsBeforeToday;
+                  } else {
+                    // Past week in current month
+                    restDays = (week.end - week.start + 1) - week.count;
+                  }
+                }
+                restDays = Math.max(0, restDays);
+
+                return (
+                  <div key={idx} style={{ flex: '1', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ 
+                      flex: '1',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      minWidth: '45px'
+                    }}>
+                      <span style={{ fontSize: '9px', fontWeight: '950', opacity: isThisWeek ? 1 : 0.4, marginBottom: '4px', letterSpacing: '1.5px', color: isThisWeek ? 'var(--accent-color)' : 'var(--text-primary)' }}>{week.label}</span>
+                      <span style={{ fontSize: '20px', fontWeight: '950', color: isThisWeek ? 'var(--accent-color)' : (week.count > 0 ? 'var(--text-primary)' : 'rgba(150,150,150,0.3)'), fontFamily: 'Outfit, sans-serif', textShadow: isThisWeek && tracker.settings.themeMode === 'dark' ? '0 0 15px rgba(var(--accent-rgb),0.6)' : 'none', lineHeight: 1 }}>{week.count}</span>
+                      
+                      {/* Rest Days Indicator */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
+                        <Sofa size={12} color={isThisWeek ? "var(--text-primary)" : "var(--text-secondary)"} style={{ opacity: restDays > 0 ? 1 : 0.4 }} />
+                        <span style={{ fontSize: '11px', fontWeight: '950', color: isThisWeek ? "var(--text-primary)" : "var(--text-secondary)", opacity: restDays > 0 ? 1 : 0.4 }}>{restDays}</span>
+                      </div>
+                    </div>
+                    {/* Vertical Divider */}
+                    {idx < displayWeeks.length - 1 && (
+                      <div style={{ width: '1px', height: '40px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
+                    )}
                   </div>
-                )}
-                {isToday && !active && (
-                   <div style={{ 
-                     position: 'absolute', inset: '-2px', borderRadius: '50%', 
-                     border: '2px solid var(--accent-color)', 
-                     boxShadow: '0 0 15px var(--accent-color-alpha)',
-                     animation: 'pulseToday 2s infinite ease-in-out'
-                   }} />
-                )}
-              </div>
-            );
-          })}
+                );
+              });
+            })()}
+          </div>
         </div>
       </div>
 
@@ -215,7 +444,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
             <div style={{ fontSize: '11px', fontWeight: '950', letterSpacing: '3px' }}>{t('noHistory').toUpperCase()}</div>
           </div>
         ) : (
-          filteredLogs.map((log: WorkoutLog) => {
+          consolidatedLogs.map((log: WorkoutLog) => {
             const exerciseToMuscle: Record<string, string> = {};
             Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
               exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
@@ -234,12 +463,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
               return mg?.[lang === 'ar' ? 'ar' : 'en'] ?? g;
             }).join(' & ');
 
-            const volume = tracker.getTotalVolume(log);
-            const totalSets = log.exercises.reduce((s, ex) => s + ex.sets.length, 0);
+            const totalSets = log.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
             
-            // Detect workout unit from the first set found
-            const workoutUnit = log.exercises[0]?.sets[0]?.unit || unit;
-
             return (
               <div 
                 key={log.id} id={`log-${log.id}`}
@@ -258,6 +483,18 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   <Flame size={12} color="var(--accent-secondary)" fill="var(--accent-secondary)" />
                   <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'Outfit, sans-serif' }}>{t('session')}</span>
                 </div>
+                <div style={{ 
+                  position: 'absolute', top: '12px', right: '12px', 
+                  display: 'flex', alignItems: 'center', gap: '4px', zIndex: 20,
+                  background: 'transparent',
+                  padding: '4px 6px', borderRadius: '12px',
+                  border: tracker.settings.themeMode === 'dark' ? '1px dashed rgba(255,255,255,0.2)' : '1px dashed rgba(0,0,0,0.1)',
+                }}>
+                  <button onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.6)', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={16} /></button>
+                  <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
+                  <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}><ChevronDown size={18} strokeWidth={2.5} /></button>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: expandedLogId === log.id ? '15px' : '0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'none' }}>
@@ -270,24 +507,20 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     </div>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', letterSpacing: '-0.5px' }}>{displayTitle}</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Calendar size={10} color="var(--accent-color)" />
-                          <span style={{ fontSize: '12px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '900' }}>{formatDate(log.date, lang)}</span>
+                          <Calendar size={12} color="var(--accent-color)" />
+                          <span style={{ fontSize: '14px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '-0.3px' }}>{formatDate(log.date, lang)}</span>
                         </div>
                         {log.startTime && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '1.5px', height: '10px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
-                            <Clock size={10} color="var(--accent-color)" />
-                            <span style={{ fontSize: '10px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '900', opacity: 1 }}>{formatTime(log.startTime, lang)}</span>
+                            <div style={{ width: '1.5px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
+                            <Clock size={12} color="var(--accent-color)" />
+                            <span style={{ fontSize: '14px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', opacity: 1, letterSpacing: '-0.3px' }}>{formatTime(log.startTime, lang)}</span>
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.6)', padding: '8px', marginRight: '-4px' }}><Trash2 size={18} /></button>
-                    <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}><ChevronDown size={20} strokeWidth={2.5} /></button>
                   </div>
                 </div>
 
@@ -298,7 +531,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                         {[
                           { label: t('exercises'), value: log.exercises.length },
                           { label: t('totalSets'), value: totalSets },
-                          { label: t('totalVolume'), value: `${volume.toFixed(0)} ${t(workoutUnit as any)}` },
                           { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
                         ].map((stat, idx) => (
                           <React.Fragment key={stat.label}>
@@ -328,8 +560,19 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                           });
 
                           return sortedExercises.map((ex, exIdx) => {
-                            const bestSet = ex.sets.reduce((best, s) => s.weight > best.weight ? s : best, ex.sets[0] ?? { weight: 0, reps: 0 });
-                            const isPR = tracker.getExercisePR(ex.name)?.weight === bestSet.weight;
+                            const bestSet = ex.sets.reduce((best, s) => {
+                              const sInKg = tracker.convertWeight(s.weight, s.unit || 'kg', 'kg');
+                              const bestInKg = tracker.convertWeight(best.weight, (best as any).unit || 'kg', 'kg');
+                              return sInKg > bestInKg ? s : best;
+                            }, ex.sets[0] ?? { weight: 0, reps: 0 });
+
+                            const isPR = (() => {
+                              const pr = tracker.getExercisePR(ex.name);
+                              if (!pr) return false;
+                              const prInKg = tracker.convertWeight(pr.weight, (pr as any).unit || 'kg', 'kg');
+                              const bestInKg = tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', 'kg');
+                              return Math.abs(prInKg - bestInKg) < 0.01;
+                            })();
                             const mg = MUSCLE_GROUPS.find(m => m.key === ex.groupKey);
                             
                             return (
@@ -355,8 +598,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                     </div>
                                     <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
                                     <div style={{ textAlign: 'right' }}>
-                                      <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
-                                      <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t((bestSet.unit || unit) as any)}</span>
+                                       <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
+                                       <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t((bestSet as any).unit as any)}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -430,6 +673,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           })
         )}
       </div>
+
     </div>
   );
 }

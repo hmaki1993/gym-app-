@@ -73,6 +73,7 @@ export interface GymSettings {
   defaultRestSeconds: number;
   soundEnabled: boolean;
   dailyCalorieGoal: number;
+  n8nWebhookUrl?: string;
   nutritionProfile?: {
     weight: number;
     height: number;

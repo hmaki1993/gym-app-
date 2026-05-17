@@ -76,10 +76,9 @@ export function SettingsPage({ tracker }: Props) {
           onClick={() => setShowResetConfirm(false)}
           style={{
             position: 'fixed', inset: 0,
-            zIndex: 999999, background: 'transparent',
-            backdropFilter: 'blur(16px)', display: 'grid',
+            zIndex: 999999, background: 'rgba(0,0,0,0.95)',
+            display: 'grid',
             placeItems: 'center', padding: '20px',
-            WebkitBackdropFilter: 'blur(16px)',
             animation: 'fadeIn 0.3s ease'
           }}
         >

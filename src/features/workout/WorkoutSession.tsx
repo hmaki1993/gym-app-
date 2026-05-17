@@ -25,7 +25,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   // const isRtl = lang === 'ar';
 
   const [phase, setPhase] = useState<'exercises' | 'logging'>('exercises');
-  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>(tracker.logs[0]?.muscleGroup || 'chest');
+  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>('chest');
   const [activeExercises, setActiveExercises] = useState<string[]>([]);
   const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>({});
   const [draftData, setDraftData] = useState<Record<string, any[]>>({});
@@ -51,9 +51,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         sessionStartTimeRef.current = Date.now();
         savedElapsedRef.current = null;
       } else {
-        const today = new Date().toISOString().split('T')[0];
-        const todayMuscleLogs = tracker.logs.filter(l => l.date.startsWith(today) && l.muscleGroup === selectedMuscle);
-        const totalSeconds = todayMuscleLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
+        const today = tracker.getLocalDateStr();
+        // Count ALL today's workout duration, not just same muscle group
+        const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
+        const totalSeconds = todayLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
         baseSecondsRef.current = totalSeconds;
         sessionStartTimeRef.current = Date.now();
       }
@@ -85,25 +86,49 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     return parts.join(':');
   };
 
-  // Restore today's session on mount
+  // Restore today's session on mount — aggregate ALL of today's logs
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayLog = tracker.logs.find(l => l.date.startsWith(today));
+    const today = tracker.getLocalDateStr();
+    const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
     
-    if (todayLog && activeExercises.length === 0) {
-      if (todayLog.muscleGroup) {
-        setSelectedMuscle(todayLog.muscleGroup as MuscleGroup);
+    if (todayLogs.length > 0 && activeExercises.length === 0) {
+      // Use the most recent log's muscle group
+      const latestLog = todayLogs[0];
+      if (latestLog.muscleGroup) {
+        setSelectedMuscle(latestLog.muscleGroup as MuscleGroup);
       }
-      setActiveExercises(todayLog.exercises.map(e => e.name));
+      // Aggregate ALL exercises from ALL of today's logs
+      const allExerciseNames: string[] = [];
       const initialLogged: Record<string, SetLog[]> = {};
-      todayLog.exercises.forEach(e => {
-        initialLogged[e.name] = e.sets;
+      todayLogs.forEach(log => {
+        log.exercises.forEach(e => {
+          if (!initialLogged[e.name]) {
+            allExerciseNames.push(e.name);
+            initialLogged[e.name] = e.sets;
+          }
+        });
       });
+      setActiveExercises(allExerciseNames);
       setLoggedData(initialLogged);
       setHasStartedSession(true);
       setPhase('logging');
     }
   }, []);
+
+  const prevOpenExRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (openExercise && !prevOpenExRef.current) {
+      // Initial open animation
+      gsap.fromTo('#exercise-overlay', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power2.out' });
+      gsap.fromTo('#exercise-modal-content', { y: '100%' }, { y: 0, duration: 0.25, ease: 'power3.out' });
+    }
+    prevOpenExRef.current = openExercise;
+  }, [openExercise]);
+
+  const closeExercise = () => {
+    gsap.to('#exercise-modal-content', { y: '100%', duration: 0.15, ease: 'power3.in' });
+    gsap.to('#exercise-overlay', { opacity: 0, duration: 0.15, ease: 'power2.in', onComplete: () => setOpenExercise(null) });
+  };
 
   useEffect(() => {
     if (containerRef.current && containerRef.current.children.length > 0) {
@@ -120,20 +145,32 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     }
   }, [phase]);
 
-  useEffect(() => {
-    if (openExercise && swipeContainerRef.current) {
-      gsap.fromTo(swipeContainerRef.current,
-        { opacity: 0, scale: 0.95, x: 0 },
-        { opacity: 1, scale: 1, x: 0, duration: 0.4, ease: 'power2.out', clearProps: 'all' }
-      );
-    }
-  }, [openExercise]);
+  // Removed redundant openExercise animation to fix swipe stutter
 
   const toggleExercise = (name: string) => {
     setActiveExercises(prev =>
       prev.includes(name) ? prev.filter(e => e !== name) : [...prev, name]
     );
   };
+
+  const handleRename = React.useCallback((oldName: string, newName: string) => {
+    setActiveExercises(prev => prev.map(e => e === oldName ? newName : e));
+    setDraftData(prev => {
+      if (prev[oldName]) {
+        const { [oldName]: oldData, ...rest } = prev;
+        return { ...rest, [newName]: oldData };
+      }
+      return prev;
+    });
+    setLoggedData(prev => {
+      if (prev[oldName]) {
+        const { [oldName]: oldData, ...rest } = prev;
+        return { ...rest, [newName]: oldData };
+      }
+      return prev;
+    });
+    if (openExercise === oldName) setOpenExercise(newName);
+  }, [openExercise]);
 
   const handleSetsDone = (exerciseName: string, sets: SetLog[]) => {
     setLoggedData(prev => ({ ...prev, [exerciseName]: sets }));
@@ -195,7 +232,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     if (exercises.length === 0) { onClose(); return; }
 
     const log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'> = {
-      date: new Date().toISOString(),
+      date: new Date(tracker.sessionStartTime).toISOString(),
       muscleGroup: selectedMuscle,
       exercises: exercises as any,
     };
@@ -280,10 +317,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
     const diff = e.clientX - touchState.current.startX;
     const xPercent = (diff / e.currentTarget.clientWidth) * 100;
+    
+    // Performance: Only update transform, avoid opacity/scale during active drag for max FPS
     gsap.set(swipeContainerRef.current, { 
-      xPercent, 
-      opacity: 1 - Math.abs(xPercent / 150),
-      scale: 1 - Math.abs(xPercent / 1000) 
+      xPercent,
+      force3D: true 
     });
   };
 
@@ -328,14 +366,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     gsap.to(swipeContainerRef.current, {
       xPercent: xDist,
       opacity: 0,
-      duration: 0.08,
+      duration: 0.15,
       ease: 'power2.in',
       force3D: true,
       onComplete: () => {
         setOpenExercise(nextEx);
+        // Instant reset and slide in
         gsap.fromTo(swipeContainerRef.current,
           { xPercent: direction === 'left' ? 100 : -100, opacity: 0 },
-          { xPercent: 0, opacity: 1, duration: 0.12, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
+          { xPercent: 0, opacity: 1, duration: 0.25, ease: 'power3.out', force3D: true, onComplete: () => { touchState.current.isAnimating = false; } }
         );
       }
     });
@@ -375,25 +414,31 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       overscrollBehavior: 'none' 
     }}>
       {openExercise && (
-        <div style={{
-          position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
-          background: 'rgba(0,0,0,0.9)', zIndex: 2000,
-          display: 'flex', justifyContent: 'center',
-          touchAction: 'none',
-          overscrollBehavior: 'none',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{
-            position: 'absolute', top: 0, bottom: 0,
-            width: '100%', maxWidth: '480px', 
-            background: 'var(--primary-bg)',
-            overflow: 'hidden',
-            display: 'flex', flexDirection: 'column',
+        <div 
+          id="exercise-overlay"
+          style={{
+            position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
+            background: 'rgba(0,0,0,0.95)', zIndex: 2000,
+            display: 'flex', justifyContent: 'center',
             touchAction: 'none',
             overscrollBehavior: 'none',
-            boxSizing: 'border-box',
-            border: 'none'
-          }}>
+            boxSizing: 'border-box'
+          }}
+        >
+          <div 
+            id="exercise-modal-content"
+            style={{
+              position: 'absolute', top: 0, bottom: 0,
+              width: '100%', maxWidth: '480px', 
+              background: 'var(--primary-bg)',
+              overflow: 'hidden',
+              display: 'flex', flexDirection: 'column',
+              touchAction: 'none',
+              overscrollBehavior: 'none',
+              boxSizing: 'border-box',
+              border: 'none'
+            }}
+          >
             <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: 'transparent' }}>
               {activeExercises.map((name, i) => (
                 <div key={i} style={{
@@ -432,9 +477,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   initialSets={draftData[openExercise] || loggedData[openExercise]}
                   isCompleted={!!loggedData[openExercise]}
                   elapsedSeconds={elapsedSeconds}
-                  onDone={(sets) => handleSetsDone(openExercise, sets)}
+                  onDone={(sets) => { handleSetsDone(openExercise, sets); closeExercise(); }}
                   onChange={(sets, isDirty) => handleDraftChange(openExercise, sets, isDirty)}
-                  onClose={() => setOpenExercise(null)} fullPage={true}
+                  onClose={closeExercise} fullPage={true}
                   isDirty={dirtyExercises[openExercise]}
                 />
               </div>
@@ -492,12 +537,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           alignItems: 'center', 
           gap: '4px', 
           flexShrink: 0,
-          background: 'rgba(var(--theme-rgb), 0.05)',
-          border: '1px dashed rgba(var(--theme-rgb), 0.2)',
+          background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)',
+          border: '1px solid rgba(var(--theme-rgb), 0.1)',
           borderRadius: '10px',
           padding: '6px 10px',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)'
         }}>
           {phase === 'logging' && (
             <div ref={timerRef} style={{ 
@@ -571,6 +614,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               onSearchChange={setSearch}
               activeExercises={activeExercises}
               onToggle={toggleExercise}
+              onRename={handleRename}
               muscleGroup={selectedMuscle}
               tracker={tracker}
               t={t as any}

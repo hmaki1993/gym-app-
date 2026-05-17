@@ -150,15 +150,23 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
     const muscles = new Set<string>();
     const mapping: Record<string, string> = {};
     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { mapping[ex.toLowerCase()] = group; });
+      exercises.forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
     });
-    Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { mapping[ex.toLowerCase()] = group; });
+    const allCustomSources = [
+      tracker.customExercises,
+      (tracker as any).hiddenExercises || {},
+      (tracker as any).deletedExercises || {}
+    ];
+    allCustomSources.forEach(source => {
+      Object.entries(source).forEach(([group, exercises]) => {
+        (exercises as string[]).forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
+      });
     });
+
     tracker.logs.forEach(log => {
       if (log.muscleGroup) muscles.add(log.muscleGroup);
       log.exercises.forEach(ex => {
-        const group = mapping[ex.name.toLowerCase()];
+        const group = mapping[ex.name.trim().toLowerCase()] || (ex as any).muscleGroup;
         if (group) muscles.add(group);
       });
     });
@@ -177,14 +185,23 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
     const freq: Record<string, number> = {};
     const mapping: Record<string, string> = {};
     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { mapping[ex.toLowerCase()] = group; });
+      exercises.forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
     });
-    Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { mapping[ex.toLowerCase()] = group; });
+    const allCustomSources = [
+      tracker.customExercises,
+      (tracker as any).hiddenExercises || {},
+      (tracker as any).deletedExercises || {}
+    ];
+    allCustomSources.forEach(source => {
+      Object.entries(source).forEach(([group, exercises]) => {
+        (exercises as string[]).forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
+      });
     });
+
     tracker.logs.forEach(log => {
       log.exercises.forEach(ex => {
-        const group = mapping[ex.name.toLowerCase()] || log.muscleGroup;
+        const exNameKey = ex.name.trim().toLowerCase();
+        const group = mapping[exNameKey] || (ex as any).muscleGroup || log.muscleGroup;
         if (group === selectedMuscle) {
           freq[ex.name] = (freq[ex.name] ?? 0) + 1;
         }
