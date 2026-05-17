@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Trash2, Scan, RefreshCw } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { GeminiService } from '../../services/gemini';
-import { ChevronDown, Check, Search, Barcode } from 'lucide-react';
+import { ChevronDown, Check, Search } from 'lucide-react';
 import { FatSecretService } from '../../services/fatsecret';
 import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 
@@ -668,12 +668,13 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             onClick={handleBarcodeScan}
             style={{
               width: '50px', height: '50px', borderRadius: '16px',
-              background: 'rgba(0,255,170,0.1)', border: '1.5px solid rgba(0,255,170,0.4)',
-              color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              
+              background: 'rgba(255, 255, 255, 0.85)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
             }}
           >
-            <Barcode size={22} />
+            <img src="/assets/qrcode-custom.png" alt="Scan" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
           </button>
         </div>
 
@@ -683,7 +684,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           position: 'relative'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-             <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', opacity: 1 }}>AI SMART TRACKER</div>
+             <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', opacity: 1 }}>SMART TRACKER</div>
              <button 
               onClick={() => setShowSetup(true)}
               style={{ 

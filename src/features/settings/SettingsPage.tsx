@@ -42,10 +42,10 @@ export function SettingsPage({ tracker }: Props) {
     marginBottom: '24px'
   };
 
-  const labelStyle: React.CSSProperties = {
+  const getLabelStyle = (color: string): React.CSSProperties => ({
     fontSize: '11px',
     fontWeight: '900',
-    color: 'var(--accent-color)',
+    color: color,
     letterSpacing: '2.5px',
     textTransform: 'uppercase',
     marginBottom: '8px',
@@ -53,7 +53,7 @@ export function SettingsPage({ tracker }: Props) {
     alignItems: 'center',
     gap: '10px',
     padding: '0 8px'
-  };
+  });
 
   const inputRowStyle: React.CSSProperties = {
     background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)',
@@ -114,7 +114,7 @@ export function SettingsPage({ tracker }: Props) {
 
       <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', padding: '20px 20px 100px', gap: '20px', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
         <div style={cardStyle}>
-          <div style={labelStyle}>
+          <div style={getLabelStyle('var(--accent-color)')}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>{t('accountProfile')}</span>
           </div>
@@ -135,7 +135,7 @@ export function SettingsPage({ tracker }: Props) {
         </div>
 
         <div style={cardStyle}>
-          <div style={labelStyle}>
+          <div style={getLabelStyle('var(--accent-color)')}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>Body Composition</span>
           </div>
@@ -158,25 +158,25 @@ export function SettingsPage({ tracker }: Props) {
             <div style={{ fontSize: '9px', fontWeight: '900', opacity: 0.4, letterSpacing: '1px', marginBottom: '8px', paddingLeft: '8px' }}>BIOLOGICAL GENDER</div>
             <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
               {(['male', 'female'] as const).map(g => (
-                <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.nutritionProfile?.gender === g ? 'var(--accent-color)' : 'transparent', color: tracker.settings.nutritionProfile?.gender === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+                <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.nutritionProfile?.gender === g ? 'var(--accent-secondary)' : 'transparent', color: tracker.settings.nutritionProfile?.gender === g ? '#fff' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
               ))}
             </div>
           </div>
         </div>
 
         <div style={cardStyle}>
-          <div style={labelStyle}>
+          <div style={getLabelStyle('var(--accent-color)')}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>Fitness Strategy</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
             {(['lose', 'maintain', 'gain'] as const).map(g => (
-              <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any })} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.nutritionProfile?.goal === g ? 'var(--accent-color)' : 'transparent', color: tracker.settings.nutritionProfile?.goal === g ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+              <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any })} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.nutritionProfile?.goal === g ? 'var(--accent-secondary)' : 'transparent', color: tracker.settings.nutritionProfile?.goal === g ? '#fff' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
             ))}
           </div>
-          <div style={{ marginTop: '8px', padding: '24px', background: 'transparent', borderBottom: '2px solid var(--accent-color)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', marginBottom: '4px', opacity: 0.6 }}>DAILY TARGET</div>
-            <div style={{ fontSize: '48px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-2px' }}>
+          <div style={{ marginTop: '8px', padding: '24px 24px 12px', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--accent-secondary)', letterSpacing: '3px', marginBottom: '4px', opacity: 0.85 }}>DAILY TARGET</div>
+            <div style={{ fontSize: '48px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-2px' }}>
               {(() => {
                 const p = tracker.settings.nutritionProfile;
                 if (!p?.weight || !p?.height || !p?.age) return '0';
@@ -188,17 +188,24 @@ export function SettingsPage({ tracker }: Props) {
               })()}
               <span style={{ fontSize: '14px', fontWeight: '800', opacity: 0.3, marginLeft: '6px', letterSpacing: '1px' }}>KCAL</span>
             </div>
+            <div style={{ 
+              height: '2px', 
+              width: '100%', 
+              background: 'var(--accent-color)', 
+              marginTop: '16px',
+              borderRadius: '1px'
+            }} />
           </div>
         </div>
 
         <div style={{ ...cardStyle, gap: '15px' }}>
-          <div style={labelStyle}>
+          <div style={getLabelStyle('var(--accent-color)')}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-color)' }} />
             <span>Appearance</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '4px', width: '100%', border: '1px solid rgba(255,255,255,0.05)' }}>
             {(['dark', 'light'] as const).map(mode => (
-              <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '900', cursor: 'pointer', background: tracker.settings.themeMode === mode ? 'var(--accent-color)' : 'transparent', color: tracker.settings.themeMode === mode ? '#000' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
+              <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.themeMode === mode ? 'var(--accent-secondary)' : 'transparent', color: tracker.settings.themeMode === mode ? '#fff' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
             ))}
           </div>
         </div>

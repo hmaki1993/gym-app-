@@ -3,7 +3,7 @@ import { useGymTracker } from '../../hooks/useGymTracker';
 import type { WorkoutLog } from '../../types';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
-import { Calendar, Trash2, Clock, ChevronDown, Flame, Sofa, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface HistoryPageProps {
@@ -200,20 +200,29 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   padding: '6px 16px', borderRadius: '24px', border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{
-                      width: '14px',
-                      height: '14px',
-                      backgroundColor: 'var(--accent-color)',
-                      WebkitMask: 'url(/assets/dumbbell-custom.png) no-repeat center / contain',
-                      mask: 'url(/assets/dumbbell-custom.png) no-repeat center / contain',
-                      display: 'inline-block'
-                    }} />
+                    <img 
+                      src="/assets/dumbbell-horizontal.png" 
+                      alt="" 
+                      style={{ 
+                        width: '20px', 
+                        height: '20px', 
+                        objectFit: 'contain',
+                        filter: tracker.settings.themeMode === 'dark' ? 'invert(1) brightness(2.5) contrast(1.2)' : 'none'
+                      }} 
+                    />
                     <span style={{ fontSize: '13px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{monthWorkouts}</span>
                   </div>
                   <div style={{ width: '1px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Sofa size={14} color="var(--text-secondary)" />
-                    <span style={{ fontSize: '13px', fontWeight: '950', color: 'var(--text-secondary)', fontFamily: "'Montserrat', sans-serif" }}>{monthRest}</span>
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      backgroundColor: 'var(--text-primary)',
+                      WebkitMask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
+                      mask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
+                      display: 'inline-block'
+                    }} />
+                    <span style={{ fontSize: '13px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{monthRest}</span>
                   </div>
                 </div>
               );
@@ -292,7 +301,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     fontWeight: active ? '950' : (isToday ? '950' : '800'),
                     color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
                     cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (worked ? 'rgba(255,255,255,0.03)' : (isPast ? 'rgba(255, 94, 0, 0.05)' : 'transparent'))),
+                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (worked ? 'rgba(255,255,255,0.03)' : (isPast ? 'rgba(var(--accent-secondary-rgb), 0.08)' : 'transparent'))),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : (worked ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent')),
                     transform: active ? 'scale(1.05)' : 'scale(1)',
@@ -302,18 +311,25 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 >
                   <span style={{ lineHeight: 1 }}>{day}</span>
                   {dayMuscles.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '1px', marginTop: '1px', height: '16px', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0px', marginTop: '1px', height: '18px', alignItems: 'center', justifyContent: 'center' }}>
                       {dayMuscles.slice(0, 3).map((g, _idx) => {
                         const mg = MUSCLE_GROUPS.find(m => m.key === g);
                         return mg?.icon ? (
-                          <TransparentImage key={g} src={mg.icon} alt="" width={16} height={16} threshold={45} style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.2)' : 'grayscale(1) brightness(0.8)' }} />
+                          <TransparentImage key={g} src={mg.icon} alt="" width={18} height={18} threshold={45} style={{ filter: 'none', marginLeft: _idx > 0 ? '-5px' : '0px', zIndex: 10 - _idx }} />
                         ) : <span key={g} style={{ fontSize: '12px' }}>•</span>;
                       })}
                     </div>
                   ) : (
                     isPast && !isToday && (
-                      <div style={{ marginTop: '2px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
-                        <Sofa size={16} color="var(--text-secondary)" />
+                      <div style={{ marginTop: '1px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.75 }}>
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          backgroundColor: 'var(--text-primary)',
+                          WebkitMask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
+                          mask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
+                          display: 'inline-block'
+                        }} />
                       </div>
                     )
                   )}
@@ -427,7 +443,15 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                       
                       {/* Rest Days Indicator */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
-                        <Sofa size={12} color={isThisWeek ? "var(--text-primary)" : "var(--text-secondary)"} style={{ opacity: restDays > 0 ? 1 : 0.4 }} />
+                        <div style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: isThisWeek ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          WebkitMask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
+                          mask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
+                          display: 'inline-block',
+                          opacity: restDays > 0 ? 1 : 0.4
+                        }} />
                         <span style={{ fontSize: '11px', fontWeight: '950', color: isThisWeek ? "var(--text-primary)" : "var(--text-secondary)", opacity: restDays > 0 ? 1 : 0.4 }}>{restDays}</span>
                       </div>
                     </div>
@@ -495,7 +519,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
               >
                 <div style={{ position: 'absolute', left: 0, top: '15%', bottom: '15%', width: '4px', background: '#E67E22', borderRadius: '0 2px 2px 0',  zIndex: 10 }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                  <Flame size={12} color="var(--accent-secondary)" fill="var(--accent-secondary)" />
+                  <img src="/assets/flame-custom.png" alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
                   <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: "'Montserrat', sans-serif" }}>{t('session')}</span>
                 </div>
                 <div style={{ 
@@ -516,21 +540,21 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                       {Array.from(involvedGroups).sort().map(g => {
                         const mg = MUSCLE_GROUPS.find(m => m.key === g);
                         return mg?.icon ? (
-                          <TransparentImage key={g} src={mg.icon} alt="" width={42} height={42} threshold={45} style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.2)' : 'grayscale(1) brightness(0.8)' }} />
+                          <TransparentImage key={g} src={mg.icon} alt="" width={54} height={54} threshold={45} style={{ filter: 'none' }} />
                         ) : <span key={g} style={{ fontSize: '24px' }}>💪</span>;
                       })}
                     </div>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', letterSpacing: '-0.5px' }}>{displayTitle}</h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Calendar size={12} color="var(--accent-color)" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <img src="/assets/calendar-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                           <span style={{ fontSize: '14px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '-0.3px' }}>{formatDate(log.date, lang)}</span>
                         </div>
                         {log.startTime && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <div style={{ width: '1.5px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
-                            <Clock size={12} color="var(--accent-color)" />
+                            <img src="/assets/clock-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                             <span style={{ fontSize: '14px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', opacity: 1, letterSpacing: '-0.3px' }}>{formatTime(log.startTime, lang)}</span>
                           </div>
                         )}

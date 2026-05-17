@@ -1,6 +1,6 @@
 {
-  "name": "PowerGrid — Elite Training System",
-  "short_name": "PowerGrid",
+  "name": "Power Grid — Elite Training System",
+  "short_name": "Power Grid",
   "description": "Track your gym workouts, sets, weights, and personal records.",
   "start_url": "/",
   "display": "standalone",

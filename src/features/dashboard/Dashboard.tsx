@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
-import { Flame, Calendar, Clock } from 'lucide-react'; 
+
 import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface DashboardProps {
@@ -32,8 +32,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
 
   // Removed unused volume memo
 
-  const recentDisplayTitle = React.useMemo(() => {
-    if (!recentLog) return '';
+  const recentGroups = React.useMemo(() => {
+    if (!recentLog) return [];
     const exerciseToMuscle: Record<string, string> = {};
     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
       exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
@@ -49,7 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
     return Array.from(involvedGroups).sort().map(g => {
       const mg = MUSCLE_GROUPS.find(m => m.key === g);
       return mg?.[lang] ?? g;
-    }).join(' & ');
+    });
   }, [recentLog, lang]);
 
   const todayStr = (() => {
@@ -214,26 +214,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
           }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Flame size={14} color="var(--accent-secondary)" fill="var(--accent-secondary)" />
+                <img src="/assets/flame-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                 <span style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: "'Montserrat', sans-serif" }}>{t('lastSession')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)', fontWeight: '800' }}>
-                  <Calendar size={13} color="var(--accent-color)" />
+                  <img src="/assets/calendar-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                   <span>{formatDate(recentLog.date, lang)}</span>
                 </div>
                 {recentLog.startTime && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)', fontWeight: '800' }}>
-                    <Clock size={13} color="var(--accent-color)" />
+                    <img src="/assets/clock-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                     <span>{formatTime(recentLog.startTime, lang)}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   {(() => {
                     const exerciseToMuscle: Record<string, string> = {};
                     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
@@ -250,28 +250,56 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                       return mg?.icon ? (
                         <TransparentImage 
                           key={g} src={mg.icon} alt="" width={48} height={48} threshold={45}
-                          style={{ filter: tracker.settings.themeMode === 'dark' ? 'grayscale(1) brightness(1.2)' : 'grayscale(1) brightness(0.8)' }}
+                          style={{ filter: 'none' }}
                         />
                       ) : <span key={g} style={{ fontSize: '24px' }}>💪</span>;
                     });
                   })()}
                 </div>
-                <div>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ 
-                    fontSize: '24px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', 
-                    letterSpacing: '-0.8px', fontFamily: "'Montserrat', sans-serif", lineHeight: 1 
+                    fontSize: '21px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', 
+                    letterSpacing: '-0.8px', fontFamily: "'Montserrat', sans-serif", lineHeight: 1,
+                    whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px'
                   }}>
-                    {recentDisplayTitle}
+                    {recentGroups.length === 0 ? (
+                      ''
+                    ) : recentGroups.length === 1 ? (
+                      recentGroups[0]
+                    ) : (
+                      <>
+                        <span>{recentGroups[0]}</span>
+                        <span style={{ 
+                          fontSize: '18px', 
+                          color: 'var(--accent-secondary)', 
+                          opacity: 0.85, 
+                          transform: 'translateY(1.5px)', 
+                          display: 'inline-block',
+                          fontWeight: '800'
+                        }}>&</span>
+                        <span>{recentGroups[1]}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
 
-                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <div style={{ fontSize: '18px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif", lineHeight: 1 }}>
-                    {recentLog.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)} <span style={{ fontSize: '10px', opacity: 0.6 }}> SETS</span>
+                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '4px', lineHeight: 1 }}>
+                    <span style={{ fontSize: '18px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
+                      {recentLog.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)}
+                    </span>
+                    <span style={{ fontSize: '9px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', letterSpacing: '0.5px' }}>
+                      SETS
+                    </span>
                   </div>
-                  <div style={{ fontSize: '10px', color: '#666', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    {recentLog.exercises.length} EXERCISES
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '4px', lineHeight: 1 }}>
+                    <span style={{ fontSize: '18px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
+                      {recentLog.exercises.length}
+                    </span>
+                    <span style={{ fontSize: '9px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', letterSpacing: '0.5px' }}>
+                      EXERCISES
+                    </span>
                   </div>
                 </div>
             </div>
