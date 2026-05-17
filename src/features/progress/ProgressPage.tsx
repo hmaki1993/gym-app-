@@ -165,7 +165,6 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
   const weeklyCount = tracker.getWeeklyCount();
 
   const loggedMuscles = React.useMemo(() => {
-    const muscles = new Set<string>();
     const mapping: Record<string, string> = {};
     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
       exercises.forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
@@ -181,14 +180,25 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
       });
     });
 
+    const freq: Record<string, number> = {};
     tracker.logs.forEach(log => {
-      if (log.muscleGroup) muscles.add(log.muscleGroup);
+      if (log.muscleGroup) {
+        freq[log.muscleGroup] = (freq[log.muscleGroup] || 0) + 1;
+      }
       log.exercises.forEach(ex => {
         const group = mapping[ex.name.trim().toLowerCase()] || (ex as any).muscleGroup;
-        if (group) muscles.add(group);
+        if (group) {
+          freq[group] = (freq[group] || 0) + 1;
+        }
       });
     });
-    return Array.from(muscles);
+    
+    return Object.keys(freq).sort((a, b) => {
+      if (freq[a] !== freq[b]) return freq[b] - freq[a]; // Highest frequency first
+      const indexA = MUSCLE_GROUPS.findIndex(m => m.key === a);
+      const indexB = MUSCLE_GROUPS.findIndex(m => m.key === b);
+      return indexA - indexB;
+    });
   }, [tracker.logs, tracker.customExercises]);
 
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(loggedMuscles.length > 0 ? loggedMuscles[0] : null);
@@ -348,7 +358,9 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
             <span className="section-label" style={{ fontSize: '20px' }}>{t('progress')}</span>
           </div>
           <div className="hide-scroll" style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '16px' }}>
-            {MUSCLE_GROUPS.filter(m => loggedMuscles.includes(m.key)).map(m => {
+            {loggedMuscles.map(mgKey => {
+              const m = MUSCLE_GROUPS.find(mg => mg.key === mgKey);
+              if (!m) return null;
               const isActive = selectedMuscle === m.key;
               return (
                 <button key={m.key} onClick={() => setSelectedMuscle(m.key)} style={{ flexShrink: 0, padding: '4px', borderRadius: '14px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

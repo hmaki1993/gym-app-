@@ -677,6 +677,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               onSelect={(m) => setSelectedMuscle(m as MuscleGroup)} 
               lang={lang} 
               musclesWithExercises={musclesWithExercises}
+              logs={tracker.logs}
             />
             <ExercisePicker
               search={search}

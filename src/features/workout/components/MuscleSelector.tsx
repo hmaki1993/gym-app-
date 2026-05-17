@@ -1,6 +1,7 @@
 import React from 'react';
 import TransparentImage from './TransparentImage';
 import { MUSCLE_GROUPS } from '../../../data/exercises';
+import type { WorkoutLog } from '../../../types';
 
 interface Props {
   selectedMuscle: string;
@@ -8,13 +9,42 @@ interface Props {
   lang: string;
   musclesWithExercises?: Set<string>;
   themeMode?: string;
+  logs?: WorkoutLog[];
 }
 
-const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises }) => {
+const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises, logs }) => {
+  const sortedMuscles = React.useMemo(() => {
+    if (!logs || logs.length === 0) return MUSCLE_GROUPS;
+    
+    const freq: Record<string, number> = {};
+    logs.forEach(log => {
+      // Weight the frequency slightly by recency (later logs have higher index)
+      if (log.muscleGroup) {
+        freq[log.muscleGroup] = (freq[log.muscleGroup] || 0) + 1;
+      }
+      log.exercises.forEach(ex => {
+        // Also count individual exercises if they have a mapped muscle group
+        const group = (ex as any).muscleGroup || log.muscleGroup;
+        if (group) {
+          freq[group] = (freq[group] || 0) + 1;
+        }
+      });
+    });
+
+    return [...MUSCLE_GROUPS].sort((a, b) => {
+      const freqA = freq[a.key] || 0;
+      const freqB = freq[b.key] || 0;
+      if (freqA !== freqB) return freqB - freqA; // Higher frequency first
+      
+      // Secondary sort: default order (to keep it deterministic)
+      return MUSCLE_GROUPS.indexOf(a) - MUSCLE_GROUPS.indexOf(b);
+    });
+  }, [logs]);
+
   return (
     <div className="hide-scrollbar allow-swipe" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: 25, overflowX: 'scroll', width: '100%', padding: '10px 10px 16px', marginBottom: 10, touchAction: 'pan-x', WebkitOverflowScrolling: 'touch', position: 'relative', zIndex: 10 }}>
       <div style={{ display: 'flex', gap: 25, minWidth: 'max-content' }}>
-        {MUSCLE_GROUPS.map(mg => {
+        {sortedMuscles.map(mg => {
           const isActive = selectedMuscle === mg.key;
           const hasExercises = musclesWithExercises?.has(mg.key);
           return (
