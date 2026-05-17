@@ -157,30 +157,36 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           <div onTouchStart={e => { e.stopPropagation(); setDraggingIndex(idx); }} style={{ touchAction: 'none', padding: 8, marginRight: isRtl ? 0 : 4, color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', opacity: isDragging ? 1 : 0.3 }}>
             <GripVertical size={20} />
           </div>
-          <div style={{ textAlign: isRtl ? 'right' : 'left', flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: isActive ? 'var(--accent-color)' : 'var(--text-primary)', transition: 'color 0.3s ease', fontFamily: "'Montserrat', sans-serif" }}>
-                {isRecent && <RotateCcw size={14} style={{ marginRight: 6, opacity: 0.5, verticalAlign: 'middle' }} />}{name}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+            <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: isActive ? 'var(--accent-color)' : 'var(--text-primary)', transition: 'color 0.3s ease', fontFamily: "'Montserrat', sans-serif" }}>
+                  {isRecent && <RotateCcw size={14} style={{ marginRight: 6, opacity: 0.5, verticalAlign: 'middle', flexShrink: 0 }} />}{name}
+                </div>
               </div>
+              {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
+              {customTranslations[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: "'Montserrat', sans-serif" }}>{customTranslations[name]}</div>}
             </div>
-            {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
-            {customTranslations[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.6, fontFamily: "'Montserrat', sans-serif" }}>{customTranslations[name]}</div>}
-            {lastSession && <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, fontWeight: 800, opacity: 0.5, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {isActive && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#E67E22', opacity: 0.5, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                    <Pen size={14} />
-                  </button>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#E67E22',  flexShrink: 0 }} />
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 2, minHeight: 24 }}>
+              <div>
+                {lastSession && <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 800, opacity: 0.5, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
               </div>
-            )}
-            {isActive && (
-              <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 900, opacity: 0.7 }}>
-                <img src="/assets/close-custom.png" alt="Remove" style={{ width: '16px', height: '16px', objectFit: 'contain' }} /> Remove
-              </button>
-            )}
+              
+              {isActive && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#E67E22', opacity: 0.5, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        <Pen size={14} />
+                      </button>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#E67E22', flexShrink: 0 }} />
+                  </div>
+                  <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 900, opacity: 0.7 }}>
+                    <img src="/assets/close-custom.png" alt="Remove" style={{ width: '16px', height: '16px', objectFit: 'contain' }} /> Remove
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

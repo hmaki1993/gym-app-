@@ -26,12 +26,31 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   // Synchronously compute today's session logs on initial render to prevent UI flickering
   const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted } = React.useMemo(() => {
+    const freq: Record<string, number> = {};
+    tracker.logs.forEach(log => {
+      if (log.muscleGroup) { freq[log.muscleGroup] = (freq[log.muscleGroup] || 0) + 1; }
+      log.exercises.forEach(ex => {
+        const group = (ex as any).muscleGroup || log.muscleGroup;
+        if (group) { freq[group] = (freq[group] || 0) + 1; }
+      });
+    });
+    
+    const DEFAULT_EXERCISES_KEYS = Object.keys(DEFAULT_EXERCISES);
+    const sortedMuscles = [...DEFAULT_EXERCISES_KEYS].sort((a, b) => {
+      const freqA = freq[a] || 0;
+      const freqB = freq[b] || 0;
+      if (freqA !== freqB) return freqB - freqA;
+      return DEFAULT_EXERCISES_KEYS.indexOf(a) - DEFAULT_EXERCISES_KEYS.indexOf(b);
+    });
+    
+    const bestMuscle = (sortedMuscles[0] || 'chest') as MuscleGroup;
+
     const today = tracker.getLocalDateStr();
     const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
     
     if (todayLogs.length > 0) {
       const latestLog = todayLogs[0];
-      const muscle = (latestLog.muscleGroup as MuscleGroup) || 'chest';
+      const muscle = (latestLog.muscleGroup as MuscleGroup) || bestMuscle;
       
       const allExerciseNames: string[] = [];
       const logged: Record<string, SetLog[]> = {};
@@ -56,7 +75,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     
     return {
       initialPhase: 'exercises' as const,
-      initialMuscle: 'chest' as MuscleGroup,
+      initialMuscle: bestMuscle,
       initialActiveExercises: [] as string[],
       initialLoggedData: {} as Record<string, SetLog[]>,
       initialStarted: false

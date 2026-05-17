@@ -240,12 +240,13 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
 
   const getExerciseHistory = (name: string) => {
     const history: { date: string; value: number }[] = [];
+    const exerciseUnit = tracker.getLastUsedUnit(name);
     for (const log of [...tracker.logs].reverse()) {
       const ex = log.exercises.find(e => e.name === name);
       const group = exerciseToMuscle[name.toLowerCase()] || log.muscleGroup;
       if (group !== selectedMuscle) continue;
       if (ex && ex.sets.length > 0) {
-        const max = Math.max(...ex.sets.map(s => tracker.convertWeight(s.weight, s.unit || 'kg', unit)));
+        const max = Math.max(...ex.sets.map(s => tracker.convertWeight(s.weight, s.unit || 'kg', exerciseUnit)));
         history.push({ date: log.date, value: Number(max.toFixed(1)) });
       }
     }
@@ -386,15 +387,16 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
                   if (history.length < 2) return null;
                   const latest = history[history.length - 1].value;
                   const first = history[0].value;
-                  const diff = latest - first;
+                  const diff = Number((latest - first).toFixed(1));
+                  const exerciseUnit = tracker.getLastUsedUnit(name);
                   return (
                     <div key={name}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{name}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--accent-color)', fontFamily: 'Inter, sans-serif' }}>{latest} {t(unit as any)}</span>
+                          <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--accent-color)', fontFamily: 'Inter, sans-serif' }}>{latest} {t(exerciseUnit as any)}</span>
                           {diff !== 0 && (
-                            <span style={{ fontSize: '11px', fontWeight: '800', color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)', fontFamily: 'Inter, sans-serif' }}>{diff > 0 ? '+' : ''}{diff} {t(unit as any)}</span>
+                            <span style={{ fontSize: '11px', fontWeight: '800', color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)', fontFamily: 'Inter, sans-serif' }}>{diff > 0 ? '+' : ''}{diff} {t(exerciseUnit as any)}</span>
                           )}
                         </div>
                       </div>
