@@ -432,6 +432,11 @@ export function useGymTracker() {
           }
         });
 
+        const matchingSetsCount = ex.sets.filter(s => {
+          const sInKg = convertWeight(s.weight, s.unit || 'kg', 'kg');
+          return Math.abs(sInKg - bestValInKg) < 0.01 && s.reps === bestSet.reps;
+        }).length;
+
         const existing = prMap[exNameClean];
         const existingValInKg = existing ? convertWeight(existing.weight, (existing.unit as any) || 'kg', 'kg') : 0;
 
@@ -442,7 +447,8 @@ export function useGymTracker() {
             reps: bestSet.reps, 
             unit: bestSet.unit || 'kg',
             date: log.date,
-            muscleGroup: (ex as any).muscleGroup || mapping[exNameKey] || log.muscleGroup
+            muscleGroup: (ex as any).muscleGroup || mapping[exNameKey] || log.muscleGroup,
+            setsCount: matchingSetsCount
           };
         }
       });
@@ -601,21 +607,40 @@ export function useGymTracker() {
   // Stats
   const getWeeklyCount = useCallback(() => {
     const now = new Date();
-    // Get the current day (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-    const day = now.getDay();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDate = now.getDate();
     
-    // Adjust to find the most recent Saturday
-    // In JS: Sun=0, Mon=1, ..., Sat=6. 
-    // To make Sat the start (0), we shift the day index.
-    const diff = now.getDate() - ((day + 1) % 7);
-    const startOfThisWeek = new Date(now.setDate(diff));
-    startOfThisWeek.setHours(0, 0, 0, 0);
+    // History page uses 7-day slices of the month (1-7, 8-14, 15-21, 22-28, 29-31)
+    const weekStartDay = Math.floor((currentDate - 1) / 7) * 7 + 1;
+    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const weekEndDay = Math.min(weekStartDay + 6, totalDaysInMonth);
     
-    return state.logs.filter(l => {
-      const logDate = new Date(l.date);
-      logDate.setHours(0, 0, 0, 0);
-      return logDate >= startOfThisWeek;
-    }).length;
+    // Count unique days within this slice where the user had a workout
+    const workoutDays = new Set<number>();
+    
+    state.logs.forEach(l => {
+      let y: number, m: number, d: number;
+      if (l.date.includes('T')) {
+        const logDate = new Date(l.date);
+        y = logDate.getFullYear();
+        m = logDate.getMonth();
+        d = logDate.getDate();
+      } else {
+        const parts = l.date.split('-');
+        y = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10) - 1;
+        d = parseInt(parts[2], 10);
+      }
+
+      if (y === currentYear && m === currentMonth) {
+        if (d >= weekStartDay && d <= weekEndDay) {
+          workoutDays.add(d);
+        }
+      }
+    });
+    
+    return workoutDays.size;
   }, [state.logs]);
 
   const getTotalVolume = useCallback((log: WorkoutLog, targetUnit?: WeightUnit) => {

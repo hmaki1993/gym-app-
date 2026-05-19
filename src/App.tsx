@@ -6,7 +6,6 @@ import WorkoutSession from './features/workout/WorkoutSession';
 import { HistoryPage } from './features/history/HistoryPage';
 import { ProgressPage } from './features/progress/ProgressPage';
 import { SettingsPage } from './features/settings/SettingsPage';
-import { OnboardingModal } from './features/common/OnboardingModal';
 import { BottomNav } from './features/common/BottomNav';
 import { NutritionPage } from './features/nutrition/NutritionPage';
 import gsap from 'gsap';
@@ -28,7 +27,7 @@ export default function App() {
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const isRtl = lang === 'ar';
 
-  const [tab, setTab] = useState<Tab>('home');
+  const [tab, setTab] = useState<Tab>(tracker.settings.userName ? 'home' : 'settings');
   const [showWorkout, setShowWorkout] = useState(false);
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -327,11 +326,6 @@ export default function App() {
             onTabChange={switchTab}
           />
         </>
-      )}
-
-      {/* Onboarding - Only if no profile exists */}
-      {!tracker.settings.userName && (
-        <OnboardingModal tracker={tracker} onComplete={() => { }} />
       )}
 
       {/* Workout Session Full Page */}

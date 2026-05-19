@@ -39,6 +39,7 @@ export interface PersonalRecord {
   unit?: string;
   date: string;
   muscleGroup?: string;
+  setsCount?: number;
 }
 
 export type WeightUnit = 'kg' | 'lbs' | 'balata';

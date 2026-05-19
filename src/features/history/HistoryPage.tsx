@@ -200,29 +200,27 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   padding: '6px 16px', borderRadius: '12px', border: '1.5px dashed rgba(var(--theme-rgb), 0.3)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <img 
-                      src="/assets/dumbbell-horizontal.png" 
-                      alt="" 
-                      style={{ 
-                        width: '20px', 
-                        height: '20px', 
-                        objectFit: 'contain',
-                        filter: tracker.settings.themeMode === 'dark' ? 'invert(1) brightness(2.5) contrast(1.2)' : 'none'
-                      }} 
-                    />
-                    <span style={{ fontSize: '13px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{monthWorkouts}</span>
+                    <div style={{
+                      width: '24px',
+                      height: '24px',
+                      backgroundColor: 'var(--text-secondary)',
+                      WebkitMask: 'url(/assets/dumbbell-custom.png) no-repeat center / contain',
+                      mask: 'url(/assets/dumbbell-custom.png) no-repeat center / contain',
+                      display: 'inline-block'
+                    }} />
+                    <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{monthWorkouts}</span>
                   </div>
                   <div style={{ width: '1px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{
-                      width: '20px',
-                      height: '20px',
-                      backgroundColor: 'var(--text-primary)',
+                      width: '24px',
+                      height: '24px',
+                      backgroundColor: 'var(--text-secondary)',
                       WebkitMask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
                       mask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
                       display: 'inline-block'
                     }} />
-                    <span style={{ fontSize: '13px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{monthRest}</span>
+                    <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{monthRest}</span>
                   </div>
                 </div>
               );

@@ -174,15 +174,15 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               </div>
               
               {isActive && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, transform: 'translateY(5px)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#E67E22', opacity: 0.5, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <Pen size={14} />
                       </button>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#E67E22', flexShrink: 0 }} />
                   </div>
-                  <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 900, opacity: 0.7 }}>
-                    <img src="/assets/close-custom.png" alt="Remove" style={{ width: '16px', height: '16px', objectFit: 'contain' }} /> Remove
+                  <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ padding: '4px 10px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: 10, fontWeight: 900, opacity: 0.7 }}>
+                    Remove
                   </button>
                 </div>
               )}

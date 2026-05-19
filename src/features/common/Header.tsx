@@ -39,12 +39,12 @@ export function Header({ tab, t, tracker }: Props) {
         </div>
 
         {tab === 'settings' && (
-          <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', padding: '4px', marginRight: '4px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+          <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '12px', padding: '4px', marginRight: '4px' }}>
             {(['ar', 'en'] as const).map(lg => (
               <button key={lg} onClick={() => tracker.setSettings({ language: lg })} style={{
                 padding: '6px 14px', border: 'none', borderRadius: '9px', fontSize: '10px', fontWeight: '950', cursor: 'pointer',
-                background: tracker.settings.language === lg ? 'var(--accent-color)' : 'transparent',
-                color: tracker.settings.language === lg ? '#000' : 'rgba(255, 255, 255, 0.3)',
+                background: tracker.settings.language === lg ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent',
+                color: tracker.settings.language === lg ? 'var(--accent-color)' : 'rgba(255, 255, 255, 0.3)',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}>{lg.toUpperCase()}</button>
             ))}

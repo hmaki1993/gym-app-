@@ -123,7 +123,16 @@ function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: 
                         <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
                         <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{groupName}</span>
                       </div>
-                      <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>{pr.weight} {t((pr.unit || unit) as any)} × {pr.reps}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
+                          {pr.weight} {t((pr.unit || unit) as any)} × {pr.reps}
+                        </span>
+                        {pr.setsCount && pr.setsCount > 0 && (
+                          <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                            {pr.setsCount} {lang === 'ar' ? 'مجموعات' : 'SETS'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </React.Fragment>

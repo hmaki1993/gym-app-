@@ -134,30 +134,25 @@ export function SessionLogger({
           );
         })}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-        <button 
-          onClick={onSave} 
-          style={{ 
-            background: 'rgba(var(--accent-rgb, 0, 230, 118), 0.1)',
-            border: '1px solid var(--accent-color)',
-            color: 'var(--accent-color)',
-            padding: '12px 30px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: '900',
-            letterSpacing: '1px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 max(24px, env(safe-area-inset-bottom)) 0', marginTop: '16px' }}>
+        <img
+          src="/assets/button-stop-rect.png"
+          alt="Finish Session"
+          onClick={onSave}
+          style={{
+            height: '55px',
+            width: 'auto',
+            objectFit: 'contain',
             cursor: 'pointer',
-            fontFamily: "'Montserrat', sans-serif",
-            touchAction: 'manipulation'
+            transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+            userSelect: 'none',
+            WebkitUserSelect: 'none'
           }}
-        >
-          <img src="/assets/trophy-custom.png" style={{ width: 16, height: 16, objectFit: 'contain' }} alt="Trophy" />
-          {t('finishSession').toUpperCase()}
-        </button>
+          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.94)'}
+          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+          onTouchStart={e => e.currentTarget.style.transform = 'scale(0.94)'}
+          onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+        />
       </div>
     </div>
   );

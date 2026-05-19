@@ -233,8 +233,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   {(() => {
                     const exerciseToMuscle: Record<string, string> = {};
@@ -258,7 +258,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                     });
                   })()}
                 </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ 
                     fontSize: '21px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', 
                     letterSpacing: '-0.8px', fontFamily: "'Montserrat', sans-serif", lineHeight: 1,
@@ -286,24 +286,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                 </div>
               </div>
 
-                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '4px', lineHeight: 1 }}>
-                    <span style={{ fontSize: '18px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
-                      {recentLog.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)}
-                    </span>
-                    <span style={{ fontSize: '9px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', letterSpacing: '0.5px' }}>
-                      SETS
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '4px', lineHeight: 1 }}>
-                    <span style={{ fontSize: '18px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
-                      {recentLog.exercises.length}
-                    </span>
-                    <span style={{ fontSize: '9px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', letterSpacing: '0.5px' }}>
-                      EXERCISES
-                    </span>
-                  </div>
-                </div>
+
             </div>
           </div>
         ) : (

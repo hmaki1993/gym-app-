@@ -372,77 +372,28 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
       </div>
 
       {/* Footer */}
-      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', background: 'var(--primary-bg)', borderTop: '2px solid rgba(var(--theme-rgb), 0.25)', transformStyle: 'preserve-3d' }}>
-        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px 0' }}>
-          <button 
-            onClick={handleDone} 
-            disabled={saving || !isDirtyRef || sets.every(s => !Number(s.reps))} 
-            style={{ 
-              background: 'none', 
-              border: '2px solid var(--accent-color)', 
-              color: 'var(--accent-color)', 
-              fontSize: 14, 
-              fontWeight: 950, 
-              padding: '16px 50px', 
-              width: 'fit-content', 
-              cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer', 
-              pointerEvents: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'auto', 
-              textTransform: 'uppercase', 
-              letterSpacing: '4px', 
-              outline: 'none', 
-              opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.3 : 1, 
-              fontFamily: "'Montserrat', sans-serif", 
-              position: 'relative',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              clipPath: 'polygon(0% 15%, 5% 0%, 95% 0%, 100% 15%, 100% 85%, 95% 100%, 5% 100%, 0% 85%, 0% 50%)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
+      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%', background: 'var(--primary-bg)', borderTop: 'none', transformStyle: 'preserve-3d' }}>
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px 0 0 0' }}>
+          <img
+            src="/assets/button-done-rect.png"
+            alt="Save Sets"
+            onClick={() => !saving && isDirtyRef && !sets.every(s => !Number(s.reps)) && handleDone()}
+            style={{
+              height: '55px',
+              width: 'auto',
+              objectFit: 'contain',
+              cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer',
+              opacity: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 0.35 : 1,
+              transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              pointerEvents: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'none' : 'auto',
             }}
-            onMouseDown={e => {
-              e.currentTarget.style.transform = 'scale(0.94)';
-              e.currentTarget.style.background = 'var(--accent-color)';
-              e.currentTarget.style.color = '#000';
-              e.currentTarget.style.boxShadow = '0 0 50px var(--accent-color)';
-            }}
-            onMouseUp={e => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.background = 'none';
-              e.currentTarget.style.color = 'var(--accent-color)';
-              e.currentTarget.style.boxShadow = '0 0 25px var(--accent-color-alpha), inset 0 0 10px var(--accent-color-alpha)';
-            }}
-          >
-            <span style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '8px',
-              position: 'relative'
-            }}>
-              {saving ? (lang === 'ar' ? 'جاري...' : 'SAVING...') : (
-                <>
-                  <span style={{ 
-                    letterSpacing: '3px',
-                    color: 'var(--accent-color)',
-                    fontWeight: 900,
-                    fontSize: 16
-                  }}>S E T   S A</span>
-                  
-                  <div style={{ display: 'inline-flex', transform: 'translateY(-1px)' }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent-color)" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                    </svg>
-                  </div>
-                  
-                  <span style={{ 
-                    letterSpacing: '3px',
-                    color: 'var(--accent-color)',
-                    fontWeight: 900,
-                    fontSize: 16
-                  }}>E D</span>
-                </>
-              )}
-            </span>
-          </button>
+            onMouseDown={e => { if (!saving && isDirtyRef) e.currentTarget.style.transform = 'scale(0.94)'; }}
+            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+            onTouchStart={e => { if (!saving && isDirtyRef) e.currentTarget.style.transform = 'scale(0.94)'; }}
+            onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+          />
         </div>
         
         <style>{`

@@ -708,38 +708,27 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               tracker={tracker}
               t={t as any}
             />
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', marginTop: '4px' }}>
-              <button 
-                onClick={() => setPhase('logging')} 
-                disabled={activeExercises.length === 0} 
-                style={{ 
-                  background: hasStartedSession ? 'rgba(var(--accent-rgb), 0.1)' : 'transparent',
-                  border: '1px solid var(--accent-color)',
-                  color: 'var(--accent-color)',
-                  padding: '12px 30px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: '900',
-                  letterSpacing: '1px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  opacity: activeExercises.length === 0 ? 0.3 : 1,
-                  
-                  cursor: 'pointer',
-                  fontFamily: "'Montserrat', sans-serif",
-                  touchAction: 'manipulation'
-                }}
-              >
-                <Play size={16} strokeWidth={3} fill="currentColor" />
-                {hasStartedSession 
-                  ? (lang === 'ar' ? 'استكمال التمرين' : 'RESUME SESSION')
-                  : (Object.keys(loggedData).length > 0 
-                    ? (lang === 'ar' ? 'استكمال التمرين' : 'RESUME WORKOUT') 
-                    : t('startWorkout').toUpperCase())
-                }
-              </button>
-            </div>
+             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'max(24px, env(safe-area-inset-bottom))', marginTop: '20px' }}>
+               <img
+                 src="/assets/button-start-rect.png"
+                 alt="Start Workout"
+                 onClick={() => activeExercises.length > 0 && setPhase('logging')}
+                 style={{
+                   height: '55px',
+                   width: 'auto',
+                   objectFit: 'contain',
+                   cursor: activeExercises.length > 0 ? 'pointer' : 'default',
+                   opacity: activeExercises.length === 0 ? 0.6 : 1,
+                   transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                   userSelect: 'none',
+                   WebkitUserSelect: 'none'
+                 }}
+                 onMouseDown={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(0.94)')}
+                 onMouseUp={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
+                 onTouchStart={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(0.94)')}
+                 onTouchEnd={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
+               />
+             </div>
           </>
         )}
 
