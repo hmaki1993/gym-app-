@@ -169,7 +169,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             src={hasWorkoutToday 
               ? (tracker.settings.themeMode === 'light' ? "/assets/stopwatch-stop-light.png" : "/assets/stopwatch-stop.png") 
               : (tracker.settings.themeMode === 'light' ? "/assets/stopwatch-ultra-clean-v3-light.png" : "/assets/stopwatch-ultra-clean-v3.png")}
-            alt={hasWorkoutToday ? "Resume" : "Start"} 
+            alt={hasWorkoutToday ? "Resume" : "Start"}  
             style={{ 
               width: '100%', 
               height: 'auto', 
@@ -288,8 +288,92 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             </div>
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '15px', opacity: 0.2 }}>
-            <div style={{ fontSize: '8px', fontWeight: '950', letterSpacing: '2px', color: 'var(--text-secondary)' }}>NO RECENT SESSIONS</div>
+          <div 
+            onClick={onStartWorkout}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
+            onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            style={{
+              padding: '24px 20px', 
+              background: tracker.settings.themeMode === 'dark' ? '#0a0a0a' : '#ffffff',
+              border: tracker.settings.themeMode === 'dark' ? '1.5px dashed rgba(230, 126, 34, 0.4)' : '1.5px dashed rgba(0,0,0,0.15)',
+              borderRadius: '20px',
+              margin: '0 0px -10px',
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: tracker.settings.themeMode === 'dark' ? '0 10px 30px rgba(0,0,0,0.4)' : '0 10px 30px rgba(0,0,0,0.03)',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+              {/* Left Burst SVG */}
+              <svg width="24" height="24" viewBox="0 0 30 30" fill="none" style={{ flexShrink: 0, marginRight: '4px' }}>
+                <line x1="25" y1="15" x2="10" y2="5" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
+                <line x1="25" y1="15" x2="5" y2="15" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
+                <line x1="25" y1="15" x2="10" y2="25" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
+              </svg>
+              
+              {/* Slanted "START" Badge */}
+              <div style={{
+                background: '#E67E22',
+                color: '#ffffff',
+                fontWeight: '950',
+                fontSize: '15px',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                transform: 'rotate(-5deg)',
+                border: tracker.settings.themeMode === 'dark' ? '2px solid #ffffff' : '2px solid #000000',
+                boxShadow: tracker.settings.themeMode === 'dark' ? '2.5px 2.5px 0px #ffffff' : '2.5px 2.5px 0px #000000',
+                fontFamily: "'Montserrat', sans-serif",
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
+              }}>
+                START
+              </div>
+
+              {/* "FIRST TRAINING" */}
+              <div style={{
+                fontSize: '17px',
+                fontWeight: '950',
+                color: tracker.settings.themeMode === 'dark' ? '#ffffff' : '#000000',
+                fontFamily: "'Montserrat', sans-serif",
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                display: 'inline-block',
+                position: 'relative',
+                marginLeft: '4px'
+              }}>
+                FIRST TRAINING
+                {/* Sketchy underline */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-4px',
+                  left: '0',
+                  right: '0',
+                  height: '3px',
+                  background: '#E67E22',
+                  borderRadius: '2px',
+                  transform: 'skewX(-10deg)'
+                }} />
+              </div>
+
+              {/* Right Burst SVG */}
+              <svg width="24" height="24" viewBox="0 0 30 30" fill="none" style={{ flexShrink: 0, marginLeft: '4px' }}>
+                <line x1="5" y1="15" x2="20" y2="5" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
+                <line x1="5" y1="15" x2="25" y2="15" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
+                <line x1="5" y1="15" x2="20" y2="25" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-secondary)', opacity: 0.75, letterSpacing: '1.5px', marginTop: '16px', textTransform: 'uppercase' }}>
+              {lang === 'ar' ? 'اضغط هنا لبدء أول تمرين لك! 🏋️‍♂️' : 'TAP HERE TO BEGIN YOUR FIRST WORKOUT! 🏋️‍♂️'}
+            </div>
           </div>
         )}
       </div>
