@@ -297,11 +297,11 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     fontSize: 'clamp(14px, 4vw, 17px)', 
                     fontWeight: active ? '950' : (isToday ? '950' : '800'),
-                    color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
+                    color: active ? 'var(--accent-color)' : (isToday ? '#E67E22' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
                     cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (worked ? 'rgba(var(--theme-rgb), 0.03)' : 'transparent')),
+                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(230, 126, 34, 0.08)' : (worked ? 'rgba(var(--theme-rgb), 0.03)' : 'transparent')),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : (worked ? '1px solid rgba(var(--theme-rgb), 0.1)' : '1px solid transparent')),
+                    border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid rgba(230, 126, 34, 0.3)' : (worked ? '1px solid rgba(var(--theme-rgb), 0.1)' : '1px solid transparent')),
                     transform: active ? 'scale(1.05)' : 'scale(1)',
                     paddingTop: dayMuscles.length > 0 ? '2px' : '0px',
                     boxSizing: 'border-box'
@@ -334,7 +334,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   {isToday && !active && (
                      <div style={{ 
                        position: 'absolute', inset: '-2px', borderRadius: '50%', 
-                       border: '2px solid var(--accent-color)', 
+                       border: '2px solid #E67E22', 
                        
                      }} />
                   )}
