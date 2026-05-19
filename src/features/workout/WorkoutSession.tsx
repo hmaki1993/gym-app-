@@ -35,14 +35,14 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     const MUSCLE_KEYS = Object.keys(DEFAULT_EXERCISES) as MuscleGroup[];
     let bestMuscle = 'chest' as MuscleGroup;
 
-    // Smart muscle selection: find the muscle not trained for the longest time
+    // 1. Calculate when each muscle was last trained
     const lastTrainedByMuscle: Record<string, string | null> = {};
     MUSCLE_KEYS.forEach(muscle => {
       const lastLog = tracker.logs.find(l => l.muscleGroup === muscle);
       lastTrainedByMuscle[muscle] = lastLog ? lastLog.date : null;
     });
 
-    // Sort: never trained first, then oldest date first
+    // Fallback sort: never trained first, then oldest date first
     const sortedByNeeded = [...MUSCLE_KEYS].sort((a, b) => {
       const dateA = lastTrainedByMuscle[a];
       const dateB = lastTrainedByMuscle[b];
@@ -52,7 +52,71 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       return dateA < dateB ? -1 : 1; // older date → comes first
     });
 
-    bestMuscle = sortedByNeeded[0];
+    // 2. Try sequence prediction based on historical transition patterns
+    let predictedNextMuscle: MuscleGroup | null = null;
+    if (tracker.logs && tracker.logs.length > 0) {
+      // Sort logs chronologically (oldest to newest)
+      const sortedLogs = [...tracker.logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      // Extract sequence of trained muscle groups, collapsing consecutive duplicates
+      const trainedSequence: MuscleGroup[] = [];
+      sortedLogs.forEach(log => {
+        if (log.muscleGroup) {
+          if (trainedSequence.length === 0 || trainedSequence[trainedSequence.length - 1] !== log.muscleGroup) {
+            trainedSequence.push(log.muscleGroup as MuscleGroup);
+          }
+        }
+      });
+
+      if (trainedSequence.length > 0) {
+        const lastMuscle = trainedSequence[trainedSequence.length - 1];
+        
+        // Build transition frequency counts
+        const transitions: Record<string, Record<string, number>> = {};
+        for (let i = 0; i < trainedSequence.length - 1; i++) {
+          const current = trainedSequence[i];
+          const next = trainedSequence[i + 1];
+          if (!transitions[current]) {
+            transitions[current] = {};
+          }
+          transitions[current][next] = (transitions[current][next] || 0) + 1;
+        }
+
+        const nextMuscleCandidates = transitions[lastMuscle];
+        if (nextMuscleCandidates) {
+          let maxCount = 0;
+          let candidates: MuscleGroup[] = [];
+          
+          (Object.keys(nextMuscleCandidates) as MuscleGroup[]).forEach(muscle => {
+            const count = nextMuscleCandidates[muscle];
+            if (count > maxCount) {
+              maxCount = count;
+              candidates = [muscle];
+            } else if (count === maxCount) {
+              candidates.push(muscle);
+            }
+          });
+
+          if (candidates.length === 1) {
+            predictedNextMuscle = candidates[0];
+          } else if (candidates.length > 1) {
+            // Tie breaker: pick the one not trained for the longest time
+            let oldestTime = Infinity;
+            let chosen = candidates[0];
+            candidates.forEach(muscle => {
+              const lastLogTime = lastTrainedByMuscle[muscle] ? new Date(lastTrainedByMuscle[muscle]!).getTime() : 0;
+              if (lastLogTime < oldestTime) {
+                oldestTime = lastLogTime;
+                chosen = muscle;
+              }
+            });
+            predictedNextMuscle = chosen;
+          }
+        }
+      }
+    }
+
+    bestMuscle = predictedNextMuscle || sortedByNeeded[0];
 
     const today = tracker.getLocalDateStr();
     const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
