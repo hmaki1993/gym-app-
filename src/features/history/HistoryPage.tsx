@@ -210,7 +210,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     }} />
                     <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{monthWorkouts}</span>
                   </div>
-                  <div style={{ width: '1px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                  <div style={{ width: '1px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{
                       width: '24px',
@@ -299,9 +299,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     fontWeight: active ? '950' : (isToday ? '950' : '800'),
                     color: active ? 'var(--accent-color)' : (isToday ? 'var(--accent-color)' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
                     cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (worked ? 'rgba(255,255,255,0.03)' : (isPast ? 'rgba(var(--accent-secondary-rgb), 0.08)' : 'transparent'))),
+                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(var(--theme-rgb), 0.05)' : (worked ? 'rgba(var(--theme-rgb), 0.03)' : 'transparent')),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : (worked ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent')),
+                    border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid var(--accent-color-alpha)' : (worked ? '1px solid rgba(var(--theme-rgb), 0.1)' : '1px solid transparent')),
                     transform: active ? 'scale(1.05)' : 'scale(1)',
                     paddingTop: dayMuscles.length > 0 ? '2px' : '0px',
                     boxSizing: 'border-box'
@@ -363,7 +363,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           </div>
           
           {/* Horizontal Divider */}
-          <div style={{ height: '1px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', width: '100%' }} />
+          <div style={{ height: '1px', background: 'rgba(var(--theme-rgb), 0.05)', width: '100%' }} />
 
           <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
             {(() => {
@@ -454,7 +454,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     </div>
                     {/* Vertical Divider */}
                     {idx < displayWeeks.length - 1 && (
-                      <div style={{ width: '1px', height: '40px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
+                      <div style={{ width: '1px', height: '40px', background: 'rgba(var(--theme-rgb), 0.05)' }} />
                     )}
                   </div>
                 );
@@ -524,10 +524,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   display: 'flex', alignItems: 'center', gap: '4px', zIndex: 20,
                   background: 'transparent',
                   padding: '4px 6px', borderRadius: '12px',
-                  border: tracker.settings.themeMode === 'dark' ? '1px dashed rgba(255,255,255,0.2)' : '1px dashed rgba(0,0,0,0.1)',
+                  border: tracker.settings.themeMode === 'dark' ? '1px dashed rgba(var(--theme-rgb), 0.2)' : '1px dashed rgba(0,0,0,0.1)',
                 }}>
                   <button onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.6)', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={16} /></button>
-                  <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
+                  <div style={{ width: '1px', height: '12px', background: 'rgba(var(--theme-rgb), 0.1)', margin: '0 2px' }} />
                   <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}>
                     <img src="/assets/arrow-custom.png" alt="Toggle" style={{ width: '22px', height: '22px', objectFit: 'contain', transform: 'rotate(90deg)' }} />
                   </button>
@@ -548,13 +548,13 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <img src="/assets/calendar-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
-                          <span style={{ fontSize: '14px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '-0.3px' }}>{formatDate(log.date, lang)}</span>
+                          <span style={{ fontSize: '14px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '950', letterSpacing: '-0.3px' }}>{formatDate(log.date, lang)}</span>
                         </div>
                         {log.startTime && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <div style={{ width: '1.5px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', margin: '0 2px' }} />
+                            <div style={{ width: '1.5px', height: '12px', background: 'rgba(var(--theme-rgb), 0.2)', margin: '0 2px' }} />
                             <img src="/assets/clock-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
-                            <span style={{ fontSize: '14px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', opacity: 1, letterSpacing: '-0.3px' }}>{formatTime(log.startTime, lang)}</span>
+                            <span style={{ fontSize: '14px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '950', opacity: 1, letterSpacing: '-0.3px' }}>{formatTime(log.startTime, lang)}</span>
                           </div>
                         )}
                       </div>
@@ -565,17 +565,17 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 <div style={{ display: 'grid', gridTemplateRows: expandedLogId === log.id ? '1fr' : '0fr', transition: 'grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1)', overflow: 'hidden' }}>
                   <div style={{ minHeight: 0 }}>
                     <div style={{ paddingTop: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)', borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)', marginBottom: '24px', gap: '4px', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.4s ease' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.08)' : '1px solid rgba(0,0,0,0.08)', borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.08)' : '1px solid rgba(0,0,0,0.08)', marginBottom: '24px', gap: '4px', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.4s ease' }}>
                         {[
                           { label: t('exercises'), value: log.exercises.length },
                           { label: t('totalSets'), value: totalSets },
                           { label: t('duration'), value: formatDuration(log.durationMinutes, t) },
                         ].map((stat, idx) => (
                           <React.Fragment key={stat.label}>
-                            {idx > 0 && <div style={{ width: '1px', height: '24px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />}
+                            {idx > 0 && <div style={{ width: '1px', height: '24px', background: 'rgba(var(--theme-rgb), 0.1)' }} />}
                             <div style={{ flex: 1, textAlign: 'center' }}>
                               <div style={{ fontSize: '20px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: "'Montserrat', sans-serif" }}>{stat.value}</div>
-                              <div style={{ fontSize: '10px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                              <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
                             </div>
                           </React.Fragment>
                         ))}
@@ -618,12 +618,12 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                 {ex.isFirstInGroup && exIdx > 0 && (
                                   <div style={{ height: '8px' }} />
                                 )}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)', transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`, background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: '10px 12px', borderRadius: '12px', borderLeft: ex.isFirstInGroup ? '2px solid var(--accent-color)' : 'none' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)', transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`, background: 'rgba(var(--theme-rgb), 0.03)', padding: '10px 12px', borderRadius: '12px', borderLeft: ex.isFirstInGroup ? '2px solid var(--accent-color)' : 'none' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                       <span style={{ fontSize: '15px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.name}</span>
-                                      <span style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px' }}>{lang === 'ar' ? mg?.ar : mg?.en}</span>
+                                      <span style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.95, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px' }}>{lang === 'ar' ? mg?.ar : mg?.en}</span>
                                     </div>
                                     {isPR && (
                                       <div style={{ fontSize: '8px', fontWeight: '950', color: '#E67E22', background: 'rgba(230, 126, 34, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>PR</div>
@@ -632,9 +632,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                     <div style={{ textAlign: 'right' }}>
                                       <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.sets.length}</span>
-                                      <span style={{ fontSize: '10px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginLeft: '4px' }}>SETS</span>
+                                      <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--text-secondary)', opacity: 0.9, marginLeft: '4px' }}>SETS</span>
                                     </div>
-                                    <div style={{ width: '1px', height: '12px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                                    <div style={{ width: '1px', height: '12px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
                                     <div style={{ textAlign: 'right' }}>
                                        <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
                                        <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t((bestSet as any).unit as any)}</span>
@@ -662,7 +662,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                         const totalFat = dayNutrition.reduce((sum: number, l: any) => sum + l.fats, 0);
 
                         return (
-                          <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(10px)', transition: 'all 0.4s ease 0.2s' }}>
+                          <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.1)' : '1px solid rgba(0,0,0,0.1)', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(10px)', transition: 'all 0.4s ease 0.2s' }}>
                             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                               <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '4px', textTransform: 'uppercase', opacity: 0.8, marginBottom: '8px' }}>Daily Nutrition Log</div>
                               <div style={{ width: '30px', height: '2px', background: 'var(--accent-color)', margin: '0 auto', opacity: 0.3, borderRadius: '2px' }} />
@@ -676,10 +676,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                 { label: 'FATS', value: `${totalFat.toFixed(0)}g` },
                               ].map((stat, idx) => (
                                 <React.Fragment key={stat.label}>
-                                  {idx > 0 && <div style={{ width: '1px', height: '16px', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />}
+                                  {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(var(--theme-rgb), 0.1)' }} />}
                                   <div style={{ flex: 1, textAlign: 'center' }}>
                                     <div style={{ fontSize: '15px', fontWeight: '950', color: idx === 0 ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : '#000'), fontFamily: 'Inter, sans-serif' }}>{stat.value}</div>
-                                    <div style={{ fontSize: '10px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                                    <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
                                   </div>
                                 </React.Fragment>
                               ))}
@@ -687,11 +687,11 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0 10px 0' }}>
                               {dayNutrition.map((food: any, fIdx: number) => (
-                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: '8px 12px', borderRadius: '10px' }}>
+                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(var(--theme-rgb), 0.03)', padding: '8px 12px', borderRadius: '10px' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#E67E22' }} />
                                     <span style={{ fontSize: '14px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', opacity: 0.9 }}>{food.nameAr || food.name}</span>
-                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>x{food.servingSize}</span>}
+                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.5)' }}>x{food.servingSize}</span>}
                                   </div>
                                   <div style={{ textAlign: 'right', minWidth: '60px' }}>
                                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{food.calories}</span>
