@@ -12,7 +12,7 @@ interface Props {
   logs?: WorkoutLog[];
 }
 
-const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises, logs }) => {
+const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // Auto-scroll to the selected muscle
