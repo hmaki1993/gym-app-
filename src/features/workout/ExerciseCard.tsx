@@ -72,7 +72,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
           lineHeight: 1, 
           transition: 'all 0.2s ease',
           background: 'transparent',
-          border: '1.5px dashed rgba(var(--theme-rgb), 0.3)',
+          border: '1.5px dashed #FF9800',
           borderRadius: '50%',
           padding: '0 4px',
           boxSizing: 'border-box'
@@ -92,9 +92,8 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
       <div style={{ 
         fontSize: 10, 
         fontWeight: 950, 
-        color: 'var(--text-secondary)', 
+        color: 'var(--text-primary)', 
         textTransform: 'uppercase', 
-        opacity: 0.9, 
         letterSpacing: '1px', 
         fontFamily: "'Montserrat', sans-serif",
         width: 48,
