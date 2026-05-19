@@ -30,12 +30,11 @@ interface Props {
   handleTouchEnd: () => void;
   draggingIndex: number | null;
   customExercises: Record<string, string[]>;
-  t: (k: any) => string;
 }
 
 export function SessionLogger({
   activeExercises, loggedData, onOpenExercise, onSave,
-  handleTouchStart, handleTouchMove, handleTouchEnd, draggingIndex, customExercises, t
+  handleTouchStart, handleTouchMove, handleTouchEnd, draggingIndex, customExercises
 }: Props) {
 
   return (

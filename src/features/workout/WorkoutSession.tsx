@@ -4,9 +4,6 @@ import type { MuscleGroup, SetLog, ExerciseLog, WorkoutLog } from '../../types';
 import { DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
 import { ExerciseCard } from './ExerciseCard';
-import {
-  Play
-} from 'lucide-react';
 import gsap from 'gsap';
 
 import { MuscleSelector } from './components/MuscleSelector';
@@ -25,7 +22,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   // const isRtl = lang === 'ar';
 
   // Synchronously compute today's session logs on initial render to prevent UI flickering
-  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted } = React.useMemo(() => {
+  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData } = React.useMemo(() => {
     const freq: Record<string, number> = {};
     tracker.logs.forEach(log => {
       if (log.muscleGroup) { freq[log.muscleGroup] = (freq[log.muscleGroup] || 0) + 1; }
@@ -90,7 +87,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [hasStartedSession, setHasStartedSession] = useState(initialStarted);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
@@ -103,7 +99,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   // Initialize base time
   useEffect(() => {
     if (phase === 'logging' && selectedMuscle) {
-      setHasStartedSession(true);
       if (savedElapsedRef.current !== null) {
         baseSecondsRef.current = savedElapsedRef.current;
         sessionStartTimeRef.current = Date.now();
@@ -744,7 +739,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             handleTouchEnd={handleTouchEnd}
             draggingIndex={draggingIndex}
             customExercises={tracker.customExercises}
-            t={t}
           />
         )}
       </div>
