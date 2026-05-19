@@ -108,7 +108,7 @@ export function SessionLogger({
                         fontSize: '10px', 
                         fontWeight: '900', 
                         color: 'var(--text-secondary)', 
-                        opacity: 0.7, 
+                        opacity: 0.95, 
                         textTransform: 'uppercase', 
                         letterSpacing: '1px',
                         marginTop: '2px',
