@@ -215,17 +215,20 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const profile = settings.nutritionProfile;
 
   const calculateTargets = (p: any) => {
-    const bmr = (10 * p.weight) + (6.25 * p.height) - (5 * p.age) + (p.gender === 'male' ? 5 : -161);
-    const tdee = bmr * p.activityLevel;
+    const w = Number(p.weight) || 80;
+    const h = Number(p.height) || 180;
+    const a = Number(p.age) || 25;
+    const bmr = (10 * w) + (6.25 * h) - (5 * a) + (p.gender === 'male' ? 5 : -161);
+    const tdee = bmr * (Number(p.activityLevel) || 1.375);
     let targetCal = tdee;
-    if (p.goal === 'lose') targetCal -= (p.goalRate * 7700 / 7);
-    if (p.goal === 'gain') targetCal += (p.goalRate * 7700 / 7);
+    if (p.goal === 'lose') targetCal -= ((Number(p.goalRate) || 0.5) * 7700 / 7);
+    if (p.goal === 'gain') targetCal += ((Number(p.goalRate) || 0.5) * 7700 / 7);
 
     return {
-      calories: Math.round(targetCal),
-      protein: Math.round((targetCal * (p.proteinRatio / 100)) / 4),
-      carbs: Math.round((targetCal * (p.carbsRatio / 100)) / 4),
-      fats: Math.round((targetCal * (p.fatsRatio / 100)) / 9),
+      calories: Math.round(targetCal) || 2500,
+      protein: Math.round((targetCal * ((Number(p.proteinRatio) || 30) / 100)) / 4) || 180,
+      carbs: Math.round((targetCal * ((Number(p.carbsRatio) || 40) / 100)) / 4) || 250,
+      fats: Math.round((targetCal * ((Number(p.fatsRatio) || 30) / 100)) / 9) || 80,
     };
   };
 
@@ -236,8 +239,9 @@ export function NutritionPage({ tracker }: { tracker: any }) {
     fats: Math.round((settings.dailyCalorieGoal || 2500) * 0.3 / 9) 
   };
 
-  const calorieGoal = targets.calories;
-  const remainingCal = Math.max(0, calorieGoal - consumedCal);
+  const calorieGoal = Number(targets.calories) || 2500;
+  const safeConsumedCal = Number(consumedCal) || 0;
+  const remainingCal = isNaN(calorieGoal - safeConsumedCal) ? 0 : Math.max(0, calorieGoal - safeConsumedCal);
 
   // ── SCAN: Open native camera → analyze → show result card ──
   const handleScan = async (category: string = 'Breakfast') => {
@@ -390,11 +394,11 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             }}>
               {/* Meal Name */}
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontSize: '20px', fontWeight: '950', color: '#ffffff', fontFamily: "'Montserrat', sans-serif" }}>
+                <div style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
                   {scanResult.name}
                 </div>
                 {scanResult.nameAr && (
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: 'rgba(var(--theme-rgb), 0.5)', marginTop: '4px' }}>
                     {scanResult.nameAr}
                   </div>
                 )}
@@ -414,15 +418,15 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 10px', marginBottom: '24px' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ color: '#ffcc00', fontSize: '20px', fontWeight: '950', fontFamily: "'Montserrat', sans-serif" }}>{(scanResult.fats * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Fats</div>
+                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Fats</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ color: '#4da6ff', fontSize: '20px', fontWeight: '950', fontFamily: "'Montserrat', sans-serif" }}>{(scanResult.carbs * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Carbs</div>
+                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Carbs</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ color: '#ff0033', fontSize: '20px', fontWeight: '950', fontFamily: "'Montserrat', sans-serif" }}>{(scanResult.protein * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Protein</div>
+                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Protein</div>
                 </div>
               </div>
 
@@ -433,19 +437,19 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               }}>
                 <button 
                   onClick={() => setServingSize(Math.max(0.5, servingSize - 0.5))}
-                  style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#ffffff', fontSize: '20px', fontWeight: '900' }}
+                  style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(var(--theme-rgb), 0.1)', color: 'var(--text-primary)', fontSize: '20px', fontWeight: '900' }}
                 >
                   -
                 </button>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '20px', fontWeight: '950', color: '#ffffff', fontFamily: "'Montserrat', sans-serif" }}>x{servingSize}</div>
-                  <div style={{ fontSize: '11px', fontWeight: '900', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Servings</div>
+                  <div style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>x{servingSize}</div>
+                  <div style={{ fontSize: '11px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Servings</div>
                 </div>
                 <button 
                   onClick={() => setServingSize(servingSize + 0.5)}
                   style={{ 
                     width: '36px', height: '36px', borderRadius: '12px', 
-                    background: 'rgba(255,255,255,0.1)', border: 'none',
+                    background: 'rgba(var(--theme-rgb), 0.1)', border: 'none',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer'
                   }}
@@ -463,8 +467,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     style={{
                       flex: 1, padding: '8px 4px', borderRadius: '10px', fontSize: '10px', fontWeight: '800',
                       background: 'transparent',
-                      color: targetCategory === cat ? 'var(--accent-color)' : 'rgba(255,255,255,0.4)',
-                      border: targetCategory === cat ? '1.5px dashed var(--accent-color)' : '1px dashed rgba(255,255,255,0.15)',
+                      color: targetCategory === cat ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.4)',
+                      border: targetCategory === cat ? '1.5px dashed var(--accent-color)' : '1px dashed rgba(var(--theme-rgb), 0.15)',
                       transition: 'all 0.2s ease'
                     }}
                   >
@@ -479,8 +483,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                   style={{ 
                     flex: 1, height: '52px', borderRadius: '18px', 
                     background: 'transparent', 
-                    border: '1.5px solid rgba(255,255,255,0.2)', 
-                    color: '#ffffff', fontWeight: '900', fontSize: '14px'
+                    border: '1.5px solid rgba(var(--theme-rgb), 0.2)', 
+                    color: 'var(--text-primary)', fontWeight: '900', fontSize: '14px'
                   }}
                 >
                   Scan New
@@ -689,7 +693,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             onClick={handleBarcodeScan}
             style={{
               width: '50px', height: '50px', borderRadius: '16px',
-              background: 'rgba(255, 255, 255, 0.85)', border: 'none',
+              background: 'rgba(var(--theme-rgb), 0.85)', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer',
               transition: 'all 0.3s ease'
@@ -731,17 +735,18 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 <circle cx="50" cy="50" r="44" fill="transparent" stroke="rgba(var(--theme-rgb), 0.2)" strokeWidth="7" />
                 {(() => {
                   const circumference = 2 * Math.PI * 44;
-                  const pCal = consumedPro * 4;
-                  const cCal = consumedCarb * 4;
-                  const fCal = consumedFat * 9;
-                  const pLen = (pCal / calorieGoal) * circumference;
-                  const cLen = (cCal / calorieGoal) * circumference;
-                  const fLen = (fCal / calorieGoal) * circumference;
+                  const pCal = (Number(consumedPro) || 0) * 4;
+                  const cCal = (Number(consumedCarb) || 0) * 4;
+                  const fCal = (Number(consumedFat) || 0) * 9;
+                  const safeGoal = Number(calorieGoal) || 2500;
+                  const pLen = isNaN(pCal / safeGoal) ? 0 : (pCal / safeGoal) * circumference;
+                  const cLen = isNaN(cCal / safeGoal) ? 0 : (cCal / safeGoal) * circumference;
+                  const fLen = isNaN(fCal / safeGoal) ? 0 : (fCal / safeGoal) * circumference;
                   return (
                     <>
                       <circle cx="50" cy="50" r="44" fill="transparent" stroke="#ffcc00" strokeWidth="7" strokeDasharray={`${fLen} ${circumference}`} strokeDashoffset={0} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
-                      <circle cx="50" cy="50" r="44" fill="transparent" stroke="#4da6ff" strokeWidth="7" strokeDasharray={`${cLen} ${circumference}`} strokeDashoffset={-fLen} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
-                      <circle cx="50" cy="50" r="44" fill="transparent" stroke="#ff4d4d" strokeWidth="7" strokeDasharray={`${pLen} ${circumference}`} strokeDashoffset={-(fLen + cLen)} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
+                      <circle cx="50" cy="50" r="44" fill="transparent" stroke="#4da6ff" strokeWidth="7" strokeDasharray={`${cLen} ${circumference}`} strokeDashoffset={-fLen || 0} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
+                      <circle cx="50" cy="50" r="44" fill="transparent" stroke="#ff4d4d" strokeWidth="7" strokeDasharray={`${pLen} ${circumference}`} strokeDashoffset={-(fLen + cLen) || 0} transform="rotate(-90 50 50)" style={{ transition: 'all 1s ease' }} />
                     </>
                   );
                 })()}
