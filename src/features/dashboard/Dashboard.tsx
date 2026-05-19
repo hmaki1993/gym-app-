@@ -166,7 +166,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
           }}
         >
           <img 
-            src={hasWorkoutToday ? "/assets/stopwatch-stop.png" : "/assets/stopwatch-ultra-clean-v3.png"}
+            src={hasWorkoutToday 
+              ? (tracker.settings.themeMode === 'light' ? "/assets/stopwatch-stop-light.png" : "/assets/stopwatch-stop.png") 
+              : (tracker.settings.themeMode === 'light' ? "/assets/stopwatch-ultra-clean-v3-light.png" : "/assets/stopwatch-ultra-clean-v3.png")}
             alt={hasWorkoutToday ? "Resume" : "Start"} 
             style={{ 
               width: '100%', 
@@ -185,15 +187,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
           <div 
           style={{ 
             padding: '24px 20px 16px 32px', 
-            background: tracker.settings.themeMode === 'dark' 
-              ? 'rgba(10, 10, 12, 0.4)' 
-              : 'rgba(255, 255, 255, 0.4)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            background: tracker.settings.themeMode === 'dark' ? '#0a0a0a' : '#ffffff',
             border: 'none',
             borderTop: tracker.settings.themeMode === 'dark' 
-              ? '1px solid rgba(255,255,255,0.1)' 
-              : '1px solid rgba(0,0,0,0.08)',
+              ? '1px solid rgba(230, 126, 34, 0.3)' 
+              : '1px solid rgba(0,0,0,0.1)',
             boxShadow: tracker.settings.themeMode === 'dark'
               ? '0 -20px 40px rgba(0,0,0,0.8)'
               : '0 -10px 30px rgba(0,0,0,0.05)',
@@ -220,12 +218,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                 <span style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: "'Montserrat', sans-serif" }}>{t('lastSession')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)', fontWeight: '800' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.6)', fontWeight: '800' }}>
                   <img src="/assets/calendar-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                   <span>{formatDate(recentLog.date, lang)}</span>
                 </div>
                 {recentLog.startTime && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)', fontWeight: '800' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.6)', fontWeight: '800' }}>
                     <img src="/assets/clock-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                     <span>{formatTime(recentLog.startTime, lang)}</span>
                   </div>
