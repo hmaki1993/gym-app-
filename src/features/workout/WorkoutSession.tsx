@@ -32,17 +32,27 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       });
     });
     
-    const DEFAULT_EXERCISES_KEYS = Object.keys(DEFAULT_EXERCISES);
+    const MUSCLE_KEYS = Object.keys(DEFAULT_EXERCISES) as MuscleGroup[];
     let bestMuscle = 'chest' as MuscleGroup;
-    
-    // Find the most recent workout to determine the next muscle in sequence
-    const lastLog = tracker.logs[0];
-    if (lastLog && lastLog.muscleGroup) {
-      const lastIndex = DEFAULT_EXERCISES_KEYS.indexOf(lastLog.muscleGroup);
-      if (lastIndex !== -1) {
-        bestMuscle = DEFAULT_EXERCISES_KEYS[(lastIndex + 1) % DEFAULT_EXERCISES_KEYS.length] as MuscleGroup;
-      }
-    }
+
+    // Smart muscle selection: find the muscle not trained for the longest time
+    const lastTrainedByMuscle: Record<string, string | null> = {};
+    MUSCLE_KEYS.forEach(muscle => {
+      const lastLog = tracker.logs.find(l => l.muscleGroup === muscle);
+      lastTrainedByMuscle[muscle] = lastLog ? lastLog.date : null;
+    });
+
+    // Sort: never trained first, then oldest date first
+    const sortedByNeeded = [...MUSCLE_KEYS].sort((a, b) => {
+      const dateA = lastTrainedByMuscle[a];
+      const dateB = lastTrainedByMuscle[b];
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return -1; // never trained → comes first
+      if (!dateB) return 1;
+      return dateA < dateB ? -1 : 1; // older date → comes first
+    });
+
+    bestMuscle = sortedByNeeded[0];
 
     const today = tracker.getLocalDateStr();
     const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));

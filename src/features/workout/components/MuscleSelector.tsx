@@ -15,16 +15,23 @@ interface Props {
 const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the selected muscle
+  // Scroll selected muscle to the very beginning (left edge)
   React.useEffect(() => {
     if (!scrollRef.current) return;
     const activeBtn = scrollRef.current.querySelector('[data-active="true"]') as HTMLElement;
     if (activeBtn) {
-      // Scroll left so activeBtn is at the start, with a small padding
-      const padding = 10;
-      scrollRef.current.scrollTo({ left: activeBtn.offsetLeft - padding, behavior: 'smooth' });
+      scrollRef.current.scrollTo({ left: activeBtn.offsetLeft - 10, behavior: 'smooth' });
     }
   }, [selectedMuscle]);
+
+  // On first mount, instantly jump (no animation) to the selected muscle
+  React.useEffect(() => {
+    if (!scrollRef.current) return;
+    const activeBtn = scrollRef.current.querySelector('[data-active="true"]') as HTMLElement;
+    if (activeBtn) {
+      scrollRef.current.scrollTo({ left: activeBtn.offsetLeft - 10, behavior: 'instant' as ScrollBehavior });
+    }
+  }, []);
 
   return (
     <div ref={scrollRef} className="hide-scrollbar allow-swipe" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: 25, overflowX: 'scroll', width: '100%', padding: '10px 10px 16px', marginBottom: 10, touchAction: 'pan-x', WebkitOverflowScrolling: 'touch', position: 'relative', zIndex: 10 }}>
