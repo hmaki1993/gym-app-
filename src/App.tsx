@@ -92,13 +92,19 @@ export default function App() {
   // ── Dynamic Theme Synchronization ──
   useEffect(() => {
     const root = document.documentElement;
-    const accent = tracker.settings.accentColor || '#00E676';
-    root.style.setProperty('--accent-color', accent);
+    const baseAccent = tracker.settings.accentColor || '#00E676';
+    
+    // In light mode, the default neon green (#00E676) lacks contrast.
+    // We dynamically switch it to a premium dark olive/zete green (#1F7336) for light mode.
+    const isLightMode = tracker.settings.themeMode === 'light';
+    const displayAccent = (isLightMode && baseAccent === '#00E676') ? '#1F7336' : baseAccent;
+
+    root.style.setProperty('--accent-color', displayAccent);
     
     // Convert hex to RGB for transparency effects (like borders)
     const hexToRgb = (hex: string) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 230, 118';
+      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : (isLightMode ? '31, 115, 54' : '0, 230, 118');
     };
     
     // Force-sync theme colors to match GitHub version if they differ
@@ -109,7 +115,7 @@ export default function App() {
       });
     }
 
-    root.style.setProperty('--accent-rgb', hexToRgb(accent));
+    root.style.setProperty('--accent-rgb', hexToRgb(displayAccent));
     
     // Update theme data-attribute
     root.setAttribute('data-theme', tracker.settings.themeMode);
