@@ -117,7 +117,7 @@ export function SettingsPage({ tracker }: Props) {
         <div style={cardStyle}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-profile.png" alt="Profile" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-orange.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>{t('accountProfile')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -196,7 +196,7 @@ export function SettingsPage({ tracker }: Props) {
         <div style={cardStyle}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-body.png" alt="Body Composition" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-orange.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Body Composition</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -240,7 +240,7 @@ export function SettingsPage({ tracker }: Props) {
         <div style={cardStyle}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-strategy.png" alt="Strategy" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-orange.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Fitness Strategy</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.06)', borderRadius: '14px', padding: '4px' }}>
@@ -268,7 +268,7 @@ export function SettingsPage({ tracker }: Props) {
         <div style={{ ...cardStyle, gap: '15px', marginBottom: '8px' }}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-appearance.png" alt="Appearance" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-orange.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Appearance</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.06)', borderRadius: '16px', padding: '4px', width: '100%' }}>
