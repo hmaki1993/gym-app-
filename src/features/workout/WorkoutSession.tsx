@@ -220,15 +220,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   useEffect(() => {
     if (openExercise && !prevOpenExRef.current) {
       // Initial open animation
-      gsap.fromTo('#exercise-overlay', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power2.out' });
-      gsap.fromTo('#exercise-modal-content', { y: '100%' }, { y: 0, duration: 0.25, ease: 'power3.out' });
+      gsap.fromTo('#exercise-overlay', { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' });
+      gsap.fromTo('#exercise-modal-content', { y: '100%' }, { y: 0, duration: 0.3, ease: 'power3.out' });
     }
     prevOpenExRef.current = openExercise;
   }, [openExercise]);
 
   const closeExercise = () => {
-    gsap.to('#exercise-modal-content', { y: '100%', duration: 0.15, ease: 'power3.in' });
-    gsap.to('#exercise-overlay', { opacity: 0, duration: 0.15, ease: 'power2.in', onComplete: () => setOpenExercise(null) });
+    gsap.to('#exercise-modal-content', { y: '100%', duration: 0.22, ease: 'power2.in' });
+    gsap.to('#exercise-overlay', { opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => setOpenExercise(null) });
   };
 
   useEffect(() => {
@@ -523,7 +523,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             display: 'flex', justifyContent: 'center',
             touchAction: 'none',
             overscrollBehavior: 'none',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            opacity: 0,
+            willChange: 'opacity'
           }}
         >
           <div 
@@ -537,7 +539,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               touchAction: 'none',
               overscrollBehavior: 'none',
               boxSizing: 'border-box',
-              border: 'none'
+              border: 'none',
+              transform: 'translateY(100%)',
+              willChange: 'transform'
             }}
           >
             <div style={{ height: '40px', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', background: 'transparent' }}>
