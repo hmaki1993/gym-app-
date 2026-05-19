@@ -56,7 +56,7 @@ export function SettingsPage({ tracker }: Props) {
   });
 
   const inputRowStyle: React.CSSProperties = {
-    background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.07)',
+    background: 'rgba(var(--theme-rgb), 0.06)',
     borderRadius: '14px',
     padding: '16px',
     border: 'none',
@@ -85,26 +85,27 @@ export function SettingsPage({ tracker }: Props) {
             style={{
               maxWidth: '320px', width: '100%', padding: '40px 24px',
               textAlign: 'center', border: '1px solid var(--glass-border)',
-              background: 'rgba(10, 0, 0, 0.98)', position: 'relative',
+              background: 'var(--modal-bg)', position: 'relative',
               animation: 'elite-expand 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
               borderRadius: '28px',
-              margin: '0'
+              margin: '0',
+              boxShadow: 'var(--elite-shadow)'
             }}
           >
             <div style={{ color: '#ff0000', marginBottom: '20px' }}>
               <Target size={52} />
             </div>
-            <h2 className="heading-font logo-underline" style={{ color: '#fff', fontSize: '26px', marginBottom: '16px' }}>
+            <h2 className="heading-font logo-underline" style={{ color: 'var(--text-primary)', fontSize: '26px', marginBottom: '16px' }}>
               {lang === 'ar' ? 'تصفير المصنع؟' : 'FACTORY RESET?'}
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
+            <p style={{ color: 'rgba(var(--theme-rgb), 0.7)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
               {lang === 'ar' ? '⚠️ سيتم مسح كل بياناتك نهائياً!' : '⚠️ This will permanently delete all your data!'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <button onClick={() => tracker.resetAllData()} style={{ background: '#ff0000', color: '#fff', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '950', fontSize: '13px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+              <button onClick={() => tracker.resetAllData()} style={{ background: '#FF3B30', color: '#ffffff', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '950', fontSize: '13px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
                 {lang === 'ar' ? 'تأكيد المسح' : 'CONFIRM RESET'}
               </button>
-              <button onClick={() => setShowResetConfirm(false)} style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: 'none', padding: '14px', borderRadius: '18px', fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+              <button onClick={() => setShowResetConfirm(false)} style={{ background: 'rgba(var(--theme-rgb), 0.08)', color: 'var(--text-primary)', border: 'none', padding: '14px', borderRadius: '18px', fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
                 {lang === 'ar' ? 'إلغاء' : 'CANCEL'}
               </button>
             </div>
@@ -116,7 +117,7 @@ export function SettingsPage({ tracker }: Props) {
         <div style={cardStyle}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-profile.png" alt="Profile" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src="/assets/arrow-green.png" alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>{t('accountProfile')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -195,7 +196,7 @@ export function SettingsPage({ tracker }: Props) {
         <div style={cardStyle}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-body.png" alt="Body Composition" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src="/assets/arrow-green.png" alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Body Composition</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -239,12 +240,12 @@ export function SettingsPage({ tracker }: Props) {
         <div style={cardStyle}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-strategy.png" alt="Strategy" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src="/assets/arrow-green.png" alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Fitness Strategy</span>
           </div>
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '14px', padding: '4px' }}>
+          <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.06)', borderRadius: '14px', padding: '4px' }}>
             {(['lose', 'maintain', 'gain'] as const).map(g => (
-              <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any })} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.nutritionProfile?.goal === g ? 'rgba(230, 126, 34, 0.18)' : 'transparent', color: tracker.settings.nutritionProfile?.goal === g ? '#E67E22' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+              <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any })} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.nutritionProfile?.goal === g ? 'rgba(230, 126, 34, 0.18)' : 'transparent', color: tracker.settings.nutritionProfile?.goal === g ? '#E67E22' : ('rgba(var(--theme-rgb), 0.4)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
             ))}
           </div>
           <div style={{ marginTop: '8px', padding: '16px 24px 12px', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
@@ -267,12 +268,12 @@ export function SettingsPage({ tracker }: Props) {
         <div style={{ ...cardStyle, gap: '15px', marginBottom: '8px' }}>
           <div style={getLabelStyle('var(--accent-color)')}>
             <img src="/assets/settings-appearance.png" alt="Appearance" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
-            <img src="/assets/arrow-green.png" alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
+            <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-green-light.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Appearance</span>
           </div>
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '16px', padding: '4px', width: '100%' }}>
+          <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.06)', borderRadius: '16px', padding: '4px', width: '100%' }}>
             {(['dark', 'light'] as const).map(mode => (
-              <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.themeMode === mode ? 'rgba(230, 126, 34, 0.18)' : 'transparent', color: tracker.settings.themeMode === mode ? '#E67E22' : (tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.75)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
+              <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.themeMode === mode ? 'rgba(230, 126, 34, 0.18)' : 'transparent', color: tracker.settings.themeMode === mode ? '#E67E22' : ('rgba(var(--theme-rgb), 0.4)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
             ))}
           </div>
         </div>
