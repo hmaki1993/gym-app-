@@ -22,7 +22,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   // const isRtl = lang === 'ar';
 
   // Synchronously compute today's session logs on initial render to prevent UI flickering
-  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData } = React.useMemo(() => {
+  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted } = React.useMemo(() => {
     const freq: Record<string, number> = {};
     tracker.logs.forEach(log => {
       if (log.muscleGroup) { freq[log.muscleGroup] = (freq[log.muscleGroup] || 0) + 1; }
@@ -33,14 +33,16 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     });
     
     const DEFAULT_EXERCISES_KEYS = Object.keys(DEFAULT_EXERCISES);
-    const sortedMuscles = [...DEFAULT_EXERCISES_KEYS].sort((a, b) => {
-      const freqA = freq[a] || 0;
-      const freqB = freq[b] || 0;
-      if (freqA !== freqB) return freqB - freqA;
-      return DEFAULT_EXERCISES_KEYS.indexOf(a) - DEFAULT_EXERCISES_KEYS.indexOf(b);
-    });
+    let bestMuscle = 'chest' as MuscleGroup;
     
-    const bestMuscle = (sortedMuscles[0] || 'chest') as MuscleGroup;
+    // Find the most recent workout to determine the next muscle in sequence
+    const lastLog = tracker.logs[0];
+    if (lastLog && lastLog.muscleGroup) {
+      const lastIndex = DEFAULT_EXERCISES_KEYS.indexOf(lastLog.muscleGroup);
+      if (lastIndex !== -1) {
+        bestMuscle = DEFAULT_EXERCISES_KEYS[(lastIndex + 1) % DEFAULT_EXERCISES_KEYS.length] as MuscleGroup;
+      }
+    }
 
     const today = tracker.getLocalDateStr();
     const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
@@ -80,6 +82,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   }, [tracker.logs]);
 
   const [phase, setPhase] = useState<'exercises' | 'logging'>(initialPhase);
+  const [hasStartedSession, setHasStartedSession] = useState(initialStarted);
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>(initialMuscle);
   const [activeExercises, setActiveExercises] = useState<string[]>(initialActiveExercises);
   const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>(initialLoggedData);
@@ -705,11 +708,16 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             />
              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'max(24px, env(safe-area-inset-bottom))', marginTop: '20px' }}>
                <img
-                 src="/assets/button-start-rect.png"
-                 alt="Start Workout"
-                 onClick={() => activeExercises.length > 0 && setPhase('logging')}
+                 src={hasStartedSession ? "/assets/button-resume-rect.png" : "/assets/button-start-rect.png"}
+                 alt={hasStartedSession ? "Resume Workout" : "Start Workout"}
+                 onClick={() => {
+                   if (activeExercises.length > 0) {
+                     setHasStartedSession(true);
+                     setPhase('logging');
+                   }
+                 }}
                  style={{
-                   height: '55px',
+                   height: hasStartedSession ? '55px' : '47px',
                    width: 'auto',
                    objectFit: 'contain',
                    cursor: activeExercises.length > 0 ? 'pointer' : 'default',

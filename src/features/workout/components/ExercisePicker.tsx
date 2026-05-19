@@ -153,9 +153,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     return (
       <div key={name} data-index={idx} ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} style={{ display: 'flex', flexDirection: 'column', zIndex: isDragging ? 100 : 1, opacity: isDragging ? 0.7 : 1, transition: isDragging ? 'none' : 'opacity 0.2s ease', boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.4)' : 'none' }}>
-        <div onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} className="exercise-select-btn" role="button" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 12px 12px 20px', background: isActive ? 'rgba(230, 126, 34, 0.06)' : 'transparent', border: 'none', borderBottom: `1px solid ${isActive ? 'rgba(230, 126, 34, 0.1)' : 'transparent'}`, borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', width: '100%', cursor: 'pointer', borderRadius: 0, transition: 'all 0.2s ease', touchAction: 'manipulation', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
-          <div onTouchStart={e => { e.stopPropagation(); setDraggingIndex(idx); }} style={{ touchAction: 'none', padding: 8, marginRight: isRtl ? 0 : 4, color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', opacity: isDragging ? 1 : 0.3 }}>
-            <GripVertical size={20} />
+        <div onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} className="exercise-select-btn" role="button" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 12px 12px 20px', background: isActive ? 'rgba(230, 126, 34, 0.28)' : 'transparent', border: 'none', borderBottom: `1px solid ${isActive ? 'rgba(230, 126, 34, 0.35)' : 'transparent'}`, borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', width: '100%', cursor: 'pointer', borderRadius: 0, transition: 'all 0.2s ease', touchAction: 'manipulation', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
+          <div onTouchStart={e => { e.stopPropagation(); setDraggingIndex(idx); }} style={{ touchAction: 'none', padding: 8, marginRight: isRtl ? 0 : 4, color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', opacity: isDragging ? 1 : 0.85 }}>
+            <GripVertical size={18} strokeWidth={isDragging ? 3 : 2.5} />
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
             <div style={{ textAlign: isRtl ? 'right' : 'left' }}>
@@ -164,8 +164,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   {isRecent && <RotateCcw size={14} style={{ marginRight: 6, opacity: 0.5, verticalAlign: 'middle', flexShrink: 0 }} />}{name}
                 </div>
               </div>
-              {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.85, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
-              {customTranslations[name] && <div style={{ fontSize: 14, color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)', fontWeight: 700, marginTop: 1, opacity: 0.85, fontFamily: "'Montserrat', sans-serif" }}>{customTranslations[name]}</div>}
+              {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 14, color: isActive ? '#D35400' : 'rgba(211, 84, 0, 0.85)', fontWeight: 900, marginTop: 1, opacity: 1, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
+              {customTranslations[name] && <div style={{ fontSize: 14, color: isActive ? '#D35400' : 'rgba(211, 84, 0, 0.85)', fontWeight: 900, marginTop: 1, opacity: 1, fontFamily: "'Montserrat', sans-serif" }}>{customTranslations[name]}</div>}
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 2, minHeight: 24 }}>
@@ -176,8 +176,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               {isActive && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, transform: 'translateY(5px)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#E67E22', opacity: 0.5, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                        <Pen size={14} />
+                    <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#D35400', opacity: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        <Pen size={14} strokeWidth={2.5} />
                       </button>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#E67E22', flexShrink: 0 }} />
                   </div>
@@ -214,7 +214,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               <div style={{ fontSize: 28, fontWeight: 950, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif", letterSpacing: -1, lineHeight: 1 }}>Find Exercise</div>
               <div style={{ width: 40, height: 2, background: 'linear-gradient(to right, transparent, var(--accent-color), transparent)', margin: '10px auto 0', borderRadius: 2 }} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(var(--theme-rgb), 0.05)', border: '1px solid rgba(var(--theme-rgb), 0.1)', borderBottom: '2px solid var(--accent-color)', borderRadius: 20, padding: '16px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(var(--theme-rgb), 0.14)', border: '1px solid rgba(var(--theme-rgb), 0.1)', borderBottom: '2px solid var(--accent-color)', borderRadius: 20, padding: '16px 20px' }}>
               <Search size={22} color="var(--accent-color)" strokeWidth={2.5} style={{ flexShrink: 0 }} />
               <input ref={searchInputRef} value={search} onChange={e => onSearchChange(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && search.trim() && filteredExercises.length === 0) { const n = search.trim(); tracker.addCustomExercise(muscleGroup as MuscleGroup, n); onToggle(n); closeSearch(); } if (e.key === 'Escape') closeSearch(); }} placeholder="" style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }} />
             </div>
@@ -230,10 +230,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               const isActive = activeExercises.includes(name);
               const lastSession = tracker.getLastSession(name);
               return (
-                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name, null); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(230, 126, 34,0.1)' : 'rgba(var(--theme-rgb), 0.04)', border: isActive ? '1px solid rgba(230, 126, 34,0.3)' : '1px solid rgba(var(--theme-rgb), 0.06)', borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
+                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name, null); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(230, 126, 34, 0.28)' : 'rgba(var(--theme-rgb), 0.12)', border: isActive ? '1px solid rgba(230, 126, 34, 0.4)' : '1px solid rgba(var(--theme-rgb), 0.16)', borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#E67E22' : '#fff', fontFamily: "'Montserrat', sans-serif" }}>{name}</div>
-                    {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 13, color: 'rgba(var(--theme-rgb), 0.4)', marginTop: 2, fontWeight: 700, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
+                    <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#D35400' : '#fff', fontFamily: "'Montserrat', sans-serif" }}>{name}</div>
+                    {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 13, color: '#D35400', opacity: 0.9, marginTop: 2, fontWeight: 900, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
                     {lastSession && <div style={{ fontSize: 10, color: 'rgba(var(--theme-rgb), 0.3)', marginTop: 4, fontWeight: 800, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
                   </div>
                   {isActive ? (
@@ -273,7 +273,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent-color)',  }} />
-          <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-secondary)', letterSpacing: '1.5px', textTransform: 'uppercase', opacity: 0.6 }}>{t('exercises') || 'Exercises'}</div>
+          <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '1.5px', textTransform: 'uppercase', opacity: 0.9 }}>{t('exercises') || 'Exercises'}</div>
         </div>
         <button onClick={() => setShowSearch(true)} style={{ background: 'rgba(230, 126, 34,0.08)', border: '1.5px solid rgba(230, 126, 34,0.3)', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E67E22',  transition: 'all 0.2s ease' }}>
           <CustomPlus size={18} color="#E67E22" />
@@ -294,7 +294,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         {otherNames.length > 0 && recentNames.length > 0 && (
           <div style={{ padding: '24px 12px 8px', display: 'flex', alignItems: 'center', gap: 8, opacity: 0.5 }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-secondary)' }} />
-            <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-secondary)', letterSpacing: 1, textTransform: 'uppercase' }}>{isRtl ? 'بقية التمارين' : 'All Other Exercises'}</span>
+            <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-primary)', opacity: 0.85, letterSpacing: 1, textTransform: 'uppercase' }}>{isRtl ? 'بقية التمارين' : 'All Other Exercises'}</span>
           </div>
         )}
         {otherNames.map((name, i) => renderExerciseItem(name, i + recentNames.length, false))}
@@ -309,7 +309,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               </div>
             </div>
             {archivedExercises.map(name => (
-              <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'transparent', borderBottom: '1px solid rgba(var(--theme-rgb), 0.03)', transition: 'all 0.2s ease' }}>
+              <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'transparent', borderBottom: '1px solid rgba(var(--theme-rgb), 0.1)', transition: 'all 0.2s ease' }}>
                 <div 
                   onClick={() => tracker.restoreExercise(muscleGroup as MuscleGroup, name)}
                   style={{ flex: 1, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif", opacity: 0.7, cursor: 'pointer' }}
@@ -317,8 +317,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   {name}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button onClick={(e) => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 6, color: '#E67E22', opacity: 0.4, cursor: 'pointer' }}>
-                    <Pen size={14} />
+                  <button onClick={(e) => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 6, color: '#D35400', opacity: 1, cursor: 'pointer' }}>
+                    <Pen size={14} strokeWidth={2.5} />
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); tracker.restoreExercise(muscleGroup as MuscleGroup, name); }} style={{ background: 'transparent', border: 'none', padding: 6, color: 'var(--accent-color)', opacity: 0.6, cursor: 'pointer' }}>
                     <RotateCcw size={16} />
@@ -338,7 +338,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ 
             width: '100%', maxWidth: 340, 
-            background: 'rgba(var(--theme-rgb), 0.03)', 
+            background: 'rgba(var(--theme-rgb), 0.1)', 
             border: '1px solid rgba(var(--theme-rgb), 0.1)',
             borderRadius: 32, padding: '40px 24px', textAlign: 'center',
             
@@ -347,7 +347,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             <div style={{ fontSize: 22, fontWeight: 950, color: 'var(--text-primary)', marginBottom: 8, fontFamily: "'Montserrat', sans-serif", letterSpacing: -0.5 }}>DELETE FOREVER</div>
             <div style={{ fontSize: 14, color: 'rgba(var(--theme-rgb), 0.5)', marginBottom: 32, fontWeight: 600, lineHeight: 1.4 }}>Are you sure you want to permanently delete "{deleteConfirm[0]}"?</div>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(var(--theme-rgb), 0.05)', border: '1px solid rgba(var(--theme-rgb), 0.1)', color: 'var(--text-primary)', fontWeight: 900, cursor: 'pointer', fontSize: 15, fontFamily: "'Montserrat', sans-serif" }}>Cancel</button>
+              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(var(--theme-rgb), 0.14)', border: '1px solid rgba(var(--theme-rgb), 0.1)', color: 'var(--text-primary)', fontWeight: 900, cursor: 'pointer', fontSize: 15, fontFamily: "'Montserrat', sans-serif" }}>Cancel</button>
               <button onClick={() => { deleteConfirm.forEach(n => tracker.permanentlyDeleteExercise(muscleGroup as MuscleGroup, n)); setDeleteConfirm(null); }} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(255,50,50,0.2)', border: '1.5px solid rgba(255,50,50,0.4)', color: '#ff5555', fontWeight: 950, cursor: 'pointer', fontSize: 15, fontFamily: "'Montserrat', sans-serif",  }}>Yes, Delete</button>
             </div>
           </div>
@@ -391,7 +391,7 @@ const RenameSheet: React.FC<{ name: string; onSave: (n: string) => void; onClose
         borderRadius: '24px 24px 0 0',
         padding: '16px 20px',
         paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
-        border: '1px solid rgba(var(--theme-rgb), 0.05)',
+        border: '1px solid rgba(var(--theme-rgb), 0.14)',
         borderTop: '1px solid rgba(var(--theme-rgb), 0.15)',
         borderBottom: 'none',
         
@@ -410,8 +410,8 @@ const RenameSheet: React.FC<{ name: string; onSave: (n: string) => void; onClose
             onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleClose(); }}
             style={{
               width: '100%', boxSizing: 'border-box',
-              background: 'rgba(var(--theme-rgb), 0.04)',
-              border: '1px solid rgba(var(--theme-rgb), 0.08)',
+              background: 'rgba(var(--theme-rgb), 0.12)',
+              border: '1px solid rgba(var(--theme-rgb), 0.18)',
               borderBottom: '1.5px solid rgba(230, 126, 34,0.6)',
               borderRadius: 12, padding: '14px 44px 14px 16px',
               color: 'var(--text-primary)', fontSize: 18, fontWeight: 800,

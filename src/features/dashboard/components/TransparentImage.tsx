@@ -73,7 +73,7 @@ export const TransparentImage: React.FC<TransparentImageProps> = ({
   }, [cacheKey, src, threshold]);
 
   if (!displaySrc) {
-    return <div style={{ width, height, borderRadius: '8px', background: 'rgba(var(--theme-rgb), 0.05)', ...style }} />;
+    return <div style={{ width, height, borderRadius: '8px', background: 'rgba(var(--theme-rgb), 0.14)', ...style }} />;
   }
 
   return (

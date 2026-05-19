@@ -299,7 +299,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     fontWeight: active ? '950' : (isToday ? '950' : '800'),
                     color: active ? 'var(--accent-color)' : (isToday ? '#E67E22' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
                     cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(230, 126, 34, 0.08)' : (worked ? 'rgba(var(--theme-rgb), 0.03)' : 'transparent')),
+                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(230, 126, 34, 0.08)' : (worked ? 'rgba(var(--theme-rgb), 0.1)' : 'transparent')),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid rgba(230, 126, 34, 0.3)' : (worked ? '1px solid rgba(var(--theme-rgb), 0.1)' : '1px solid transparent')),
                     transform: active ? 'scale(1.05)' : 'scale(1)',
@@ -363,7 +363,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           </div>
           
           {/* Horizontal Divider */}
-          <div style={{ height: '1px', background: 'rgba(var(--theme-rgb), 0.05)', width: '100%' }} />
+          <div style={{ height: '1px', background: 'rgba(var(--theme-rgb), 0.14)', width: '100%' }} />
 
           <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
             {(() => {
@@ -454,7 +454,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     </div>
                     {/* Vertical Divider */}
                     {idx < displayWeeks.length - 1 && (
-                      <div style={{ width: '1px', height: '40px', background: 'rgba(var(--theme-rgb), 0.05)' }} />
+                      <div style={{ width: '1px', height: '40px', background: 'rgba(var(--theme-rgb), 0.14)' }} />
                     )}
                   </div>
                 );
@@ -544,7 +544,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                       })}
                     </div>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', letterSpacing: '-0.5px' }}>{displayTitle}</h3>
+                      <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', letterSpacing: '-0.5px' }}>{displayTitle}</h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <img src="/assets/calendar-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
@@ -565,7 +565,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 <div style={{ display: 'grid', gridTemplateRows: expandedLogId === log.id ? '1fr' : '0fr', transition: 'grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1)', overflow: 'hidden' }}>
                   <div style={{ minHeight: 0 }}>
                     <div style={{ paddingTop: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.08)' : '1px solid rgba(0,0,0,0.08)', borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.08)' : '1px solid rgba(0,0,0,0.08)', marginBottom: '24px', gap: '4px', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.4s ease' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.18)' : '1px solid rgba(0, 0, 0, 0.18)', borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.18)' : '1px solid rgba(0, 0, 0, 0.18)', marginBottom: '24px', gap: '4px', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.4s ease' }}>
                         {[
                           { label: t('exercises'), value: log.exercises.length },
                           { label: t('totalSets'), value: totalSets },
@@ -574,7 +574,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                           <React.Fragment key={stat.label}>
                             {idx > 0 && <div style={{ width: '1px', height: '24px', background: 'rgba(var(--theme-rgb), 0.1)' }} />}
                             <div style={{ flex: 1, textAlign: 'center' }}>
-                              <div style={{ fontSize: '20px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: "'Montserrat', sans-serif" }}>{stat.value}</div>
+                              <div style={{ fontSize: '20px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{stat.value}</div>
                               <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
                             </div>
                           </React.Fragment>
@@ -618,11 +618,11 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                 {ex.isFirstInGroup && exIdx > 0 && (
                                   <div style={{ height: '8px' }} />
                                 )}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)', transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`, background: 'rgba(var(--theme-rgb), 0.03)', padding: '10px 12px', borderRadius: '12px', borderLeft: ex.isFirstInGroup ? '2px solid var(--accent-color)' : 'none' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)', transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`, background: 'rgba(var(--theme-rgb), 0.1)', padding: '10px 12px', borderRadius: '12px', borderLeft: ex.isFirstInGroup ? '2px solid var(--accent-color)' : 'none' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                      <span style={{ fontSize: '15px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.name}</span>
+                                      <span style={{ fontSize: '15px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.name}</span>
                                       <span style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.95, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px' }}>{lang === 'ar' ? mg?.ar : mg?.en}</span>
                                     </div>
                                     {isPR && (
@@ -631,7 +631,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                     <div style={{ textAlign: 'right' }}>
-                                      <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000' }}>{ex.sets.length}</span>
+                                      <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.sets.length}</span>
                                       <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--text-secondary)', opacity: 0.9, marginLeft: '4px' }}>SETS</span>
                                     </div>
                                     <div style={{ width: '1px', height: '12px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
@@ -678,7 +678,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                 <React.Fragment key={stat.label}>
                                   {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(var(--theme-rgb), 0.1)' }} />}
                                   <div style={{ flex: 1, textAlign: 'center' }}>
-                                    <div style={{ fontSize: '15px', fontWeight: '950', color: idx === 0 ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : '#000'), fontFamily: 'Inter, sans-serif' }}>{stat.value}</div>
+                                    <div style={{ fontSize: '15px', fontWeight: '950', color: idx === 0 ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)'), fontFamily: 'Inter, sans-serif' }}>{stat.value}</div>
                                     <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
                                   </div>
                                 </React.Fragment>
@@ -687,10 +687,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0 10px 0' }}>
                               {dayNutrition.map((food: any, fIdx: number) => (
-                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(var(--theme-rgb), 0.03)', padding: '8px 12px', borderRadius: '10px' }}>
+                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(var(--theme-rgb), 0.1)', padding: '8px 12px', borderRadius: '10px' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#E67E22' }} />
-                                    <span style={{ fontSize: '14px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', opacity: 0.9 }}>{food.nameAr || food.name}</span>
+                                    <span style={{ fontSize: '14px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', opacity: 0.9 }}>{food.nameAr || food.name}</span>
                                     {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.5)' }}>x{food.servingSize}</span>}
                                   </div>
                                   <div style={{ textAlign: 'right', minWidth: '60px' }}>

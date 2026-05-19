@@ -56,7 +56,7 @@ export function SettingsPage({ tracker }: Props) {
   });
 
   const inputRowStyle: React.CSSProperties = {
-    background: 'rgba(var(--theme-rgb), 0.06)',
+    background: 'rgba(var(--theme-rgb), 0.16)',
     borderRadius: '14px',
     padding: '16px',
     border: 'none',
@@ -105,7 +105,7 @@ export function SettingsPage({ tracker }: Props) {
               <button onClick={() => tracker.resetAllData()} style={{ background: '#FF3B30', color: '#ffffff', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '950', fontSize: '13px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
                 {lang === 'ar' ? 'تأكيد المسح' : 'CONFIRM RESET'}
               </button>
-              <button onClick={() => setShowResetConfirm(false)} style={{ background: 'rgba(var(--theme-rgb), 0.08)', color: 'var(--text-primary)', border: 'none', padding: '14px', borderRadius: '18px', fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+              <button onClick={() => setShowResetConfirm(false)} style={{ background: 'rgba(var(--theme-rgb), 0.18)', color: 'var(--text-primary)', border: 'none', padding: '14px', borderRadius: '18px', fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
                 {lang === 'ar' ? 'إلغاء' : 'CANCEL'}
               </button>
             </div>
@@ -134,10 +134,10 @@ export function SettingsPage({ tracker }: Props) {
                   flexShrink: 0
                 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-secondary)' }}>
                     <span>{t('userName').toUpperCase()}</span>
                   </div>
-                  <input style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })} />
+                  <input style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })} />
                 </div>
                 {(localName.trim() && localName === (tracker.settings.userName || '')) ? (
                   <div style={{ width: '20px', height: '20px', backgroundColor: '#E67E22', opacity: 0.9, WebkitMask: 'url(/assets/check-custom.png) center / contain no-repeat', mask: 'url(/assets/check-custom.png) center / contain no-repeat', flexShrink: 0 }} />
@@ -157,10 +157,10 @@ export function SettingsPage({ tracker }: Props) {
                   flexShrink: 0
                 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-secondary)' }}>
                     <span>EMAIL</span>
                   </div>
-                  <input type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })} />
+                  <input type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })} />
                 </div>
                 {(localEmail.trim() && localEmail === (tracker.settings.userEmail || '')) ? (
                   <div style={{ width: '20px', height: '20px', backgroundColor: '#E67E22', opacity: 0.9, WebkitMask: 'url(/assets/check-custom.png) center / contain no-repeat', mask: 'url(/assets/check-custom.png) center / contain no-repeat', flexShrink: 0 }} />
@@ -180,10 +180,10 @@ export function SettingsPage({ tracker }: Props) {
                   flexShrink: 0
                 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-secondary)' }}>
                     <span>{t('password').toUpperCase()}</span>
                   </div>
-                  <input type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })} />
+                  <input type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })} />
                 </div>
                 {(localPassword.trim() && localPassword === (tracker.settings.userPassword || '')) ? (
                   <div style={{ width: '20px', height: '20px', backgroundColor: '#E67E22', opacity: 0.9, WebkitMask: 'url(/assets/check-custom.png) center / contain no-repeat', mask: 'url(/assets/check-custom.png) center / contain no-repeat', flexShrink: 0 }} />
@@ -216,10 +216,10 @@ export function SettingsPage({ tracker }: Props) {
                     display: 'inline-block',
                     flexShrink: 0
                   }} />
-                  <div style={{ fontSize: '11px', fontWeight: '900', opacity: 1, color: 'var(--text-primary)' }}>{f.label.toUpperCase()}</div>
+                  <div style={{ fontSize: '11px', fontWeight: '900', opacity: 1, color: 'var(--text-secondary)' }}>{f.label.toUpperCase()}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                  <input type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[f.key] || 0} onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [f.key]: Number(e.target.value) } as any })} style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} />
+                  <input type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[f.key] || 0} onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [f.key]: Number(e.target.value) } as any })} style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} />
                   {f.unit && <span style={{ fontSize: '10px', fontWeight: '900', opacity: 0.8 }}>{f.unit}</span>}
                 </div>
               </div>
@@ -243,14 +243,14 @@ export function SettingsPage({ tracker }: Props) {
             <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-orange.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Fitness Strategy</span>
           </div>
-          <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.06)', borderRadius: '14px', padding: '4px' }}>
+          <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.16)', borderRadius: '14px', padding: '4px' }}>
             {(['lose', 'maintain', 'gain'] as const).map(g => (
               <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, goal: g, goalRate: g === 'maintain' ? 0 : (tracker.settings.nutritionProfile?.goalRate || 0.5) } as any })} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '9px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.nutritionProfile?.goal === g ? 'rgba(230, 126, 34, 0.18)' : 'transparent', color: tracker.settings.nutritionProfile?.goal === g ? '#E67E22' : ('rgba(var(--theme-rgb), 0.4)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
             ))}
           </div>
           <div style={{ marginTop: '8px', padding: '16px 24px 12px', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
             <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--accent-secondary)', letterSpacing: '3px', marginBottom: '4px', opacity: 0.85, textAlign: 'center', width: '100%' }}>DAILY TARGET</div>
-            <div style={{ fontSize: '48px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-2px', textAlign: 'center', width: '100%' }}>
+            <div style={{ fontSize: '48px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-2px', textAlign: 'center', width: '100%' }}>
               {(() => {
                 const p = tracker.settings.nutritionProfile;
                 if (!p?.weight || !p?.height || !p?.age) return '0';
@@ -271,7 +271,7 @@ export function SettingsPage({ tracker }: Props) {
             <img src={tracker.settings.themeMode === 'light' ? "/assets/arrow-orange.png" : "/assets/arrow-green.png"} alt="Arrow" style={{ height: '14px', width: 'auto', objectFit: 'contain', marginRight: '8px' }} />
             <span>Appearance</span>
           </div>
-          <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.06)', borderRadius: '16px', padding: '4px', width: '100%' }}>
+          <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.16)', borderRadius: '16px', padding: '4px', width: '100%' }}>
             {(['dark', 'light'] as const).map(mode => (
               <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.themeMode === mode ? 'rgba(230, 126, 34, 0.18)' : 'transparent', color: tracker.settings.themeMode === mode ? '#E67E22' : ('rgba(var(--theme-rgb), 0.4)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
             ))}

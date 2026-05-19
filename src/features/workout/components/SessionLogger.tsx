@@ -53,12 +53,15 @@ export function SessionLogger({
                 gap: '12px',
                 transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0, 0.2, 1)',
                 zIndex: isDragging ? 100 : 1,
-                scale: isDragging ? 1.05 : 1,
+                scale: isDragging ? 0.96 : 1,
                 background: isDragging ? 'var(--glass-bg)' : 'transparent',
                 borderRadius: isDragging ? '16px' : '0',
-                boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.5), 0 0 20px var(--accent-color-alpha)' : 'none',
+                boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.6), 0 0 20px var(--accent-color-alpha)' : 'none',
                 padding: isDragging ? '0 12px' : '0',
-                border: isDragging ? '1.5px solid var(--accent-color)' : 'none'
+                border: isDragging ? '1.5px solid var(--accent-color)' : '1.5px solid transparent',
+                boxSizing: 'border-box',
+                margin: isDragging ? '0 8px' : '0',
+                width: isDragging ? 'calc(100% - 16px)' : '100%'
               }}
             >
               <div 
@@ -66,12 +69,13 @@ export function SessionLogger({
                 onTouchMove={handleTouchMove} 
                 onTouchEnd={handleTouchEnd} 
                 style={{ 
-                  color: isDragging ? 'var(--accent-color)' : 'rgba(var(--theme-rgb), 0.25)', 
+                  color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', 
+                  opacity: isDragging ? 1 : 0.85,
                   padding: '10px',
                   cursor: 'grab'
                 }}
               >
-                <GripVertical size={20} strokeWidth={isDragging ? 3 : 2} />
+                <GripVertical size={20} strokeWidth={isDragging ? 3 : 2.5} />
               </div>
               <button 
                 onClick={() => onOpenExercise(name)} 
@@ -139,7 +143,7 @@ export function SessionLogger({
           alt="Finish Session"
           onClick={onSave}
           style={{
-            height: '55px',
+            height: '47px',
             width: 'auto',
             objectFit: 'contain',
             cursor: 'pointer',

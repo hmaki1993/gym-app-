@@ -41,12 +41,12 @@ function MiniChart({ data, color, title }: { data: { date: string; value: number
   const gridId = `grid-${title.replace(/[^a-zA-Z0-9]/g, '')}`;
 
   return (
-    <div style={{ width: '100%', background: 'transparent', borderRadius: '20px', border: '1.5px solid rgba(255, 255, 255, 0.1)', padding: '24px 0 4px', marginTop: '16px', overflow: 'hidden', boxShadow: 'none' }}>
+    <div style={{ width: '100%', background: 'transparent', borderRadius: '20px', border: '1.5px solid rgba(var(--theme-rgb), 0.1)', padding: '24px 0 4px', marginTop: '16px', overflow: 'hidden', boxShadow: 'none' }}>
       <svg width="100%" viewBox={`0 0 ${W} 125`} style={{ overflow: 'visible' }}>
         <defs>
           {/* Subtle technical grid background */}
           <pattern id={gridId} width="16" height="16" patternUnits="userSpaceOnUse">
-            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(var(--theme-rgb), 0.15)" strokeWidth="1" />
           </pattern>
         </defs>
 
@@ -90,7 +90,7 @@ function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: 
   const displayDate = new Date(dateStr).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   
   return (
-    <div style={{ background: 'rgba(var(--theme-rgb), 0.03)', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(var(--theme-rgb), 0.05)' }}>
+    <div style={{ background: 'rgba(var(--theme-rgb), 0.1)', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(var(--theme-rgb), 0.14)' }}>
       <button onClick={() => setIsDateOpen(!isDateOpen)} style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer' }}>
         <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--text-primary)', opacity: 0.8, textTransform: 'uppercase' }}>
           {dateStr === today ? (lang === 'ar' ? 'اليوم' : 'TODAY') : displayDate}
@@ -118,7 +118,7 @@ function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: 
                     <div style={{ flex: 1, height: '1.5px', background: 'var(--accent-color)', opacity: 0.15, borderRadius: '1px' }} />
                   </div>
                   {items.map((pr, idx) => (
-                    <div key={pr.exerciseName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx === items.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.03)' }}>
+                    <div key={pr.exerciseName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx === items.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.1)' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
                         <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{groupName}</span>
@@ -268,7 +268,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
         {selectedDay && (
           <button onClick={() => setSelectedDay(null)} style={{ position: 'absolute', top: '-15px', right: '0', background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '10px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'عرض الكل ✓' : 'SHOW ALL ✓'}</button>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px', background: 'rgba(var(--theme-rgb), 0.02)', borderRadius: '24px', border: '1.5px solid rgba(var(--theme-rgb), 0.12)',  }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px', background: 'rgba(var(--theme-rgb), 0.16)', borderRadius: '24px', border: '1.5px solid rgba(var(--theme-rgb), 0.12)',  }}>
           {[
             { label: selectedDay ? (lang === 'ar' ? 'تمارين اليوم' : 'DAY LOGS') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: <img src="/assets/calendar-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="Calendar" /> },
             { label: selectedDay ? (lang === 'ar' ? 'تاريخ اليوم' : 'LOG DATE') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: <img src="/assets/trophy-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="Trophy" /> },
@@ -315,7 +315,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
             const [isMasterOpen, setIsMasterOpen] = useState(hasWinsToday);
             return (
               <div style={{ position: 'relative' }}>
-                <div onClick={() => setIsMasterOpen(!isMasterOpen)} style={{ background: hasWinsToday ? 'rgba(255, 149, 0, 0.15)' : 'rgba(var(--theme-rgb), 0.03)', borderRadius: '20px', padding: '18px 20px', border: hasWinsToday ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(var(--theme-rgb), 0.1)', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                <div onClick={() => setIsMasterOpen(!isMasterOpen)} style={{ background: hasWinsToday ? 'rgba(255, 149, 0, 0.15)' : 'rgba(var(--theme-rgb), 0.1)', borderRadius: '20px', padding: '18px 20px', border: hasWinsToday ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(var(--theme-rgb), 0.1)', cursor: 'pointer', transition: 'all 0.3s ease' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                       <img src="/assets/badge-custom.png" style={{ width: 30, height: 30, objectFit: 'contain', filter: hasWinsToday ? 'drop-shadow(0 4px 12px rgba(255, 149, 0, 0.5))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))', transition: 'all 0.3s ease' }} alt="Badge" />

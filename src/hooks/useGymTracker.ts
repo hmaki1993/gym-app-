@@ -167,15 +167,19 @@ export function useGymTracker() {
     saveState(state);
     // Apply theme & color
     const root = document.documentElement;
+    const baseAccent = (state.settings.accentColor || '#00E676').toUpperCase();
+    const isLightMode = state.settings.themeMode === 'light';
+    const displayAccent = (isLightMode && baseAccent === '#00E676') ? '#166E36' : baseAccent;
+
     const theme = THEME_COLORS.find(c => c.hex === state.settings.accentColor);
     const secondaryColor = state.settings.accentSecondary || theme?.secondary || state.settings.accentColor;
     
     root.setAttribute('data-theme', state.settings.themeMode);
-    root.style.setProperty('--accent-color', state.settings.accentColor);
+    root.style.setProperty('--accent-color', displayAccent);
     root.style.setProperty('--accent-secondary', secondaryColor);
-    root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${state.settings.accentColor}, ${secondaryColor})`);
-    root.style.setProperty('--accent-color-alpha', `${state.settings.accentColor}25`);
-    root.style.setProperty('--accent-color-alpha-heavy', `${state.settings.accentColor}50`);
+    root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${displayAccent}, ${secondaryColor})`);
+    root.style.setProperty('--accent-color-alpha', `${displayAccent}25`);
+    root.style.setProperty('--accent-color-alpha-heavy', `${displayAccent}50`);
   }, [state]);
 
   // Midnight Reset Logic: Clear session if day changed

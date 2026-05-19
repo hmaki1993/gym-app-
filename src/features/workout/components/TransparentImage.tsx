@@ -88,7 +88,7 @@ export function TransparentImage({ src, alt, width, height, style, threshold = 5
       <div style={{
         width, height,
         borderRadius: '8px',
-        background: 'rgba(var(--theme-rgb), 0.05)',
+        background: 'rgba(var(--theme-rgb), 0.14)',
         ...style
       }} />
     );

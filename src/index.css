@@ -2,9 +2,9 @@
 
 :root {
   --primary-bg: #0a0a0c;
-  --glass-bg: rgba(var(--theme-rgb), 0.05);
+  --glass-bg: rgba(var(--theme-rgb), 0.14);
   --glass-border: rgba(var(--theme-rgb), 0.12);
-  --glass-hover: rgba(var(--theme-rgb), 0.08);
+  --glass-hover: rgba(var(--theme-rgb), 0.18);
   --accent-color: #00E676;
   --accent-rgb: 0, 230, 118;
   --accent-secondary: #E67E22;
@@ -31,17 +31,17 @@
 }
 
 [data-theme='light'] {
-  --primary-bg: #f8f9fa;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-hover: rgba(0, 0, 0, 0.04);
-  --text-primary: #1a1a1a;
-  --text-secondary: #4a4a4a;
-  --theme-rgb: 0, 0, 0;
-  --elite-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  --glass-blur: blur(20px);
-  --nav-bg: rgba(255, 255, 255, 0.9);
-  --modal-bg: #ffffff;
+  --primary-bg: #f6f7f9;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.16);
+  --glass-hover: rgba(0, 0, 0, 0.1);
+  --text-primary: #4a4a4a;
+  --text-secondary: #888888;
+  --theme-rgb: 74, 74, 74;
+  --elite-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+  --glass-blur: blur(24px);
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --modal-bg: #E5E7EB;
 }
 
 /* ── Elite Typography System ── */
@@ -111,12 +111,12 @@
 
 .exercise-select-btn:active {
   transform: scale(0.97) translateX(-2px);
-  background: rgba(var(--theme-rgb), 0.08) !important;
-  opacity: 0.8;
+  background: rgba(230, 126, 34, 0.25) !important;
+  opacity: 1;
 }
 
 .exercise-select-btn:hover {
-  background: rgba(var(--theme-rgb), 0.04);
+  background: rgba(230, 126, 34, 0.15) !important;
 }
 @keyframes pulse-glow {
   0%, 100% { 
@@ -327,25 +327,26 @@ body {
 /* Desktop Hover - Lift + Glow */
 @media (hover: hover) {
   .exercise-select-btn:hover {
-    background: rgba(var(--theme-rgb), 0.06) !important;
+    background: rgba(230, 126, 34, 0.2) !important;
     transform: translateX(4px);
-    border-color: var(--accent-color-alpha) !important;
+    border-color: rgba(230, 126, 34, 0.4) !important;
   }
   .exercise-select-btn:hover::before {
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 3px;
-    background: var(--accent-color);
+    background: var(--accent-secondary);
     border-radius: 0 2px 2px 0;
-    box-shadow: 0 0 12px var(--accent-color);
+    box-shadow: 0 0 12px var(--accent-secondary);
     animation: slideInBar 0.2s ease;
   }
 }
 
 /* Mobile Tap Feedback */
 .exercise-select-btn:active {
-  opacity: 0.85;
+  background: rgba(230, 126, 34, 0.3) !important;
+  opacity: 1;
 }
 
 @keyframes slideInBar {
@@ -635,7 +636,7 @@ input[type=number] {
 .progress-bar-track {
   width: 100%;
   height: 4px;
-  background: rgba(var(--theme-rgb), 0.06);
+  background: rgba(var(--theme-rgb), 0.16);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -726,7 +727,7 @@ input[type=number] {
   background: linear-gradient(
     to right,
     transparent,
-    rgba(255, 255, 255, 0.4),
+    rgba(var(--theme-rgb), 0.2),
     transparent
   );
   transform: translateX(-150%) skewX(-25deg);

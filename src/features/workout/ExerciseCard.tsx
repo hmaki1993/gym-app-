@@ -52,7 +52,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
     <div style={{ width: 24, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif" }}>{index + 1}</div>
     <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 12 }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
+      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
       <div 
         onClick={onCycleUnit} 
         style={{ 
@@ -88,7 +88,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
     </div>
     <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.05)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
+      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
       <div style={{ 
         fontSize: 10, 
         fontWeight: 950, 
@@ -342,7 +342,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                 <span style={{ fontWeight: 900, fontSize: 15 }}>{setsAtMaxWeight} <span style={{ fontSize: 10, opacity: 0.8 }}>SETS</span></span>
                 <span style={{ opacity: 0.4, fontSize: 10 }}>×</span>
                 <span style={{ fontWeight: 900, fontSize: 15 }}>{maxRepsAtMaxWeight} <span style={{ fontSize: 10, opacity: 0.8 }}>REPS</span></span>
-                <div style={{ width: '1px', height: 12, background: 'rgba(255, 255, 255, 0.15)', margin: '0 6px' }} />
+                <div style={{ width: '1px', height: 12, background: 'rgba(var(--theme-rgb), 0.15)', margin: '0 6px' }} />
                 <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{maxWeight}</span>
                 <span style={{ fontSize: 11, opacity: 0.7, color: 'var(--accent-color)', fontWeight: 900 }}>{t(displayUnit)}</span>
                 <img src="/assets/trophy-custom.png" style={{ width: 18, height: 18, marginLeft: 6, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }} alt="Trophy" />

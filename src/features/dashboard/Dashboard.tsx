@@ -126,10 +126,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             <div style={{ 
               width: '100%', 
               height: '6px', 
-              background: 'rgba(var(--theme-rgb), 0.05)', 
+              background: 'rgba(var(--theme-rgb), 0.14)', 
               borderRadius: '3px', 
               overflow: 'hidden', 
-              border: isGoalCompleted ? '1px solid var(--accent-color)' : '1px solid rgba(var(--theme-rgb), 0.08)',
+              border: isGoalCompleted ? '1px solid var(--accent-color)' : '1px solid rgba(var(--theme-rgb), 0.18)',
               transition: 'border-color 0.3s ease'
             }}>
               <div style={{ 
@@ -144,7 +144,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
         );
       })()}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '0 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '12vh 16px 0 16px' }}>
         <div
           onClick={onStartWorkout}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
@@ -194,7 +194,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
               : '1px solid rgba(0,0,0,0.1)',
             boxShadow: tracker.settings.themeMode === 'dark'
               ? '0 -20px 40px rgba(0,0,0,0.8)'
-              : '0 -10px 30px rgba(0,0,0,0.05)',
+              : '0 -10px 30px rgba(0, 0, 0, 0.14)',
             margin: '0 0 -10px',
             width: '100%',
             position: 'relative',
@@ -258,7 +258,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ 
-                    fontSize: '21px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', 
+                    fontSize: '21px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', 
                     letterSpacing: '-0.8px', fontFamily: "'Montserrat', sans-serif", lineHeight: 1,
                     whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px'
                   }}>
@@ -295,11 +295,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
             onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
             style={{
-              padding: '24px 20px', 
-              background: tracker.settings.themeMode === 'dark' ? '#0a0a0a' : '#ffffff',
-              border: tracker.settings.themeMode === 'dark' ? '1.5px dashed rgba(230, 126, 34, 0.4)' : '1.5px dashed rgba(0,0,0,0.15)',
-              borderRadius: '20px',
-              margin: '0 0px -10px',
+              padding: '10px 20px', 
+              background: 'transparent',
+              border: 'none',
+              boxShadow: 'none',
+              margin: '0 auto',
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
@@ -307,73 +307,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
               justifyContent: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: tracker.settings.themeMode === 'dark' ? '0 10px 30px rgba(0,0,0,0.4)' : '0 10px 30px rgba(0,0,0,0.03)',
               userSelect: 'none',
               WebkitUserSelect: 'none'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
-              {/* Left Burst SVG */}
-              <svg width="24" height="24" viewBox="0 0 30 30" fill="none" style={{ flexShrink: 0, marginRight: '4px' }}>
-                <line x1="25" y1="15" x2="10" y2="5" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="25" y1="15" x2="5" y2="15" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="25" y1="15" x2="10" y2="25" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
-              </svg>
-              
-              {/* Slanted "START" Badge */}
-              <div style={{
-                background: '#E67E22',
-                color: '#ffffff',
-                fontWeight: '950',
-                fontSize: '15px',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                transform: 'rotate(-5deg)',
-                border: tracker.settings.themeMode === 'dark' ? '2px solid #ffffff' : '2px solid #000000',
-                boxShadow: tracker.settings.themeMode === 'dark' ? '2.5px 2.5px 0px #ffffff' : '2.5px 2.5px 0px #000000',
-                fontFamily: "'Montserrat', sans-serif",
-                letterSpacing: '1px',
-                textTransform: 'uppercase'
-              }}>
-                START
-              </div>
-
-              {/* "FIRST TRAINING" */}
-              <div style={{
-                fontSize: '17px',
-                fontWeight: '950',
-                color: tracker.settings.themeMode === 'dark' ? '#ffffff' : '#000000',
-                fontFamily: "'Montserrat', sans-serif",
-                letterSpacing: '0.5px',
-                textTransform: 'uppercase',
-                display: 'inline-block',
-                position: 'relative',
-                marginLeft: '4px'
-              }}>
-                FIRST TRAINING
-                {/* Sketchy underline */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-4px',
-                  left: '0',
-                  right: '0',
-                  height: '3px',
-                  background: '#E67E22',
-                  borderRadius: '2px',
-                  transform: 'skewX(-10deg)'
-                }} />
-              </div>
-
-              {/* Right Burst SVG */}
-              <svg width="24" height="24" viewBox="0 0 30 30" fill="none" style={{ flexShrink: 0, marginLeft: '4px' }}>
-                <line x1="5" y1="15" x2="20" y2="5" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="5" y1="15" x2="25" y2="15" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="5" y1="15" x2="20" y2="25" stroke="#E67E22" strokeWidth="3.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-secondary)', opacity: 0.75, letterSpacing: '1.5px', marginTop: '16px', textTransform: 'uppercase' }}>
-              {lang === 'ar' ? 'اضغط هنا لبدء أول تمرين لك! 🏋️‍♂️' : 'TAP HERE TO BEGIN YOUR FIRST WORKOUT! 🏋️‍♂️'}
-            </div>
+            <img 
+              src="/assets/start-first-training.png" 
+              alt="Start First Training"
+              style={{
+                width: '100%',
+                maxWidth: '280px',
+                height: 'auto',
+                objectFit: 'contain',
+                display: 'block'
+              }}
+            />
           </div>
         )}
       </div>
