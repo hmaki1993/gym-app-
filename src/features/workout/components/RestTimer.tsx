@@ -45,7 +45,7 @@ export const RestTimer: React.FC<Props> = ({
               <span style={{ fontSize: '14px', fontWeight: '900', fontFamily: "'Montserrat', sans-serif" }}>{restRemaining}s</span>
             </div>
             <button onClick={onSkip}
-              style={{ background: 'none', border: 'none', fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.4, fontWeight: '800', cursor: 'pointer', textTransform: 'uppercase', fontFamily: "'Montserrat', sans-serif" }}>
+              style={{ background: 'none', border: 'none', fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '800', cursor: 'pointer', textTransform: 'uppercase', fontFamily: "'Montserrat', sans-serif" }}>
               {t('skip')}
             </button>
           </div>

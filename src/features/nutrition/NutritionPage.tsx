@@ -674,9 +674,9 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                                 <div style={{ fontWeight: '950', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-0.3px' }}>{normalizedItem.name}</div>
                                 {normalizedItem.nameAr && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '700', opacity: 0.9 }}>{normalizedItem.nameAr}</div>}
                                 <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '950', letterSpacing: '0.5px' }}>
-                                  {normalizedItem.calories} <span style={{opacity: 0.7}}>KCAL</span> 
-                                  <span style={{ opacity: 0.4, margin: '0 8px' }}>•</span> 
-                                  {normalizedItem.portion || 100}<span style={{opacity: 0.7}}>G</span>
+                                  {normalizedItem.calories} <span style={{opacity: 0.9}}>KCAL</span> 
+                                  <span style={{ opacity: 0.85, margin: '0 8px' }}>•</span> 
+                                  {normalizedItem.portion || 100}<span style={{opacity: 0.9}}>G</span>
                                 </div>
                               </div>
                             );
@@ -799,7 +799,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 alignItems: idx === 0 ? 'flex-start' : (idx === 2 ? 'flex-end' : 'center'),
                 position: 'relative'
               }}>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: m.color, fontFamily: "'Montserrat', sans-serif" }}>{m.val.toFixed(1)}<span style={{fontSize: '10px', opacity: 0.3, fontWeight: '700', marginLeft: '2px'}}>g</span></div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: m.color, fontFamily: "'Montserrat', sans-serif" }}>{m.val.toFixed(1)}<span style={{fontSize: '10px', opacity: 0.75, fontWeight: '700', marginLeft: '2px'}}>g</span></div>
                 <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.85)', fontWeight: '900', letterSpacing: '1px' }}>{m.label}</div>
               </div>
             ))}
@@ -1073,7 +1073,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 { id: 'setup-age', label: 'Age', val: profile?.age || 25, unit: 'yr' }
               ].map(field => (
                 <div key={field.id}>
-                  <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.7 }}>{field.label.toUpperCase()}</label>
+                  <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>{field.label.toUpperCase()}</label>
                   <div style={{ position: 'relative' }}>
                     <input 
                       type="number" defaultValue={field.val}
@@ -1082,12 +1082,12 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                       onFocus={(e) => { e.currentTarget.style.border = '1px solid var(--accent-color)'; e.currentTarget.style.background = 'rgba(var(--theme-rgb), 0.07)'; }}
                       onBlur={(e) => { e.currentTarget.style.border = '1px solid rgba(var(--theme-rgb), 0.1)'; e.currentTarget.style.background = 'rgba(var(--theme-rgb), 0.03)'; }}
                     />
-                    <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.3, color: 'var(--text-primary)' }}>{field.unit}</span>
+                    <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.7, color: 'var(--text-primary)' }}>{field.unit}</span>
                   </div>
                 </div>
               ))}
               <div>
-                <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.7 }}>GENDER</label>
+                <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>GENDER</label>
                 <EliteSelect 
                   id="setup-gender"
                   defaultValue={profile?.gender || 'male'}
@@ -1100,7 +1100,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             </div>
 
             <div style={{ marginBottom: '32px' }}>
-              <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.7 }}>FITNESS GOAL</label>
+              <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>FITNESS GOAL</label>
               <EliteSelect 
                 id="setup-goal"
                 defaultValue={profile?.goal || 'maintain'}

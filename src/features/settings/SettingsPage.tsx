@@ -134,7 +134,7 @@ export function SettingsPage({ tracker }: Props) {
                   flexShrink: 0
                 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-primary)' }}>
                     <span>{t('userName').toUpperCase()}</span>
                   </div>
                   <input style={{ background: 'none', border: 'none', fontSize: '17px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localName} onChange={e => setLocalName(e.target.value)} onBlur={() => tracker.setSettings({ userName: localName })} />
@@ -157,7 +157,7 @@ export function SettingsPage({ tracker }: Props) {
                   flexShrink: 0
                 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-primary)' }}>
                     <span>EMAIL</span>
                   </div>
                   <input type="email" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localEmail} onChange={e => setLocalEmail(e.target.value)} onBlur={() => tracker.setSettings({ userEmail: localEmail })} />
@@ -180,7 +180,7 @@ export function SettingsPage({ tracker }: Props) {
                   flexShrink: 0
                 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.6, letterSpacing: '1px', color: 'var(--text-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '900', opacity: 0.9, letterSpacing: '1px', color: 'var(--text-primary)' }}>
                     <span>{t('password').toUpperCase()}</span>
                   </div>
                   <input type="password" style={{ background: 'none', border: 'none', fontSize: '15px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={localPassword} onChange={e => setLocalPassword(e.target.value)} onBlur={() => tracker.setSettings({ userPassword: localPassword })} />
@@ -220,13 +220,13 @@ export function SettingsPage({ tracker }: Props) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                   <input type="number" defaultValue={(tracker.settings.nutritionProfile as any)?.[f.key] || 0} onBlur={(e) => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, [f.key]: Number(e.target.value) } as any })} style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : '#000', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} />
-                  {f.unit && <span style={{ fontSize: '10px', fontWeight: '900', opacity: 0.4 }}>{f.unit}</span>}
+                  {f.unit && <span style={{ fontSize: '10px', fontWeight: '900', opacity: 0.8 }}>{f.unit}</span>}
                 </div>
               </div>
             ))}
           </div>
           <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '9px', fontWeight: '950', opacity: 0.4, letterSpacing: '2px', marginBottom: '16px' }}>BIOLOGICAL GENDER</div>
+            <div style={{ fontSize: '9px', fontWeight: '950', opacity: 0.8, letterSpacing: '2px', marginBottom: '16px' }}>BIOLOGICAL GENDER</div>
             <div style={{ display: 'flex', gap: '32px', justifyContent: 'center' }}>
               {(['male', 'female'] as const).map(g => (
                 <button key={g} onClick={() => tracker.setSettings({ nutritionProfile: { ...tracker.settings.nutritionProfile, gender: g } as any })} style={{ padding: '0', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', opacity: tracker.settings.nutritionProfile?.gender === g ? 1 : 0.3, transform: tracker.settings.nutritionProfile?.gender === g ? 'scale(1.15)' : 'scale(0.9)' }}>
@@ -260,7 +260,7 @@ export function SettingsPage({ tracker }: Props) {
                 const target = p.goal === 'lose' ? tdee - deficit : p.goal === 'gain' ? tdee + deficit : tdee;
                 return Math.round(target);
               })()}
-              <span style={{ fontSize: '14px', fontWeight: '800', opacity: 0.3, marginLeft: '6px', letterSpacing: '1px' }}>KCAL</span>
+              <span style={{ fontSize: '14px', fontWeight: '800', opacity: 0.7, marginLeft: '6px', letterSpacing: '1px' }}>KCAL</span>
             </div>
           </div>
         </div>
