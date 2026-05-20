@@ -285,10 +285,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           gridTemplateColumns: 'repeat(7, 1fr)', 
           gap: '4px', 
           padding: '4px',
-          background: tracker.settings.themeMode === 'dark' ? 'rgba(230, 126, 34, 0.25)' : 'rgba(0, 0, 0, 0.08)',
+          background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)',
           borderRadius: '16px',
           overflow: 'hidden',
-          border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(230, 126, 34, 0.25)' : '1px solid rgba(0, 0, 0, 0.08)',
+          border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.08)',
           boxSizing: 'border-box',
           width: '100%',
           textAlign: 'center'
@@ -298,10 +298,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
             <div key={`${d}-${_idx}`} style={{ 
               fontSize: '11px', 
               fontWeight: '950', 
-              color: 'var(--accent-color)', 
-              opacity: 1, 
+              color: 'var(--text-secondary)', 
+              opacity: 0.9, 
               letterSpacing: '1px',
-              background: tracker.settings.themeMode === 'dark' ? '#0d0d0d' : '#f8f9fa',
+              background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#f8f9fa',
               padding: '12px 0',
               width: '100%',
               display: 'flex',
@@ -337,14 +337,14 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   key="calendar-intro-card" 
                   style={{ 
                     background: tracker.settings.themeMode === 'dark' 
-                      ? 'rgba(230, 126, 34, 0.25)' 
-                      : 'rgba(0, 0, 0, 0.08)',
+                      ? 'rgba(255, 255, 255, 0.03)' 
+                      : 'rgba(0, 0, 0, 0.04)',
                     border: tracker.settings.themeMode === 'dark'
-                      ? '1px solid rgba(255, 255, 255, 0.05)'
-                      : '1px solid rgba(0, 0, 0, 0.03)',
+                      ? '1px solid rgba(255, 255, 255, 0.06)'
+                      : '1px solid rgba(0, 0, 0, 0.04)',
                     boxShadow: tracker.settings.themeMode === 'dark'
-                      ? '0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                      : '0 2px 6px rgba(0, 0, 0, 0.05)',
+                      ? 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+                      : 'none',
                     gridColumn: `span ${satStartOffset}`,
                     width: '100%',
                     height: '100%',
@@ -412,9 +412,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   style={{
                     background: active 
                       ? 'var(--accent-color-alpha)' 
-                      : (isToday ? 'rgba(230, 126, 34, 0.08)' : (worked ? 'rgba(var(--theme-rgb), 0.08)' : (tracker.settings.themeMode === 'dark' ? '#070707' : '#ffffff'))),
+                      : (worked ? (tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)') : (tracker.settings.themeMode === 'dark' ? '#111114' : '#ffffff')),
                     width: '100%',
-                    minHeight: '58px',
+                    height: '70px',
                     padding: '6px 2px',
                     display: 'flex', 
                     flexDirection: 'column', 
@@ -432,10 +432,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     transform: (active || isToday) ? 'translateY(-2px)' : 'none',
                     border: active 
                       ? '2.5px solid var(--accent-color)' 
-                      : (isToday ? '2.5px solid #E67E22' : (worked ? '1.5px solid rgba(var(--theme-rgb), 0.15)' : '2.5px solid transparent')),
-                    boxShadow: active 
-                      ? '0 4px 12px rgba(var(--theme-rgb), 0.3)' 
-                      : (isToday ? '0 4px 12px rgba(230, 126, 34, 0.45)' : 'none'),
+                      : (isToday ? '2.5px solid #E67E22' : (worked ? (tracker.settings.themeMode === 'dark' ? '1.5px solid rgba(255, 255, 255, 0.15)' : '1.5px solid rgba(0, 0, 0, 0.08)') : '2.5px solid transparent')),
+
                   }}
                 >
                   <span style={{ lineHeight: 1, zIndex: 2 }}>{day}</span>
@@ -474,10 +472,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 <div 
                   key={`empty-end-${dayNum}`} 
                   style={{ 
-                    background: tracker.settings.themeMode === 'dark' ? '#070707' : '#ffffff',
+                    background: tracker.settings.themeMode === 'dark' ? '#111114' : '#ffffff',
                     width: '100%',
-                    height: '100%',
-                    minHeight: '58px',
+                    height: '70px',
                     padding: '6px 2px',
                     borderRadius: '8px',
                     display: 'flex', 
