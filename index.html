@@ -16,18 +16,23 @@
       (function() {
         try {
           const raw = localStorage.getItem('gymlog_state_v1');
+          let theme = 'dark';
           if (raw) {
             const parsed = JSON.parse(raw);
-            const theme = parsed?.settings?.themeMode;
-            if (theme) {
-              document.documentElement.setAttribute('data-theme', theme);
-              if (theme === 'light') {
-                const themeMeta = document.querySelector('meta[name="theme-color"]');
-                if (themeMeta) {
-                  themeMeta.setAttribute('content', '#f6f7f9');
-                }
-              }
-            }
+            theme = parsed?.settings?.themeMode || 'dark';
+          }
+          document.documentElement.setAttribute('data-theme', theme);
+          
+          // Apply initial background color immediately to prevent white flash
+          const bg = theme === 'light' ? '#f6f7f9' : '#0a0a0c';
+          const style = document.createElement('style');
+          style.id = 'theme-initial-bg';
+          style.innerHTML = `html, body { background: ${bg} !important; }`;
+          document.head.appendChild(style);
+          
+          const themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (themeMeta) {
+            themeMeta.setAttribute('content', bg);
           }
         } catch (e) {
           console.error('Theme detection failed', e);

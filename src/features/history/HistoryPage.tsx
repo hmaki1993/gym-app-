@@ -28,6 +28,7 @@ function formatDuration(mins: number, t: (k: any) => string) {
 
 export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   const lang = tracker.settings.language;
+  const isLight = tracker.settings.themeMode === 'light';
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
@@ -60,6 +61,15 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   const monthName = viewDate.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { month: 'long', year: 'numeric' });
 
 
+  const mockLogDate = React.useMemo(() => {
+    const now = new Date();
+    const isCurrent = now.getFullYear() === currentYear && now.getMonth() === currentMonth;
+    const day = isCurrent 
+      ? (now.getDate() > 5 ? now.getDate() - 3 : 1) 
+      : 10;
+    return new Date(currentYear, currentMonth, day);
+  }, [currentYear, currentMonth]);
+
   const monthDayMuscles = React.useMemo(() => {
     const map: Record<number, string[]> = {};
     const exerciseToMuscle: Record<string, string> = {};
@@ -69,6 +79,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
     Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
       exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
     });
+
+    // Inject mock workout muscles
+    const mockDay = mockLogDate.getDate();
+    map[mockDay] = ['chest', 'back'];
 
     tracker.logs.forEach(log => {
       const d = new Date(log.date);
@@ -84,7 +98,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
       }
     });
     return map;
-  }, [tracker.logs, tracker.customExercises, currentYear, currentMonth]);
+  }, [tracker.logs, tracker.customExercises, currentYear, currentMonth, mockLogDate]);
 
   const isSelected = (day: number) => {
     if (!selectedDate) return false;
@@ -93,18 +107,51 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
            selectedDate.getDate() === day;
   };
 
-  const filteredLogs = selectedDate 
-    ? tracker.logs.filter(l => {
-        // Robust check: handles both 'YYYY-MM-DD' and full ISO timestamps
-        const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-        // Direct string prefix match (fastest for YYYY-MM-DD stored dates)
-        if (l.date.startsWith(selectedStr)) return true;
-        // Fallback: parse as local date for ISO timestamps
-        const d = new Date(l.date);
-        const logStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return logStr === selectedStr;
-      })
-    : [];
+  const filteredLogs = React.useMemo(() => {
+    const logs = [...tracker.logs];
+    const mockDay = mockLogDate.getDate();
+    const mockDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(mockDay).padStart(2, '0')}`;
+    
+    const hasRealLog = logs.some(l => l.date.startsWith(mockDateStr));
+    if (!hasRealLog) {
+      logs.push({
+        id: 'mock-workout-id',
+        date: `${mockDateStr}T18:00:00.000Z`,
+        durationMinutes: 45,
+        durationSeconds: 2700,
+        exercises: [
+          {
+            name: 'Bench Press',
+            sets: [
+              { weight: 60, reps: 10, completed: true },
+              { weight: 70, reps: 8, completed: true },
+              { weight: 80, reps: 6, completed: true }
+            ],
+            muscleGroup: 'chest'
+          },
+          {
+            name: 'Pull Up',
+            sets: [
+              { weight: 0, reps: 12, completed: true },
+              { weight: 0, reps: 10, completed: true }
+            ],
+            muscleGroup: 'back'
+          }
+        ],
+        notes: 'Mock training session'
+      } as any);
+    }
+
+    return selectedDate 
+      ? logs.filter(l => {
+          const selectedStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+          if (l.date.startsWith(selectedStr)) return true;
+          const d = new Date(l.date);
+          const logStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          return logStr === selectedStr;
+        })
+      : [];
+  }, [tracker.logs, selectedDate, currentYear, currentMonth, mockLogDate]);
 
   // Consolidate multiple logs for the same day into one (fixes old split-session bug)
   const consolidatedLogs = (() => {
@@ -139,16 +186,11 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingBottom: '120px' }}>
-      {/* Weightless Elite Calendar - Compact Card Frame */}
+      {/* Weightless Elite Calendar - Compact */}
       <div style={{ 
-        padding: '24px 16px', 
+        padding: '5px 0 15px', 
         transformStyle: 'preserve-3d',
-        animation: 'fadeIn 0.6s ease',
-        background: tracker.settings.themeMode === 'dark' ? '#0d0d0d' : '#ffffff',
-        border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(230, 126, 34, 0.25)' : '1px solid rgba(0, 0, 0, 0.08)',
-        borderRadius: '24px',
-        boxShadow: tracker.settings.themeMode === 'dark' ? '0 10px 40px 0 rgba(0, 0, 0, 0.5)' : '0 10px 40px 0 rgba(0, 0, 0, 0.03)',
-        marginBottom: '20px'
+        animation: 'fadeIn 0.6s ease'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', padding: '0 10px' }}>
           <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -237,24 +279,35 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           </button>
         </div>
 
+        {/* Structured Calendar Grid with Dividers */}
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(7, 1fr)', 
-          justifyItems: 'center',
-          gap: '16px 6px', 
-          textAlign: 'center',
-          padding: '0 8px', 
+          gap: '4px', 
+          padding: '4px',
+          background: tracker.settings.themeMode === 'dark' ? 'rgba(230, 126, 34, 0.25)' : 'rgba(0, 0, 0, 0.08)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(230, 126, 34, 0.25)' : '1px solid rgba(0, 0, 0, 0.08)',
           boxSizing: 'border-box',
-          width: '100%'
+          width: '100%',
+          textAlign: 'center'
         }}>
-          {/* Clear Headers: Sat, Sun, Mon, Tue, Wed, Thu, Fri */}
+          {/* Weekday Headers */}
           {['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((d, _idx) => (
             <div key={`${d}-${_idx}`} style={{ 
               fontSize: '11px', 
               fontWeight: '950', 
               color: 'var(--accent-color)', 
               opacity: 1, 
-              letterSpacing: '1px' 
+              letterSpacing: '1px',
+              background: tracker.settings.themeMode === 'dark' ? '#0d0d0d' : '#f8f9fa',
+              padding: '12px 0',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px'
             }}>{d.toUpperCase()}</div>
           ))}
 
@@ -277,9 +330,70 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
             const satStartOffset = offsetMap[firstDayOfWeek];
             const dayElements = [];
             
-            // 1. Initial Padding
-            for (let i = 0; i < satStartOffset; i++) {
-              dayElements.push(<div key={`empty-start-${i}`} />);
+            // 1. Initial Padding Cells (Motivational/Info Card)
+            if (satStartOffset > 0) {
+              dayElements.push(
+                <div 
+                  key="calendar-intro-card" 
+                  style={{ 
+                    background: tracker.settings.themeMode === 'dark' 
+                      ? 'rgba(230, 126, 34, 0.25)' 
+                      : 'rgba(0, 0, 0, 0.08)',
+                    border: tracker.settings.themeMode === 'dark'
+                      ? '1px solid rgba(255, 255, 255, 0.05)'
+                      : '1px solid rgba(0, 0, 0, 0.03)',
+                    boxShadow: tracker.settings.themeMode === 'dark'
+                      ? '0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                      : '0 2px 6px rgba(0, 0, 0, 0.05)',
+                    gridColumn: `span ${satStartOffset}`,
+                    width: '100%',
+                    height: '100%',
+                    minHeight: '58px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    boxSizing: 'border-box',
+                    padding: '0 16px'
+                  }} 
+                >
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    backgroundColor: 'var(--text-secondary)',
+                    WebkitMask: 'url(/assets/dumbbell-intro.png) no-repeat center / contain',
+                    mask: 'url(/assets/dumbbell-intro.png) no-repeat center / contain',
+                    display: 'inline-block',
+                    transform: 'rotate(-35deg)',
+                    opacity: 0.9
+                  }} />
+                  {satStartOffset >= 4 && (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {"SUCCESSFUL START".split("").map((char, index) => {
+                        const wobble = [3, -3, 2, -2, 4, -3, 3, 0, -2, 3, -3, 2, -2, 3, -3, 2][index % 16];
+                        return (
+                          <span 
+                            key={index} 
+                            style={{ 
+                              fontSize: 'clamp(14px, 4vw, 18px)', 
+                              fontWeight: '900', 
+                              marginRight: char === ' ' ? '8px' : '2px',
+                              color: 'var(--text-secondary)',
+                              fontFamily: '"Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif',
+                              WebkitTextStroke: '1.5px var(--text-secondary)',
+                              display: 'inline-block',
+                              transform: `rotate(${wobble}deg) translateY(${wobble * 0.3}px)`
+                            }}
+                          >
+                            {char === ' ' ? '\u00A0' : char}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
             }
 
             // 2. Actual Days
@@ -296,38 +410,50 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   key={day}
                   onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
                   style={{
-                    width: 'clamp(38px, 11vw, 46px)', 
-                    height: 'clamp(38px, 11vw, 46px)', 
-                    margin: '0 auto', 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 'clamp(14px, 4vw, 17px)', 
+                    background: active 
+                      ? 'var(--accent-color-alpha)' 
+                      : (isToday ? 'rgba(230, 126, 34, 0.08)' : (worked ? 'rgba(var(--theme-rgb), 0.08)' : (tracker.settings.themeMode === 'dark' ? '#070707' : '#ffffff'))),
+                    width: '100%',
+                    minHeight: '58px',
+                    padding: '6px 2px',
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: 'clamp(14px, 3.8vw, 16px)', 
                     fontWeight: active ? '950' : (isToday ? '950' : '800'),
                     color: active ? 'var(--accent-color)' : (isToday ? '#E67E22' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
-                    cursor: 'pointer', position: 'relative', borderRadius: '50%',
-                    background: active ? 'var(--accent-color-alpha)' : (isToday ? 'rgba(230, 126, 34, 0.08)' : (worked ? 'rgba(var(--theme-rgb), 0.1)' : 'transparent')),
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    border: active ? '1.5px solid var(--accent-color)' : (isToday ? '1.5px solid rgba(230, 126, 34, 0.3)' : (worked ? '1px solid rgba(var(--theme-rgb), 0.1)' : '1px solid transparent')),
-                    transform: active ? 'scale(1.05)' : 'scale(1)',
-                    paddingTop: dayMuscles.length > 0 ? '2px' : '0px',
-                    boxSizing: 'border-box'
+                    cursor: 'pointer', 
+                    position: 'relative',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxSizing: 'border-box',
+                    borderRadius: '8px',
+                    zIndex: (active || isToday) ? 10 : 2,
+                    transform: (active || isToday) ? 'translateY(-2px)' : 'none',
+                    border: active 
+                      ? '2.5px solid var(--accent-color)' 
+                      : (isToday ? '2.5px solid #E67E22' : (worked ? '1.5px solid rgba(var(--theme-rgb), 0.15)' : '2.5px solid transparent')),
+                    boxShadow: active 
+                      ? '0 4px 12px rgba(var(--theme-rgb), 0.3)' 
+                      : (isToday ? '0 4px 12px rgba(230, 126, 34, 0.45)' : 'none'),
                   }}
                 >
-                  <span style={{ lineHeight: 1 }}>{day}</span>
+                  <span style={{ lineHeight: 1, zIndex: 2 }}>{day}</span>
                   {dayMuscles.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '0px', marginTop: '1px', height: '18px', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0px', marginTop: '3px', height: '28px', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
                       {dayMuscles.slice(0, 3).map((g, _idx) => {
                         const mg = MUSCLE_GROUPS.find(m => m.key === g);
                         return mg?.icon ? (
-                          <TransparentImage key={g} src={mg.icon} alt="" width={18} height={18} threshold={45} style={{ filter: 'none', marginLeft: _idx > 0 ? '-5px' : '0px', zIndex: 10 - _idx }} />
-                        ) : <span key={g} style={{ fontSize: '12px' }}>•</span>;
+                          <TransparentImage key={g} src={mg.icon} alt="" width={28} height={28} threshold={45} style={{ filter: 'none', marginLeft: _idx > 0 ? '-7px' : '0px', zIndex: 10 - _idx }} />
+                        ) : <span key={g} style={{ fontSize: '10px' }}>•</span>;
                       })}
                     </div>
                   ) : (
                     isPast && !isToday && (
-                      <div style={{ marginTop: '1px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.75 }}>
+                      <div style={{ marginTop: '3px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, zIndex: 2 }}>
                         <div style={{
-                          width: '18px',
-                          height: '18px',
+                          width: '22px',
+                          height: '22px',
                           backgroundColor: 'var(--text-primary)',
                           WebkitMask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
                           mask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
@@ -336,13 +462,36 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                       </div>
                     )
                   )}
-                  {isToday && !active && (
-                     <div style={{ 
-                       position: 'absolute', inset: '-2px', borderRadius: '50%', 
-                       border: '2px solid #E67E22', 
-                       
-                     }} />
-                  )}
+                </div>
+              );
+            }
+
+            // 3. Trailing Padding Cells (Next Month Days)
+            const totalCellsRendered = satStartOffset + totalDays;
+            const remainingCells = (7 - (totalCellsRendered % 7)) % 7;
+            for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
+              dayElements.push(
+                <div 
+                  key={`empty-end-${dayNum}`} 
+                  style={{ 
+                    background: tracker.settings.themeMode === 'dark' ? '#070707' : '#ffffff',
+                    width: '100%',
+                    height: '100%',
+                    minHeight: '58px',
+                    padding: '6px 2px',
+                    borderRadius: '8px',
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: 'clamp(14px, 3.8vw, 16px)', 
+                    fontWeight: '800',
+                    color: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+                    cursor: 'default',
+                    boxSizing: 'border-box'
+                  }} 
+                >
+                  <span style={{ lineHeight: 1 }}>{dayNum}</span>
                 </div>
               );
             }
@@ -350,6 +499,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
             return dayElements;
           })()}
         </div>
+
+
 
         {/* Premium Training Frequency Card */}
         {/* Weekly Summary Card */}
@@ -440,8 +591,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                       alignItems: 'center',
                       minWidth: '45px'
                     }}>
-                      <span style={{ fontSize: '9px', fontWeight: '950', opacity: isThisWeek ? 1 : 0.4, marginBottom: '4px', letterSpacing: '1.5px', color: isThisWeek ? 'var(--accent-color)' : 'var(--text-primary)' }}>{week.label}</span>
-                      <span style={{ fontSize: '20px', fontWeight: '950', color: isThisWeek ? 'var(--accent-color)' : (week.count > 0 ? 'var(--text-primary)' : 'rgba(150,150,150,0.3)'), fontFamily: "'Montserrat', sans-serif", lineHeight: 1 }}>{week.count}</span>
+                      <span style={{ fontSize: '9px', fontWeight: '950', opacity: isThisWeek ? 1 : (isLight ? 0.65 : 0.4), marginBottom: '4px', letterSpacing: '1.5px', color: isThisWeek ? 'var(--accent-color)' : 'var(--text-primary)' }}>{week.label}</span>
+                      <span style={{ fontSize: '20px', fontWeight: '950', color: isThisWeek ? 'var(--accent-color)' : (week.count > 0 ? 'var(--text-primary)' : (isLight ? 'rgba(18, 18, 18, 0.25)' : 'rgba(150,150,150,0.3)')), fontFamily: "'Montserrat', sans-serif", lineHeight: 1 }}>{week.count}</span>
                       
                       {/* Rest Days Indicator */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
@@ -452,9 +603,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                           WebkitMask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
                           mask: 'url(/assets/sofa-custom.png) no-repeat center / contain',
                           display: 'inline-block',
-                          opacity: restDays > 0 ? 1 : 0.4
+                          opacity: restDays > 0 ? 1 : (isLight ? 0.65 : 0.4)
                         }} />
-                        <span style={{ fontSize: '11px', fontWeight: '950', color: isThisWeek ? "var(--text-primary)" : "var(--text-secondary)", opacity: restDays > 0 ? 1 : 0.4 }}>{restDays}</span>
+                        <span style={{ fontSize: '11px', fontWeight: '950', color: isThisWeek ? "var(--text-primary)" : "var(--text-secondary)", opacity: restDays > 0 ? 1 : (isLight ? 0.65 : 0.4) }}>{restDays}</span>
                       </div>
                     </div>
                     {/* Vertical Divider */}
@@ -512,17 +663,37 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
                 role="button"
                 style={{ 
-                  padding: '24px 16px 24px 32px', cursor: 'pointer',
+                  padding: '24px 20px 16px 32px', cursor: 'pointer',
                   background: tracker.settings.themeMode === 'dark' ? '#0a0a0a' : '#ffffff',
-                  border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(230, 126, 34, 0.3)' : '1px solid rgba(0,0,0,0.1)',
-                  borderRadius: '20px', margin: '0 0px 12px 0px', position: 'relative',
+                  border: 'none',
+                  borderTop: tracker.settings.themeMode === 'dark' 
+                    ? '1px solid rgba(230, 126, 34, 0.3)' 
+                    : '1px solid rgba(0,0,0,0.1)',
+                  borderBottom: tracker.settings.themeMode === 'dark' 
+                    ? '1px solid rgba(230, 126, 34, 0.3)' 
+                    : '1px solid rgba(0,0,0,0.1)',
+                  boxShadow: tracker.settings.themeMode === 'dark'
+                    ? '0 10px 30px rgba(0,0,0,0.4)'
+                    : '0 10px 30px rgba(0, 0, 0, 0.08)',
+                  borderRadius: '0px', 
+                  margin: '0 -16px 12px -16px', 
+                  position: 'relative',
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                <div style={{ position: 'absolute', left: 0, top: '15%', bottom: '15%', width: '4px', background: '#E67E22', borderRadius: '0 2px 2px 0',  zIndex: 10 }} />
+                <div style={{ 
+                  position: 'absolute', 
+                  left: '16px', 
+                  top: '20%', 
+                  bottom: '20%', 
+                  width: '4px', 
+                  background: 'var(--accent-secondary)', 
+                  borderRadius: '2px',
+                  zIndex: 10 
+                }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                  <img src="/assets/flame-custom.png" alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-                  <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: "'Montserrat', sans-serif" }}>{t('session')}</span>
+                  <img src="/assets/flame-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+                  <span style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: "'Montserrat', sans-serif" }}>{t('session')}</span>
                 </div>
                 <div style={{ 
                   position: 'absolute', top: '12px', right: '12px', 
@@ -580,7 +751,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                             {idx > 0 && <div style={{ width: '1px', height: '24px', background: 'rgba(var(--theme-rgb), 0.1)' }} />}
                             <div style={{ flex: 1, textAlign: 'center' }}>
                               <div style={{ fontSize: '20px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{stat.value}</div>
-                              <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                              <div style={{ fontSize: '10px', color: isLight ? 'rgba(var(--theme-rgb), 0.75)' : 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
                             </div>
                           </React.Fragment>
                         ))}
@@ -634,17 +805,24 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                       <div style={{ fontSize: '8px', fontWeight: '950', color: '#E67E22', background: 'rgba(230, 126, 34, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>PR</div>
                                     )}
                                   </div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                    <div style={{ textAlign: 'right' }}>
-                                      <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.sets.length}</span>
-                                      <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--text-secondary)', opacity: 0.9, marginLeft: '4px' }}>SETS</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                      <div style={{ textAlign: 'right' }}>
+                                        <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.sets.length}</span>
+                                        <span style={{ fontSize: '10px', fontWeight: '950', color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: isLight ? 1 : 0.9, marginLeft: '4px' }}>SETS</span>
+                                      </div>
+                                      <div style={{ width: '1px', height: '12px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
+                                      {(() => {
+                                        const displayUnit = tracker.getDisplayUnit(ex.name, ex.groupKey as any);
+                                        const convertedWeight = tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', displayUnit);
+                                        const roundedWeight = Number(convertedWeight.toFixed(1));
+                                        return (
+                                          <div style={{ textAlign: 'right' }}>
+                                             <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{roundedWeight}</span>
+                                             <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t(displayUnit as any)}</span>
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
-                                    <div style={{ width: '1px', height: '12px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
-                                    <div style={{ textAlign: 'right' }}>
-                                       <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{bestSet.weight}</span>
-                                       <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t((bestSet as any).unit as any)}</span>
-                                    </div>
-                                  </div>
                                 </div>
                               </React.Fragment>
                             );
@@ -684,7 +862,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                   {idx > 0 && <div style={{ width: '1px', height: '16px', background: 'rgba(var(--theme-rgb), 0.1)' }} />}
                                   <div style={{ flex: 1, textAlign: 'center' }}>
                                     <div style={{ fontSize: '15px', fontWeight: '950', color: idx === 0 ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)'), fontFamily: 'Inter, sans-serif' }}>{stat.value}</div>
-                                    <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
+                                    <div style={{ fontSize: '10px', color: isLight ? 'rgba(var(--theme-rgb), 0.75)' : 'rgba(var(--theme-rgb), 0.5)', fontWeight: '950', letterSpacing: '2px', marginTop: '6px', textTransform: 'uppercase' }}>{stat.label}</div>
                                   </div>
                                 </React.Fragment>
                               ))}
@@ -696,7 +874,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#E67E22' }} />
                                     <span style={{ fontSize: '14px', fontWeight: '800', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', opacity: 0.9 }}>{food.nameAr || food.name}</span>
-                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.5)' }}>x{food.servingSize}</span>}
+                                    {food.servingSize && <span style={{ fontSize: '10px', fontWeight: '900', color: isLight ? 'rgba(var(--theme-rgb), 0.75)' : 'rgba(var(--theme-rgb), 0.5)' }}>x{food.servingSize}</span>}
                                   </div>
                                   <div style={{ textAlign: 'right', minWidth: '60px' }}>
                                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)' }}>{food.calories}</span>

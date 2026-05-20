@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, memo } from 'react';
 import { Trash2 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../hooks/useGymTracker';
+import type { MuscleGroup } from '../../types';
 
 const translations: any = {
   en: { totalVolume: 'Total Volume', addSet: 'Add Set', reps: 'Reps', done: 'Done', kg: 'kg', lbs: 'lbs', balata: 'plate', lastSession: 'Last Session' },
@@ -139,16 +140,17 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
   const lang = tracker.settings.language;
   const t = (k: string) => (translations[lang] as any)[k] ?? k;
   const weightUnit = tracker.settings.weightUnit;
+  const isLight = tracker.settings.themeMode === 'light';
 
   const initSets = () => {
-    const lastUnit = tracker.getLastUsedUnit(exerciseName);
+    const lastUnit = tracker.getDisplayUnit(exerciseName, muscleGroup as MuscleGroup);
     return initialSets && initialSets.length > 0
       ? initialSets.map(s => ({ ...s, unit: (s.unit || lastUnit || weightUnit || 'kg') as any }))
       : [{ weight: '', reps: '', unit: (lastUnit || weightUnit || 'kg') as any }];
   };
 
   const [sets, setSets] = useState(initSets);
-  const [activeUnit, setActiveUnit] = useState(initialSets?.[0]?.unit || tracker.getLastUsedUnit(exerciseName) || weightUnit || 'kg');
+  const [activeUnit, setActiveUnit] = useState(initialSets?.[0]?.unit || tracker.getDisplayUnit(exerciseName, muscleGroup as MuscleGroup) || weightUnit || 'kg');
   const [isResting, setIsResting] = useState(false);
   const [restSeconds, setRestSeconds] = useState(tracker.settings.defaultRestSeconds);
   const [restingSetIndex, setRestingSetIndex] = useState<number | null>(null);
@@ -161,7 +163,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
 
   // Re-init when exercise changes
   useEffect(() => {
-    const lastUnit = tracker.getLastUsedUnit(exerciseName);
+    const lastUnit = tracker.getDisplayUnit(exerciseName, muscleGroup as MuscleGroup);
     const s = initSets();
     setSets(s);
     setActiveUnit(initialSets?.[0]?.unit || lastUnit || weightUnit || 'kg');
@@ -320,7 +322,9 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
             const setsAtMaxWeight = maxWeightSets.length;
             const maxRepsAtMaxWeight = Math.max(...maxWeightSets.map(s => Number(s.reps) || 0));
             const bestSet = maxWeightSets[0];
-            const displayUnit = bestSet.unit || weightUnit;
+            const targetUnit = tracker.getDisplayUnit(exerciseName, muscleGroup as MuscleGroup);
+            const convertedWeight = tracker.convertWeight(maxWeight, bestSet.unit || 'kg', targetUnit);
+            const roundedWeight = Number(convertedWeight.toFixed(1));
 
             return (
               <div style={{ 
@@ -329,7 +333,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                 padding: '4px 0', 
                 color: 'var(--text-primary)', 
                 fontSize: 13, 
-                fontWeight: 800, 
+                fontWeight: 900, 
                 fontFamily: "'Montserrat', sans-serif", 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -337,13 +341,13 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                 whiteSpace: 'nowrap',
                 border: 'none',
               }}>
-                <span style={{ color: 'var(--accent-color)', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, opacity: 0.9 }}>LAST:</span>
-                <span style={{ fontWeight: 900, fontSize: 15 }}>{setsAtMaxWeight} <span style={{ fontSize: 10, opacity: 0.8 }}>SETS</span></span>
-                <span style={{ opacity: 0.4, fontSize: 10 }}>×</span>
-                <span style={{ fontWeight: 900, fontSize: 15 }}>{maxRepsAtMaxWeight} <span style={{ fontSize: 10, opacity: 0.8 }}>REPS</span></span>
-                <div style={{ width: '1px', height: 12, background: 'rgba(var(--theme-rgb), 0.15)', margin: '0 6px' }} />
-                <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{maxWeight}</span>
-                <span style={{ fontSize: 11, opacity: 0.7, color: 'var(--accent-color)', fontWeight: 900 }}>{t(displayUnit)}</span>
+                <span style={{ color: 'var(--accent-color)', fontSize: 10, fontWeight: 950, letterSpacing: 1.5, opacity: isLight ? 0.95 : 0.9 }}>LAST:</span>
+                <span style={{ fontWeight: 950, fontSize: 15 }}>{setsAtMaxWeight} <span style={{ fontSize: 10, opacity: isLight ? 0.95 : 0.8, fontWeight: 900 }}>SETS</span></span>
+                <span style={{ opacity: isLight ? 0.65 : 0.4, fontSize: 10, fontWeight: 900 }}>×</span>
+                <span style={{ fontWeight: 950, fontSize: 15 }}>{maxRepsAtMaxWeight} <span style={{ fontSize: 10, opacity: isLight ? 0.95 : 0.8, fontWeight: 900 }}>REPS</span></span>
+                <div style={{ width: '1px', height: 12, background: isLight ? 'rgba(var(--theme-rgb), 0.3)' : 'rgba(var(--theme-rgb), 0.15)', margin: '0 6px' }} />
+                <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{roundedWeight}</span>
+                <span style={{ fontSize: 11, opacity: isLight ? 0.95 : 0.7, color: 'var(--accent-color)', fontWeight: 950 }}>{t(targetUnit)}</span>
                 <img src="/assets/trophy-custom.png" style={{ width: 18, height: 18, marginLeft: 6, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }} alt="Trophy" />
               </div>
             );

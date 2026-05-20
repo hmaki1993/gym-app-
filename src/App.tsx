@@ -125,8 +125,8 @@ export default function App() {
   useEffect(() => {
     if (appRef.current) {
       gsap.fromTo(appRef.current,
-        { opacity: 0, y: 15, scale: 0.97 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.65, ease: 'power4.out', force3D: true, clearProps: 'transform' }
+        { opacity: 0, y: 50, scale: 0.88, filter: 'blur(12px)' },
+        { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.55, ease: 'power4.out', force3D: true, clearProps: 'transform,filter' }
       );
     }
   }, []);

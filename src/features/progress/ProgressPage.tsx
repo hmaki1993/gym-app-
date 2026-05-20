@@ -85,16 +85,21 @@ function MiniChart({ data, color, title }: { data: { date: string; value: number
   );
 }
 
-function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: string, prs: any[], today: string, lang: string, t: any, unit: any }) {
+function RecordDateAccordion({ dateStr, prs, today, lang, t, isLight, tracker }: { dateStr: string, prs: any[], today: string, lang: string, t: any, isLight: boolean, tracker: ReturnType<typeof useGymTracker> }) {
   const [isDateOpen, setIsDateOpen] = useState(dateStr === today);
   const displayDate = new Date(dateStr).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   
   return (
     <div style={{ background: 'rgba(var(--theme-rgb), 0.1)', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(var(--theme-rgb), 0.14)' }}>
       <button onClick={() => setIsDateOpen(!isDateOpen)} style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer' }}>
-        <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--text-primary)', opacity: 0.8, textTransform: 'uppercase' }}>
+        <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--text-primary)', opacity: isLight ? 0.95 : 0.8, textTransform: 'uppercase' }}>
           {dateStr === today ? (lang === 'ar' ? 'اليوم' : 'TODAY') : displayDate}
-          <span style={{ marginLeft: '8px', opacity: 0.4 }}>({prs.length})</span>
+          <span style={{ 
+            marginLeft: '8px', 
+            opacity: isLight ? 0.95 : 0.4, 
+            color: isLight ? '#E67E22' : 'inherit', 
+            fontWeight: isLight ? '950' : 'inherit' 
+          }}>({prs.length})</span>
         </div>
         <img src="/assets/arrow-custom.png" alt="Toggle" style={{ width: '16px', height: '16px', objectFit: 'contain', opacity: 0.8, transform: isDateOpen ? 'rotate(270deg)' : 'rotate(90deg)', transition: 'transform 0.3s ease' }} />
       </button>
@@ -117,24 +122,36 @@ function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: 
                     <span style={{ whiteSpace: 'nowrap' }}>{groupName}</span>
                     <div style={{ flex: 1, height: '1.5px', background: 'var(--accent-color)', opacity: 0.15, borderRadius: '1px' }} />
                   </div>
-                  {items.map((pr, idx) => (
-                    <div key={pr.exerciseName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx === items.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.1)' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
-                        <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{groupName}</span>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                        <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
-                          {pr.weight} {t((pr.unit || unit) as any)} × {pr.reps}
-                        </span>
-                        {pr.setsCount && pr.setsCount > 0 && (
-                          <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-secondary)', opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                            {pr.setsCount} {lang === 'ar' ? 'مجموعات' : 'SETS'}
+                  {items.map((pr, idx) => {
+                    const displayUnit = tracker.getDisplayUnit(pr.exerciseName, pr.muscleGroup);
+                    const convertedWeight = tracker.convertWeight(pr.weight, pr.unit || 'kg', displayUnit);
+                    const roundedWeight = Number(convertedWeight.toFixed(1));
+                    return (
+                      <div key={pr.exerciseName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx === items.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.1)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
+                          <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{groupName}</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                          <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
+                            {roundedWeight} {t(displayUnit as any)} × {pr.reps}
                           </span>
-                        )}
+                          {pr.setsCount && pr.setsCount > 0 && (
+                            <span style={{ 
+                              fontSize: '10px', 
+                              fontWeight: '950', 
+                              color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', 
+                              opacity: isLight ? 0.95 : 0.7, 
+                              letterSpacing: '0.5px', 
+                              textTransform: 'uppercase' 
+                            }}>
+                              {pr.setsCount} {lang === 'ar' ? 'مجموعات' : 'SETS'}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </React.Fragment>
               );
             });
@@ -148,7 +165,6 @@ function RecordDateAccordion({ dateStr, prs, today, lang, t, unit }: { dateStr: 
 export const ProgressPage: React.FC<Props> = ({ tracker }) => {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
-  const unit = tracker.settings.weightUnit;
   const containerRef = useRef<HTMLDivElement>(null);
   const chartsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -249,7 +265,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
 
   const getExerciseHistory = (name: string) => {
     const history: { date: string; value: number }[] = [];
-    const exerciseUnit = tracker.getLastUsedUnit(name);
+    const exerciseUnit = tracker.getDisplayUnit(name);
     for (const log of [...tracker.logs].reverse()) {
       const ex = log.exercises.find(e => e.name === name);
       const group = exerciseToMuscle[name.toLowerCase()] || log.muscleGroup;
@@ -331,17 +347,75 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
                 </div>
                 {isMasterOpen && (
                   <div style={{ marginTop: '12px', animation: 'slideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '5px', paddingLeft: '10px' }}>{lang === 'ar' ? 'سجل الإنجازات الزمني' : 'CHRONOLOGICAL RECORDS'}</div>
+                    <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '5px', paddingLeft: '10px' }}>{lang === 'ar' ? 'سجل التدريبات الزمني' : 'CHRONOLOGICAL WORKOUTS'}</div>
                     {(() => {
-                      const dateGroups: Record<string, typeof tracker.prs> = {};
-                      tracker.prs.forEach(pr => {
-                        const dateStr = new Date(pr.date).toDateString();
-                        if (!dateGroups[dateStr]) dateGroups[dateStr] = [];
-                        dateGroups[dateStr].push(pr);
+                      const dateGroups: Record<string, any[]> = {};
+                      
+                      tracker.logs.forEach(log => {
+                        const dateStr = new Date(log.date).toDateString();
+                        if (!dateGroups[dateStr]) {
+                          dateGroups[dateStr] = [];
+                        }
+                        
+                        log.exercises.forEach(ex => {
+                          if (ex.sets.length === 0) return;
+                          
+                          // Find the best set of this day for this exercise (highest weight, then reps)
+                          let bestSet = ex.sets[0];
+                          ex.sets.forEach(s => {
+                            const sWeight = tracker.convertWeight(s.weight, s.unit || 'kg', 'kg');
+                            const bWeight = tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', 'kg');
+                            if (sWeight > bWeight) {
+                              bestSet = s;
+                            } else if (sWeight === bWeight && s.reps > bestSet.reps) {
+                              bestSet = s;
+                            }
+                          });
+                          
+                          // Determine the muscle group
+                          const exerciseToMuscle: Record<string, string> = {};
+                          Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+                            exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
+                          });
+                          Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
+                            exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
+                          });
+                          const muscleGroup = (ex as any).muscleGroup || exerciseToMuscle[ex.name.trim().toLowerCase()] || log.muscleGroup || 'other';
+                          
+                          // Prevent duplication on the same day: merge sets count and take the absolute best set
+                          const existingIdx = dateGroups[dateStr].findIndex(item => item.exerciseName === ex.name);
+                          if (existingIdx > -1) {
+                            const existing = dateGroups[dateStr][existingIdx];
+                            existing.setsCount += ex.sets.length;
+                            const currentBestWeightKg = tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', 'kg');
+                            const existingBestWeightKg = tracker.convertWeight(existing.weight, existing.unit || 'kg', 'kg');
+                            if (currentBestWeightKg > existingBestWeightKg) {
+                              existing.weight = bestSet.weight;
+                              existing.reps = bestSet.reps;
+                              existing.unit = (bestSet as any).unit || tracker.settings.weightUnit;
+                            } else if (currentBestWeightKg === existingBestWeightKg && bestSet.reps > existing.reps) {
+                              existing.reps = bestSet.reps;
+                            }
+                          } else {
+                            dateGroups[dateStr].push({
+                              exerciseName: ex.name,
+                              muscleGroup: muscleGroup,
+                              weight: bestSet.weight,
+                              reps: bestSet.reps,
+                              unit: (bestSet as any).unit || tracker.settings.weightUnit,
+                              setsCount: ex.sets.length,
+                              date: log.date
+                            });
+                          }
+                        });
                       });
-                      const sortedDates = Object.keys(dateGroups).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+                      const sortedDates = Object.keys(dateGroups)
+                        .filter(d => dateGroups[d].length > 0)
+                        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
                       return sortedDates.map(dateStr => (
-                        <RecordDateAccordion key={dateStr} dateStr={dateStr} prs={dateGroups[dateStr]} today={today} lang={lang} t={t} unit={unit} />
+                        <RecordDateAccordion key={dateStr} dateStr={dateStr} prs={dateGroups[dateStr]} today={today} lang={lang} t={t} isLight={tracker.settings.themeMode === 'light'} tracker={tracker} />
                       ));
                     })()}
                   </div>
@@ -397,7 +471,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
                   const latest = history[history.length - 1].value;
                   const first = history[0].value;
                   const diff = Number((latest - first).toFixed(1));
-                  const exerciseUnit = tracker.getLastUsedUnit(name);
+                  const exerciseUnit = tracker.getDisplayUnit(name);
                   return (
                     <div key={name}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>

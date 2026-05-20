@@ -36,7 +36,6 @@ interface Props {
 const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, activeExercises, onToggle, onRename, tracker, t }) => {
   const lang = tracker.settings.language;
   const isRtl = lang === 'ar';
-  const weightUnit = tracker.settings.weightUnit;
   const customTranslations = (tracker.state as any).customTranslations || {};
   const isLight = tracker.settings.themeMode === 'light';
 
@@ -170,9 +169,16 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 2, minHeight: 24 }}>
-              <div>
-                {lastSession && <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 800, opacity: 0.8, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
-              </div>
+                {lastSession && (() => {
+                  const displayUnit = tracker.getDisplayUnit(name, muscleGroup as MuscleGroup);
+                  const convertedWeight = tracker.convertWeight(lastSession.bestSet?.weight || 0, lastSession.bestSet?.unit || 'kg', displayUnit);
+                  const roundedWeight = Number(convertedWeight.toFixed(1));
+                  return (
+                    <div style={{ fontSize: 10, color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isLight ? 950 : 800, opacity: isLight ? 0.95 : 0.8, letterSpacing: '0.5px' }}>
+                      {t('lastSession').toUpperCase()}: {roundedWeight} {t(displayUnit as any)} × {lastSession.bestSet?.reps}
+                    </div>
+                  );
+                })()}
               
               {isActive && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, transform: 'translateY(5px)' }}>
@@ -203,8 +209,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       {/* Search overlay portal */}
       {showSearch && ReactDOM.createPortal(
         <div ref={overlayRef} style={{ position: 'fixed', inset: 0, zIndex: 9000, background: isLight ? 'rgba(246, 247, 249, 0.96)' : 'rgba(10, 10, 12, 0.96)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(env(safe-area-inset-top) + 24px)' }}>
-          <button onClick={closeSearch} style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top) + 20px)', right: 20, background: 'rgba(255,0,0,0.15)', border: '1.5px solid rgba(255,0,0,0.35)', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff4444', zIndex: 1 }}>
-            <img src="/assets/close-custom.png" alt="Close" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+          <button onClick={closeSearch} style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top) + 20px)', right: 20, background: 'none', border: 'none', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 1, padding: 0 }}>
+            <img src="/assets/close-custom.png" alt="Close" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
           </button>
           <div style={{ padding: '0 20px 20px' }}>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -232,7 +238,16 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#D35400' : 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{name}</div>
                     {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 13, color: '#D35400', opacity: 0.9, marginTop: 2, fontWeight: 900, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
-                    {lastSession && <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, fontWeight: 800, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
+                    {lastSession && (() => {
+                      const displayUnit = tracker.getDisplayUnit(name, muscleGroup as MuscleGroup);
+                      const convertedWeight = tracker.convertWeight(lastSession.bestSet?.weight || 0, lastSession.bestSet?.unit || 'kg', displayUnit);
+                      const roundedWeight = Number(convertedWeight.toFixed(1));
+                      return (
+                        <div style={{ fontSize: 10, color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', marginTop: 4, fontWeight: isLight ? 950 : 800, opacity: isLight ? 0.95 : 0.8, letterSpacing: '0.5px' }}>
+                          {t('lastSession').toUpperCase()}: {roundedWeight} {t(displayUnit as any)} × {lastSession.bestSet?.reps}
+                        </div>
+                      );
+                    })()}
                   </div>
                   {isActive ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
