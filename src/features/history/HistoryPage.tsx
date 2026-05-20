@@ -139,11 +139,16 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingBottom: '120px' }}>
-      {/* Weightless Elite Calendar - Compact */}
+      {/* Weightless Elite Calendar - Compact Card Frame */}
       <div style={{ 
-        padding: '5px 0 15px', 
+        padding: '24px 16px', 
         transformStyle: 'preserve-3d',
-        animation: 'fadeIn 0.6s ease'
+        animation: 'fadeIn 0.6s ease',
+        background: tracker.settings.themeMode === 'dark' ? '#0d0d0d' : '#ffffff',
+        border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(230, 126, 34, 0.25)' : '1px solid rgba(0, 0, 0, 0.08)',
+        borderRadius: '24px',
+        boxShadow: tracker.settings.themeMode === 'dark' ? '0 10px 40px 0 rgba(0, 0, 0, 0.5)' : '0 10px 40px 0 rgba(0, 0, 0, 0.03)',
+        marginBottom: '20px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', padding: '0 10px' }}>
           <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
