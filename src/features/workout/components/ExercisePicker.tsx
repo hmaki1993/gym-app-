@@ -38,6 +38,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const isRtl = lang === 'ar';
   const weightUnit = tracker.settings.weightUnit;
   const customTranslations = (tracker.state as any).customTranslations || {};
+  const isLight = tracker.settings.themeMode === 'light';
 
   const [showSearch, setShowSearch] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -175,12 +176,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               
               {isActive && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, transform: 'translateY(5px)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#D35400', opacity: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                        <Pen size={14} strokeWidth={2.5} />
-                      </button>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#E67E22', flexShrink: 0 }} />
-                  </div>
+                  <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ background: 'transparent', border: 'none', padding: 4, color: '#D35400', opacity: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                    <Pen size={14} strokeWidth={2.5} />
+                  </button>
                   <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ padding: '4px 10px', background: 'rgba(255,0,0,0.08)', border: '1px solid rgba(255,0,0,0.2)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: 10, fontWeight: 900, opacity: 0.7 }}>
                     Remove
                   </button>
@@ -204,7 +202,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1, minHeight: 0, userSelect: draggingIndex === null ? 'auto' : 'none' }}>
       {/* Search overlay portal */}
       {showSearch && ReactDOM.createPortal(
-        <div ref={overlayRef} style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(env(safe-area-inset-top) + 24px)' }}>
+        <div ref={overlayRef} style={{ position: 'fixed', inset: 0, zIndex: 9000, background: isLight ? 'rgba(246, 247, 249, 0.96)' : 'rgba(10, 10, 12, 0.96)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(env(safe-area-inset-top) + 24px)' }}>
           <button onClick={closeSearch} style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top) + 20px)', right: 20, background: 'rgba(255,0,0,0.15)', border: '1.5px solid rgba(255,0,0,0.35)', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff4444', zIndex: 1 }}>
             <img src="/assets/close-custom.png" alt="Close" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
           </button>
@@ -232,13 +230,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               return (
                 <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name, null); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(230, 126, 34, 0.28)' : 'rgba(var(--theme-rgb), 0.12)', border: isActive ? '1px solid rgba(230, 126, 34, 0.4)' : '1px solid rgba(var(--theme-rgb), 0.16)', borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#D35400' : '#fff', fontFamily: "'Montserrat', sans-serif" }}>{name}</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#D35400' : 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{name}</div>
                     {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 13, color: '#D35400', opacity: 0.9, marginTop: 2, fontWeight: 900, fontFamily: "'Montserrat', sans-serif" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
-                    {lastSession && <div style={{ fontSize: 10, color: 'rgba(var(--theme-rgb), 0.3)', marginTop: 4, fontWeight: 800, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
+                    {lastSession && <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, fontWeight: 800, letterSpacing: '0.5px' }}>{t('lastSession').toUpperCase()}: {lastSession.bestSet?.weight} {t(lastSession.bestSet?.unit || weightUnit)} × {lastSession.bestSet?.reps}</div>}
                   </div>
                   {isActive ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#E67E22',  }} />
                       <button onClick={e => { e.stopPropagation(); onToggle(name); }} style={{ padding: '4px 8px', background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.25)', borderRadius: 6, color: '#ff4444', cursor: 'pointer', fontSize: 10, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 3 }}>
                         <img src="/assets/close-custom.png" alt="Remove" style={{ width: '16px', height: '16px', objectFit: 'contain' }} /> Remove
                       </button>

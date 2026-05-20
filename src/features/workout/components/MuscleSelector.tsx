@@ -12,8 +12,111 @@ interface Props {
   logs?: WorkoutLog[];
 }
 
-const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises }) => {
+const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises, logs }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Dynamically sort muscle groups based on training history
+  const sortedMuscleGroups = React.useMemo(() => {
+    if (!logs || logs.length === 0) {
+      return MUSCLE_GROUPS;
+    }
+
+    const keys = MUSCLE_GROUPS.map(mg => mg.key);
+    
+    // 1. Calculate when each muscle was last trained
+    const lastTrainedByMuscle: Record<string, string | null> = {};
+    keys.forEach(muscle => {
+      const matchLogs = logs.filter(l => l.muscleGroup === muscle);
+      if (matchLogs.length > 0) {
+        let newestDate = matchLogs[0].date;
+        matchLogs.forEach(l => {
+          if (l.date > newestDate) newestDate = l.date;
+        });
+        lastTrainedByMuscle[muscle] = newestDate;
+      } else {
+        lastTrainedByMuscle[muscle] = null;
+      }
+    });
+
+    // Fallback sort: never trained first, then oldest date first
+    const sortedByNeeded = [...keys].sort((a, b) => {
+      const dateA = lastTrainedByMuscle[a];
+      const dateB = lastTrainedByMuscle[b];
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return -1;
+      if (!dateB) return 1;
+      return dateA < dateB ? -1 : 1;
+    });
+
+    // 2. Try sequence prediction based on historical transition patterns
+    let predictedNextMuscle: string | null = null;
+    const sortedLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    const trainedSequence: string[] = [];
+    sortedLogs.forEach(log => {
+      if (log.muscleGroup) {
+        if (trainedSequence.length === 0 || trainedSequence[trainedSequence.length - 1] !== log.muscleGroup) {
+          trainedSequence.push(log.muscleGroup);
+        }
+      }
+    });
+
+    if (trainedSequence.length > 0) {
+      const lastMuscle = trainedSequence[trainedSequence.length - 1];
+      
+      const transitions: Record<string, Record<string, number>> = {};
+      for (let i = 0; i < trainedSequence.length - 1; i++) {
+        const current = trainedSequence[i];
+        const next = trainedSequence[i + 1];
+        if (!transitions[current]) {
+          transitions[current] = {};
+        }
+        transitions[current][next] = (transitions[current][next] || 0) + 1;
+      }
+
+      const nextMuscleCandidates = transitions[lastMuscle];
+      if (nextMuscleCandidates) {
+        let maxCount = 0;
+        let candidates: string[] = [];
+        
+        Object.keys(nextMuscleCandidates).forEach(muscle => {
+          const count = nextMuscleCandidates[muscle];
+          if (count > maxCount) {
+            maxCount = count;
+            candidates = [muscle];
+          } else if (count === maxCount) {
+            candidates.push(muscle);
+          }
+        });
+
+        if (candidates.length === 1) {
+          predictedNextMuscle = candidates[0];
+        } else if (candidates.length > 1) {
+          let oldestTime = Infinity;
+          let chosen = candidates[0];
+          candidates.forEach(muscle => {
+            const lastLogTime = lastTrainedByMuscle[muscle] ? new Date(lastTrainedByMuscle[muscle]!).getTime() : 0;
+            if (lastLogTime < oldestTime) {
+              oldestTime = lastLogTime;
+              chosen = muscle;
+            }
+          });
+          predictedNextMuscle = chosen;
+        }
+      }
+    }
+
+    const bestMuscle = predictedNextMuscle || sortedByNeeded[0];
+
+    return [...MUSCLE_GROUPS].sort((a, b) => {
+      if (a.key === bestMuscle) return -1;
+      if (b.key === bestMuscle) return 1;
+
+      const idxA = sortedByNeeded.indexOf(a.key);
+      const idxB = sortedByNeeded.indexOf(b.key);
+      return idxA - idxB;
+    });
+  }, [logs]);
 
   // Scroll selected muscle to the very beginning (left edge)
   React.useEffect(() => {
@@ -36,7 +139,7 @@ const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, muscl
   return (
     <div ref={scrollRef} className="hide-scrollbar allow-swipe" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: 25, overflowX: 'scroll', width: '100%', padding: '10px 10px 16px', marginBottom: 10, touchAction: 'pan-x', WebkitOverflowScrolling: 'touch', position: 'relative', zIndex: 10 }}>
       <div style={{ display: 'flex', gap: 25, minWidth: 'max-content' }}>
-        {MUSCLE_GROUPS.map(mg => {
+        {sortedMuscleGroups.map(mg => {
           const isActive = selectedMuscle === mg.key;
           const hasExercises = musclesWithExercises?.has(mg.key);
           return (

@@ -12,6 +12,28 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <script>
+      // Synchronously apply theme before paint to prevent dark mode startup flash in Light Mode
+      (function() {
+        try {
+          const raw = localStorage.getItem('gymlog_state_v1');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const theme = parsed?.settings?.themeMode;
+            if (theme) {
+              document.documentElement.setAttribute('data-theme', theme);
+              if (theme === 'light') {
+                const themeMeta = document.querySelector('meta[name="theme-color"]');
+                if (themeMeta) {
+                  themeMeta.setAttribute('content', '#f6f7f9');
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Theme detection failed', e);
+        }
+      })();
+
       // Clear Service Workers and Caches to force update from APK assets
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(regs => {

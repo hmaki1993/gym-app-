@@ -121,6 +121,16 @@ export default function App() {
     root.setAttribute('data-theme', tracker.settings.themeMode);
   }, [tracker.settings.accentColor, tracker.settings.themeMode]);
 
+  // ── Entrance Fade-In & Premium Spatial Scale Animation ──
+  useEffect(() => {
+    if (appRef.current) {
+      gsap.fromTo(appRef.current,
+        { opacity: 0, y: 15, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.65, ease: 'power4.out', force3D: true, clearProps: 'transform' }
+      );
+    }
+  }, []);
+
   // When opening workout, push a state so back gesture can close it
   useEffect(() => {
     if (showWorkout) {
@@ -288,7 +298,8 @@ export default function App() {
         boxSizing: 'border-box',
         background: 'var(--primary-bg)',
         touchAction: 'auto',
-        overscrollBehaviorX: 'none'
+        overscrollBehaviorX: 'none',
+        opacity: 0
       }}>
 
       {!showWorkout && (
