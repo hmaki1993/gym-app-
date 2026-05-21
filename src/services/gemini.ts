@@ -10,9 +10,6 @@ const getKeys = () => {
   if (import.meta.env.VITE_GEMINI_API_KEY && import.meta.env.VITE_GEMINI_API_KEY !== import.meta.env.VITE_GEMINI_KEY) 
     keys.push(import.meta.env.VITE_GEMINI_API_KEY);
   
-  // Fallback direct key
-  keys.push('AIzaSyBkBcTygJozSsumNog5cMSJZWv4qdhnfA8');
-  
   return keys.filter(k => k && k.trim().length > 0);
 };
 
@@ -32,6 +29,86 @@ const getActiveKey = () => {
 
 console.log('Gemini API Keys found:', getKeys().length);
 
+/**
+ * Extract and parse JSON from AI response text.
+ * Handles trailing commas, control characters, and markdown fences.
+ */
+export function parseJsonFromAIResponse<T = any>(text: string, mode: 'object' | 'array' = 'object'): T | null {
+  const pattern = mode === 'array' ? /\[[\s\S]*\]/ : /\{[\s\S]*?\}/;
+  const match = text.match(pattern);
+  if (!match) return null;
+
+  // First attempt: clean trailing commas
+  const cleaned = match[0].replace(/,\s*([\]}])/g, '$1');
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    // Second attempt: strip control characters
+    const fallback = cleaned.replace(/[\u0000-\u001F\u007F-\u009F]/g, '').trim();
+    try {
+      return JSON.parse(fallback) as T;
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * Unified request helper for Gemini API calls.
+ * Handles model fallback, key rotation, and retries.
+ */
+async function geminiRequest(
+  buildBody: (modelName: string) => object,
+  models: string[] = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro']
+): Promise<any> {
+  let lastError: Error | null = null;
+
+  for (const modelName of models) {
+    // Re-fetch the key on every model attempt so rotations take effect
+    const key = getActiveKey();
+    if (!key) throw new Error('API Key missing. Add a key in the .env file (VITE_GEMINI_KEY).');
+
+    const fullModelName = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
+    console.log(`📡 Trying Model: ${fullModelName} with Key: ${key.substring(0, 6)}...`);
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/${fullModelName}:generateContent?key=${key.trim()}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildBody(fullModelName)),
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json();
+        if (response.status === 404) {
+          // Model not available for this key, try next model
+          lastError = new Error(err.error?.message || `Model ${modelName} not found`);
+          continue;
+        }
+        if (response.status === 429 || response.status === 403 || response.status === 401) {
+          // Rotate key and try the next model (which will pick up the new key)
+          rotateKey();
+          lastError = new Error(err.error?.message || `API error ${response.status}`);
+          continue;
+        }
+        throw new Error(err.error?.message || 'Gemini API Error');
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      lastError = err;
+      if (err.message?.includes('404')) continue;
+      // For network errors, try the next model
+      if (err instanceof TypeError) continue;
+      throw err;
+    }
+  }
+  throw lastError || new Error('All models failed');
+}
+
 export const GeminiService = {
   listModels: async (): Promise<void> => {
     const key = getActiveKey();
@@ -46,103 +123,39 @@ export const GeminiService = {
   },
 
   analyzeMeal: async (base64Image: string, mimeType: string = 'image/jpeg'): Promise<any> => {
-    const key = getActiveKey();
-    if (!key) throw new Error('API Key missing');
+    const prompt = `Analyze this food image. Return ONLY a valid JSON object: {"name":"food name","nameAr":"الاسم بالعربي","calories":number,"protein":number,"carbs":number,"fats":number,"portion":number}. Be highly accurate.`;
 
-    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro'];
-    let lastError = null;
+    const result = await geminiRequest((_model) => ({
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inline_data: { mime_type: mimeType, data: base64Image } }
+        ]
+      }]
+    }));
 
-    for (const modelName of models) {
-      try {
-        const fullModelName = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
-        console.log(`📡 Trying Model: ${fullModelName} with Key: ${key.substring(0, 6)}...`);
-        const prompt = `Analyze this food image. Return ONLY a valid JSON object: {"name":"food name","nameAr":"الاسم بالعربي","calories":number,"protein":number,"carbs":number,"fats":number,"portion":number}. Be highly accurate.`;
-        
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${fullModelName}:generateContent?key=${key.trim()}`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: mimeType, data: base64Image } }
-              ]
-            }]
-          })
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          console.error(`❌ Model ${modelName} failed:`, err);
-          if (response.status === 404) continue; // Try next model
-          if (response.status === 429 || response.status === 403 || response.status === 401) rotateKey();
-          throw new Error(err.error?.message || 'Gemini API Error');
-        }
-
-        const result = await response.json();
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const jsonMatch = text.match(/\{[\s\S]*?\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          return {
-            name: parsed.name || 'Analyzed Meal',
-            nameAr: parsed.nameAr || '',
-            calories: Math.round(parsed.calories) || 0,
-            protein: Math.round(parsed.protein) || 0,
-            carbs: Math.round(parsed.carbs) || 0,
-            fats: Math.round(parsed.fats) || 0,
-            portion: Math.round(parsed.portion) || 300
-          };
-        }
-        throw new Error('Invalid response format');
-      } catch (err: any) {
-        lastError = err;
-        if (err.message?.includes('404')) continue;
-        throw err;
-      }
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = parseJsonFromAIResponse<any>(text, 'object');
+    if (parsed) {
+      return {
+        name: parsed.name || 'Analyzed Meal',
+        nameAr: parsed.nameAr || '',
+        calories: Math.round(parsed.calories) || 0,
+        protein: Math.round(parsed.protein) || 0,
+        carbs: Math.round(parsed.carbs) || 0,
+        fats: Math.round(parsed.fats) || 0,
+        portion: Math.round(parsed.portion) || 300
+      };
     }
-    throw lastError || new Error('All models failed');
+    throw new Error('Invalid response format');
   },
 
   generateText: async (prompt: string): Promise<string> => {
-    const key = getActiveKey();
-    if (!key) throw new Error('API Key missing');
+    const result = await geminiRequest((_model) => ({
+      contents: [{ parts: [{ text: prompt }] }]
+    }));
 
-    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro'];
-    let lastError = null;
-
-    for (const modelName of models) {
-      try {
-        const fullModelName = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
-        console.log(`📡 Text Auth with Model: ${fullModelName}...`);
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${fullModelName}:generateContent?key=${key.trim()}`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          if (response.status === 404) continue;
-          if (response.status === 429 || response.status === 403 || response.status === 401) rotateKey();
-          throw new Error(err.error?.message || 'Gemini API Error');
-        }
-
-        const result = await response.json();
-        return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      } catch (err: any) {
-        lastError = err;
-        if (err.message?.includes('404')) continue;
-        throw err;
-      }
-    }
-    throw lastError || new Error('All models failed');
+    return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
   },
 
   translateExercise: async (name: string, muscleGroup?: string): Promise<{ en: string, ar: string }> => {
@@ -162,10 +175,8 @@ export const GeminiService = {
     
     try {
       const result = await GeminiService.generateText(prompt);
-      const jsonMatch = result.match(/\{[\s\S]*?\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
+      const parsed = parseJsonFromAIResponse<{ en: string; ar: string }>(result, 'object');
+      if (parsed) return parsed;
       return { en: name, ar: name };
     } catch (err) {
       console.error('Translation failed:', err);
@@ -174,5 +185,5 @@ export const GeminiService = {
   }
 };
 
-// Call immediately to diagnose
-GeminiService.listModels();
+// Lazy-load model list only when AI features are first used (not on import)
+// To diagnose available models, call GeminiService.listModels() manually.

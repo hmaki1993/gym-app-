@@ -48,9 +48,9 @@ function EliteSelect({ id, defaultValue, options }: { id: string, defaultValue: 
           <div onClick={() => setIsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
           <div style={{
             position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 20,
-            background: 'rgba(20,20,20,0.8)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(var(--theme-rgb), 0.1)', borderRadius: '20px',
-            padding: '8px', 
+            background: 'var(--primary-bg)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(var(--theme-rgb), 0.12)', borderRadius: '20px',
+            padding: '8px', boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
             animation: 'slide-up 0.2s ease-out'
           }}>
             {options.map(opt => (
@@ -88,11 +88,14 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const justFocused = useRef(false);
   const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
+  const [customAlert, setCustomAlert] = useState<{ title?: string; message: string } | null>(null);
 
   const searchCache = useRef<Record<string, any[]>>({});
   const nutritionLogs = tracker.nutritionLogs || [];
   const todayDateStr = new Date().toLocaleDateString('en-CA');
+  const isLight = tracker.settings.themeMode === 'light';
 
   // Unique recent meals for instant suggestions
   const COMMON_FOODS = [
@@ -173,7 +176,10 @@ export function NutritionPage({ tracker }: { tracker: any }) {
         } catch (error: any) {
           console.error('AI Search Error:', error);
           if (error.message?.includes('429')) {
-            alert('Google API Limit Reached. Please wait 60 seconds.');
+            setCustomAlert({
+              title: 'API Limit Reached',
+              message: 'Google API Limit Reached. Please wait 60 seconds.'
+            });
           }
           setSearchResults([]);
         } finally {
@@ -340,13 +346,19 @@ export function NutritionPage({ tracker }: { tracker: any }) {
     try {
       const isSupported = await BarcodeScanner.isSupported();
       if (!isSupported.supported) {
-        alert('Scanner requires a mobile device. This feature uses native ML Kit which only works on Android/iOS app builds. Once you build the APK, you can scan any food barcode! 📱');
+        setCustomAlert({
+          title: 'Scanner Info',
+          message: 'Scanner requires a mobile device. This feature uses native ML Kit which only works on Android/iOS app builds. Once you build the APK, you can scan any food barcode! 📱'
+        });
         return;
       }
 
       const permission = await BarcodeScanner.requestPermissions();
       if (permission.camera !== 'granted') {
-        alert('Camera permission is required to scan barcodes');
+        setCustomAlert({
+          title: 'Permission Denied',
+          message: 'Camera permission is required to scan barcodes'
+        });
         return;
       }
       
@@ -361,17 +373,26 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           setScanResult(food);
           setShowResult(true);
         } else {
-          alert('AI couldn\'t identify this barcode yet. Try searching for it by name!');
+          setCustomAlert({
+            title: 'Barcode Not Found',
+            message: "AI couldn't identify this barcode yet. Try searching for it by name!"
+          });
         }
       }
     } catch (err: any) {
       console.error('Barcode Scan Error:', err);
       // If it still fails with module error, it might need one last sync
       if (err.message?.includes('Module')) {
-         alert('جاري تهيئة السكنر لأول مرة، جرب كمان ثانية');
+         setCustomAlert({
+           title: 'جاري التهيئة',
+           message: 'جاري تهيئة السكنر لأول مرة، جرب كمان ثانية'
+         });
          await BarcodeScanner.installGoogleBarcodeScannerModule();
       } else {
-         alert('Scanner Error: ' + (err.message || 'Unknown error'));
+         setCustomAlert({
+           title: 'Scanner Error',
+           message: 'Scanner Error: ' + (err.message || 'Unknown error')
+         });
       }
     } finally {
       setScanning(false);
@@ -384,12 +405,13 @@ export function NutritionPage({ tracker }: { tracker: any }) {
       {showResult && scanResult && createPortal(
           <div style={{
             position: 'fixed', inset: 0, zIndex: 10000,
-            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)',
+            background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
           }}>
             <div style={{
-              width: '100%', maxWidth: '340px', background: 'rgba(20,20,20,0.95)',
-              borderRadius: '32px', border: '1px solid rgba(var(--theme-rgb), 0.18)',
+              width: '100%', maxWidth: '340px', background: isLight ? 'rgba(255,255,255,0.97)' : 'rgba(20,20,20,0.95)',
+              borderRadius: '32px', border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(var(--theme-rgb), 0.18)',
+              boxShadow: isLight ? '0 20px 60px rgba(0,0,0,0.12)' : 'none',
               padding: '32px 24px', textAlign: 'center', animation: 'slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}>
               {/* Meal Name */}
@@ -454,7 +476,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     cursor: 'pointer'
                   }}
                 >
-                  <CustomPlus size={16} color="#ffffff" />
+                  <CustomPlus size={16} color="var(--text-primary)" />
                 </button>
               </div>
 
@@ -520,11 +542,71 @@ export function NutritionPage({ tracker }: { tracker: any }) {
         document.getElementById('scanner-root')!
       )}
 
+      {/* ── Custom Premium Alert Modal ── */}
+      {customAlert && createPortal(
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '340px', background: isLight ? 'rgba(255,255,255,0.97)' : 'rgba(20,20,20,0.95)',
+            borderRadius: '32px', border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(var(--theme-rgb), 0.18)',
+            padding: '32px 24px', textAlign: 'center', animation: 'slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+            {customAlert.title && (
+              <div style={{ 
+                fontSize: '18px', 
+                fontWeight: '950', 
+                color: 'var(--accent-color)', 
+                fontFamily: "'Montserrat', sans-serif",
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                marginBottom: '16px'
+              }}>
+                {customAlert.title}
+              </div>
+            )}
+            <div style={{ 
+              fontSize: '14px', 
+              fontWeight: '700', 
+              color: 'var(--text-primary)', 
+              lineHeight: '1.6',
+              marginBottom: '28px',
+              whiteSpace: 'pre-line'
+            }}>
+              {customAlert.message}
+            </div>
+            <button 
+              onClick={() => setCustomAlert(null)}
+              style={{
+                width: '100%',
+                padding: '14px',
+                borderRadius: '16px',
+                background: 'var(--accent-color)',
+                color: '#ffffff',
+                fontWeight: '950',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: "'Montserrat', sans-serif",
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                boxShadow: '0 8px 24px rgba(0, 255, 170, 0.25)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>,
+        document.getElementById('scanner-root')!
+      )}
+
       {/* ── Loading overlay while scanning ── */}
       {scanning && createPortal(
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9998,
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+          background: isLight ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px'
         }}>
           <div style={{
@@ -550,63 +632,60 @@ export function NutritionPage({ tracker }: { tracker: any }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {
-                if (suggestedResults.length > 0) setShowDropdown(true);
+                setShowDropdown(true);
+                justFocused.current = true;
+                setTimeout(() => {
+                  justFocused.current = false;
+                }, 100);
               }}
               onClick={() => {
-                if (suggestedResults.length > 0) setShowDropdown(!showDropdown);
+                if (!justFocused.current) {
+                  setShowDropdown(prev => !prev);
+                }
               }}
-              style={{
-                width: '100%', padding: '14px 20px', paddingLeft: '44px',
-                background: showDropdown ? 'rgba(var(--theme-rgb), 0.14)' : 'rgba(var(--theme-rgb), 0.1)', 
-                backdropFilter: showDropdown ? 'blur(30px)' : 'none',
-                WebkitBackdropFilter: showDropdown ? 'blur(30px)' : 'none',
-                border: '1.5px solid rgba(var(--theme-rgb), 0.3)',
-                borderBottom: showDropdown ? 'none' : '1.5px solid rgba(var(--theme-rgb), 0.3)',
-                borderRadius: showDropdown ? '20px 20px 0 0' : '20px', 
-                color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600',
-                outline: 'none', transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: "'Montserrat', sans-serif",
-                boxShadow: showDropdown ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.16)'
-              }}
+              className={`premium-search-input ${showDropdown && (suggestedResults.length > 0 || isSearching || searchResults.length > 0) ? 'dropdown-open' : ''}`}
             />
             <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.8 }}>
               <Search size={18} />
             </div>
 
             {/* LIVE SEARCH DROPDOWN */}
-            {showDropdown && (
+            {showDropdown && (suggestedResults.length > 0 || isSearching || searchResults.length > 0) && (
               <div className="hide-scrollbar" style={{
-                position: 'absolute', top: '100%', left: 0, right: 0,
-                marginTop: '-1.5px', 
-                background: 'rgba(var(--theme-rgb), 0.14)', backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
+                position: 'absolute', 
+                top: '100%', 
+                left: 0, 
+                right: 0,
+                marginTop: '-1.5px',
+                background: 'var(--glass-bg)', 
+                backdropFilter: 'var(--glass-blur)',
+                WebkitBackdropFilter: 'var(--glass-blur)',
                 border: '1.5px solid rgba(var(--theme-rgb), 0.3)', 
                 borderTop: 'none',
-                borderRadius: '0 0 24px 24px',
-                 padding: '10px',
-                maxHeight: '350px', overflowY: 'auto', 
-                transformOrigin: 'top',
-                animation: 'elite-expand 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                zIndex: 1000
+                borderRadius: '0 0 20px 20px',
+                padding: '10px',
+                maxHeight: '350px', 
+                overflowY: 'auto', 
+                transformOrigin: 'top center',
+                animation: 'elite-expand 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                zIndex: 1000,
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.25)'
               }}>
                 {/* Instant Suggestions from History */}
-                {suggestedResults.length > 0 && (
+                {suggestedResults.length > 0 && !isSearching && (
                   <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>AI Suggestions</div>
-                    <div style={{ 
-                      overflow: 'hidden'
-                    }}>
+                    <div style={{ overflow: 'hidden' }}>
                       {suggestedResults.map((item: any, idx: number) => (
                         <div 
                           key={`rec-${idx}`}
-                          onClick={() => { setScanResult(item); setTargetCategory('Breakfast'); setShowResult(true); setShowDropdown(false); setSearchQuery(''); }}
-                          style={{
-                            padding: '16px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            borderBottom: idx === suggestedResults.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.12)'
+                          onClick={() => { 
+                            setScanResult(item); 
+                            setTargetCategory('Breakfast'); 
+                            setShowResult(true); 
+                            setShowDropdown(false); 
+                            setSearchQuery(''); 
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(var(--theme-rgb), 0.1)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                          className="nutrition-dropdown-item"
                         >
                           <div style={{ fontWeight: '900', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "'Montserrat', sans-serif" }}>{item.name}</div>
                           {item.nameAr && <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700', opacity: 0.8 }}>{item.nameAr}</div>}
@@ -627,12 +706,13 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     {/* AI Results Section with Colored Divider */}
                     {searchResults.length > 0 && (
                       <div style={{ marginTop: '8px' }}>
-                        <div style={{ 
-                          height: '2px', 
-                          background: 'linear-gradient(90deg, transparent, var(--accent-color), transparent)', 
-                          opacity: 0.3,
-                          margin: '20px 12px' 
-                        }} />
+                        {suggestedResults.length > 0 && (
+                          <div style={{ 
+                            height: '1.5px', 
+                            background: 'linear-gradient(90deg, transparent, var(--glass-border), transparent)', 
+                            margin: '12px 12px' 
+                          }} />
+                        )}
                         
                         <div style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>Search Results</div>
                         <div style={{ overflow: 'hidden' }}>
@@ -656,20 +736,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                                   setShowDropdown(false); 
                                   setSearchQuery(''); 
                                 }}
-                                style={{
-                                  padding: '16px 16px', borderRadius: '16px',
-                                  cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  borderBottom: idx === searchResults.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.14)',
-                                  position: 'relative', overflow: 'hidden'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'rgba(var(--theme-rgb), 0.12)';
-                                  e.currentTarget.style.transform = 'translateX(4px)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'transparent';
-                                  e.currentTarget.style.transform = 'translateX(0)';
-                                }}
+                                className="nutrition-dropdown-item"
                               >
                                 <div style={{ fontWeight: '950', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-0.3px' }}>{normalizedItem.name}</div>
                                 {normalizedItem.nameAr && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '700', opacity: 0.9 }}>{normalizedItem.nameAr}</div>}
@@ -1046,7 +1113,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
       {showSetup && createPortal(
         <div style={{
           position: 'fixed', inset: 0, zIndex: 10000,
-          background: 'radial-gradient(circle at top right, rgba(0,255,170,0.15), transparent), radial-gradient(circle at bottom left, rgba(0,163,255,0.1), transparent), rgba(0,0,0,0.92)',
+          background: isLight ? 'radial-gradient(circle at top right, rgba(0,200,130,0.08), transparent), radial-gradient(circle at bottom left, rgba(0,163,255,0.06), transparent), rgba(255,255,255,0.96)' : 'radial-gradient(circle at top right, rgba(0,255,170,0.15), transparent), radial-gradient(circle at bottom left, rgba(0,163,255,0.1), transparent), rgba(0,0,0,0.92)',
           backdropFilter: 'blur(25px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
         }}>
@@ -1160,6 +1227,58 @@ export function NutritionPage({ tracker }: { tracker: any }) {
 
       
       <style>{`
+        .premium-search-input {
+          width: 100%;
+          padding: 14px 20px;
+          padding-left: 44px;
+          background: rgba(var(--theme-rgb), 0.06);
+          border: 1.5px solid rgba(var(--theme-rgb), 0.16);
+          border-radius: 20px;
+          color: var(--text-primary);
+          font-size: 14px;
+          font-weight: 600;
+          outline: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          font-family: 'Montserrat', sans-serif;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .premium-search-input:focus {
+          background: rgba(var(--theme-rgb), 0.12);
+          border-color: var(--accent-color);
+          box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.15);
+        }
+        .premium-search-input.dropdown-open {
+          border-bottom-left-radius: 0 !important;
+          border-bottom-right-radius: 0 !important;
+          background: var(--glass-bg) !important;
+          border-color: rgba(var(--theme-rgb), 0.3) !important;
+          box-shadow: none !important;
+        }
+        .premium-search-input.dropdown-open:focus {
+          background: var(--glass-bg) !important;
+          border-color: rgba(var(--theme-rgb), 0.3) !important;
+          box-shadow: none !important;
+        }
+        .nutrition-dropdown-item {
+          padding: 14px 16px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          border-bottom: 1px solid rgba(var(--theme-rgb), 0.08);
+          position: relative;
+          overflow: hidden;
+        }
+        .nutrition-dropdown-item:last-child {
+          border-bottom: none;
+        }
+        .nutrition-dropdown-item:hover {
+          background: rgba(var(--theme-rgb), 0.08);
+          transform: translateX(4px);
+        }
+        @keyframes elite-expand {
+          from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         @keyframes slide-up {
           from { transform: translateY(40px) scale(0.96); opacity: 0; }
           to { transform: translateY(0) scale(1); opacity: 1; }

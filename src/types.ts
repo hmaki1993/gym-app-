@@ -17,11 +17,12 @@ export interface ExerciseLog {
   name: string;
   sets: SetLog[];
   restSeconds: number;
+  muscleGroup?: MuscleGroup;
 }
 
 export interface WorkoutLog {
   id: string;
-  date: string; // ISO
+  date: string; // YYYY-MM-DD local date string
   startTime: string; // ISO
   endTime: string; // ISO
   muscleGroup: MuscleGroup;
@@ -33,12 +34,11 @@ export interface WorkoutLog {
 
 export interface PersonalRecord {
   exerciseName: string;
-  name?: string; // alias used in some contexts
   weight: number;
   reps: number;
-  unit?: string;
+  unit?: WeightUnit;
   date: string;
-  muscleGroup?: string;
+  muscleGroup?: MuscleGroup;
   setsCount?: number;
 }
 
@@ -70,7 +70,7 @@ export interface GymSettings {
   language: Language;
   accentColor: string;
   accentSecondary?: string;
-  themeMode: 'dark' | 'light';
+  themeMode: 'dark' | 'light' | 'system';
   defaultRestSeconds: number;
   soundEnabled: boolean;
   dailyCalorieGoal: number;
@@ -95,6 +95,7 @@ export interface GymState {
   settings: GymSettings;
   customExercises: Record<MuscleGroup, string[]>;
   hiddenExercises: Record<MuscleGroup, string[]>;
+  deletedExercises: Record<MuscleGroup, string[]>;
   exerciseOrder: Record<MuscleGroup, string[]>;
   customTranslations?: Record<string, string>;
   nutritionLogs: MealLog[];

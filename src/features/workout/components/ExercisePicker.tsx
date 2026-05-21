@@ -272,6 +272,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       {renamingExercise && (
         <RenameSheet
           name={renamingExercise}
+          isLight={isLight}
           onSave={(newName) => { 
             tracker.renameExercise(muscleGroup as MuscleGroup, renamingExercise, newName); 
             if (onRename) onRename(renamingExercise, newName);
@@ -347,20 +348,51 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
       {/* Delete confirm modal */}
       {deleteConfirm && ReactDOM.createPortal(
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: isLight ? 'rgba(255,255,255,0.35)' : 'rgba(10,10,12,0.45)', 
+          backdropFilter: 'blur(30px) saturate(190%)',
+          WebkitBackdropFilter: 'blur(30px) saturate(190%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+        }}>
           <div style={{ 
             width: '100%', maxWidth: 340, 
-            background: 'rgba(var(--theme-rgb), 0.1)', 
-            border: '1px solid rgba(var(--theme-rgb), 0.1)',
+            background: isLight ? 'rgba(255,255,255,0.7)' : 'rgba(25,25,30,0.55)', 
+            border: '1.5px solid var(--glass-border)',
             borderRadius: 32, padding: '40px 24px', textAlign: 'center',
-            
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            boxShadow: 'var(--elite-shadow)',
+            animation: 'slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}>
-            <div style={{ fontSize: 40, marginBottom: 16,  }}>🗑️</div>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🗑️</div>
             <div style={{ fontSize: 22, fontWeight: 950, color: 'var(--text-primary)', marginBottom: 8, fontFamily: "'Montserrat', sans-serif", letterSpacing: -0.5 }}>DELETE FOREVER</div>
-            <div style={{ fontSize: 14, color: 'rgba(var(--theme-rgb), 0.5)', marginBottom: 32, fontWeight: 600, lineHeight: 1.4 }}>Are you sure you want to permanently delete "{deleteConfirm[0]}"?</div>
+            <div style={{ fontSize: 14, color: isLight ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.6)', marginBottom: 32, fontWeight: 700, lineHeight: 1.4 }}>
+              Are you sure you want to permanently delete "{deleteConfirm[0]}"?
+            </div>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(var(--theme-rgb), 0.14)', border: '1px solid rgba(var(--theme-rgb), 0.1)', color: 'var(--text-primary)', fontWeight: 900, cursor: 'pointer', fontSize: 15, fontFamily: "'Montserrat', sans-serif" }}>Cancel</button>
-              <button onClick={() => { deleteConfirm.forEach(n => tracker.permanentlyDeleteExercise(muscleGroup as MuscleGroup, n)); setDeleteConfirm(null); }} style={{ flex: 1, height: 54, borderRadius: 16, background: 'rgba(255,50,50,0.2)', border: '1.5px solid rgba(255,50,50,0.4)', color: '#ff5555', fontWeight: 950, cursor: 'pointer', fontSize: 15, fontFamily: "'Montserrat', sans-serif",  }}>Yes, Delete</button>
+              <button 
+                onClick={() => setDeleteConfirm(null)} 
+                style={{ 
+                  flex: 1, height: 54, borderRadius: 16, 
+                  background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)', 
+                  border: isLight ? '1.5px solid rgba(0,0,0,0.1)' : '1.5px solid rgba(255,255,255,0.1)', 
+                  color: 'var(--text-primary)', fontWeight: 900, cursor: 'pointer', fontSize: 15, fontFamily: "'Montserrat', sans-serif" 
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => { deleteConfirm.forEach(n => tracker.permanentlyDeleteExercise(muscleGroup as MuscleGroup, n)); setDeleteConfirm(null); }} 
+                style={{ 
+                  flex: 1, height: 54, borderRadius: 16, 
+                  background: isLight ? 'rgba(255,50,50,0.1)' : 'rgba(255,50,50,0.2)', 
+                  border: '1.5px solid #ff4444', 
+                  color: '#ff4444', fontWeight: 950, cursor: 'pointer', fontSize: 15, fontFamily: "'Montserrat', sans-serif" 
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>,
@@ -371,7 +403,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 };
 
 // Premium Rename Bottom Sheet
-const RenameSheet: React.FC<{ name: string; onSave: (n: string) => void; onClose: () => void }> = ({ name, onSave, onClose }) => {
+const RenameSheet: React.FC<{ name: string; isLight: boolean; onSave: (n: string) => void; onClose: () => void }> = ({ name, isLight, onSave, onClose }) => {
   const [val, setVal] = React.useState(name);
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -397,23 +429,23 @@ const RenameSheet: React.FC<{ name: string; onSave: (n: string) => void; onClose
     <div onClick={handleClose} style={{ position: 'fixed', inset: 0, zIndex: 9500, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end' }}>
       <div ref={sheetRef} onClick={e => e.stopPropagation()} style={{
         width: '100%',
-        background: 'rgba(15,15,15,0.4)',
+        background: isLight ? 'rgba(255, 255, 255, 0.75)' : 'rgba(20, 20, 25, 0.7)',
         backdropFilter: 'blur(40px) saturate(180%)',
         WebkitBackdropFilter: 'blur(40px) saturate(180%)',
         borderRadius: '24px 24px 0 0',
         padding: '16px 20px',
         paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
-        border: '1px solid rgba(var(--theme-rgb), 0.14)',
-        borderTop: '1px solid rgba(var(--theme-rgb), 0.15)',
+        border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)',
+        borderTop: isLight ? '1.5px solid rgba(0, 0, 0, 0.12)' : '1.5px solid rgba(255, 255, 255, 0.12)',
         borderBottom: 'none',
-        
+        boxShadow: isLight ? '0 -10px 40px rgba(0, 0, 0, 0.05)' : '0 -10px 40px rgba(0, 0, 0, 0.3)',
       }}>
         <div onClick={handleClose} style={{ padding: '8px 0 16px', margin: '-8px 0 0', cursor: 'pointer', display: 'flex', justifyContent: 'center' }}>
-          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(var(--theme-rgb), 0.2)' }} />
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.15)' }} />
         </div>
-        <div style={{ fontSize: 10, fontWeight: 900, color: '#E67E22', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12, opacity: 0.7, textAlign: 'center' }}>Rename Exercise</div>
+        <div style={{ fontSize: 11, fontWeight: 900, color: '#E67E22', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16, opacity: 0.8, textAlign: 'center' }}>Rename Exercise</div>
         
-        <div style={{ position: 'relative', marginBottom: 16 }}>
+        <div style={{ position: 'relative', marginBottom: 20 }}>
           <input
             ref={inputRef}
             value={val}
@@ -422,33 +454,54 @@ const RenameSheet: React.FC<{ name: string; onSave: (n: string) => void; onClose
             onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleClose(); }}
             style={{
               width: '100%', boxSizing: 'border-box',
-              background: 'rgba(var(--theme-rgb), 0.12)',
-              border: '1px solid rgba(var(--theme-rgb), 0.18)',
-              borderBottom: '1.5px solid rgba(230, 126, 34,0.6)',
-              borderRadius: 12, padding: '14px 44px 14px 16px',
+              background: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
+              border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)',
+              borderBottom: '2px solid #E67E22',
+              borderRadius: 16, padding: '16px 48px 16px 18px',
               color: 'var(--text-primary)', fontSize: 18, fontWeight: 800,
               outline: 'none', fontFamily: "'Montserrat', sans-serif",
               textAlign: 'start',
-              userSelect: 'text', WebkitUserSelect: 'text'
+              userSelect: 'text', WebkitUserSelect: 'text',
+              transition: 'all 0.2s ease',
             }}
           />
           {val && (
             <button 
               onClick={() => { setVal(''); inputRef.current?.focus(); }}
               style={{
-                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                background: 'rgba(var(--theme-rgb), 0.1)', border: 'none', borderRadius: '50%',
-                width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-primary)', cursor: 'pointer', opacity: 0.6,
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', padding: 4,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', opacity: 0.8,
                 zIndex: 1
               }}
             >
-              <img src="/assets/close-custom.png" alt="Clear" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+              <img src="/assets/close-custom.png" alt="Clear" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
             </button>
           )}
         </div>
 
-        <button onClick={handleSave} style={{ width: '100%', height: 48, borderRadius: 12, background: 'rgba(230, 126, 34,0.08)', border: '1px solid rgba(230, 126, 34,0.3)', color: '#E67E22', fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", letterSpacing: 1, textTransform: 'uppercase' }}>Save Name</button>
+        <button 
+          onClick={handleSave} 
+          style={{ 
+            width: '100%', 
+            height: 44, 
+            borderRadius: 12, 
+            background: 'rgba(230, 126, 34, 0.08)', 
+            border: '1.5px solid rgba(230, 126, 34, 0.35)', 
+            color: '#E67E22', 
+            fontWeight: 950, 
+            fontSize: 13, 
+            cursor: 'pointer', 
+            fontFamily: "'Montserrat', sans-serif", 
+            letterSpacing: 1.5, 
+            textTransform: 'uppercase',
+            boxShadow: 'none',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Save Name
+        </button>
       </div>
     </div>,
     document.body

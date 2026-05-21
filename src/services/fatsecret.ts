@@ -1,7 +1,7 @@
-import { GeminiService } from './gemini';
+import { GeminiService, parseJsonFromAIResponse } from './gemini';
 import { searchLocalDB } from '../data/foodDatabase';
 
-export const FatSecretService = {
+export const NutritionSearchService = {
   searchFood: async (query: string) => {
     // ── Step 1: Search Local DB first (instant + accurate) ──
     const localResults = searchLocalDB(query);
@@ -35,28 +35,20 @@ JSON schema (no extra text, no markdown):
       const response = await GeminiService.generateText(prompt);
       console.log('Gemini Search Response:', response);
 
-      const arrayMatch = response.match(/\[[\s\S]*\]/);
-      const objectMatch = response.match(/\{[\s\S]*?\}/);
-
+      // Try array first, then single object
       let rawResults: any[] = [];
-      try {
-        if (arrayMatch) {
-          const cleaned = arrayMatch[0].replace(/,\s*([\]}])/g, '$1');
-          rawResults = JSON.parse(cleaned);
-        } else if (objectMatch) {
-          const cleaned = objectMatch[0].replace(/,\s*([\]}])/g, '$1');
-          rawResults = [JSON.parse(cleaned)];
+      const arrayParsed = parseJsonFromAIResponse<any[]>(response, 'array');
+      if (arrayParsed) {
+        rawResults = arrayParsed;
+      } else {
+        const objParsed = parseJsonFromAIResponse<any>(response, 'object');
+        if (objParsed) {
+          rawResults = [objParsed];
         }
-      } catch (parseErr) {
-        console.warn('Parse failed, trying fallback...', parseErr);
-        const fallbackStr = (arrayMatch ? arrayMatch[0] : objectMatch?.[0] || '')
-          .replace(/[\u0000-\u001F\u007F-\u009F]/g, '').trim();
-        try {
-          rawResults = arrayMatch ? JSON.parse(fallbackStr) : [JSON.parse(fallbackStr)];
-        } catch {
-          // Merge local results with empty AI results
-          return localResults;
-        }
+      }
+
+      if (rawResults.length === 0) {
+        return localResults;
       }
 
       const aiResults = rawResults.map((item: any) => ({
@@ -91,10 +83,8 @@ If you can identify it, return ONLY this JSON (no extra text):
 If not found, return: {"error": "not found"}`;
 
       const response = await GeminiService.generateText(prompt);
-      const jsonMatch = response.match(/\{[\s\S]*?\}/);
-      if (jsonMatch) {
-        const data = JSON.parse(jsonMatch[0]);
-        if (data.error) return null;
+      const data = parseJsonFromAIResponse<any>(response, 'object');
+      if (data && !data.error) {
         return {
           ...data,
           nameAr: data.nameAr || data.name_ar || data.arabicName || '',
@@ -109,3 +99,6 @@ If not found, return: {"error": "not found"}`;
 
   getFoodDetails: async () => null,
 };
+
+// Keep backward-compatible alias
+export const FatSecretService = NutritionSearchService;

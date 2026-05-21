@@ -16,10 +16,13 @@
       (function() {
         try {
           const raw = localStorage.getItem('gymlog_state_v1');
-          let theme = 'dark';
+          let theme = 'system';
           if (raw) {
             const parsed = JSON.parse(raw);
-            theme = parsed?.settings?.themeMode || 'dark';
+            theme = parsed?.settings?.themeMode || 'system';
+          }
+          if (theme === 'system') {
+            theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
           }
           document.documentElement.setAttribute('data-theme', theme);
           

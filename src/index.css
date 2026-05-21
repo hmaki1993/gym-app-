@@ -5,15 +5,15 @@
   --glass-bg: rgba(var(--theme-rgb), 0.14);
   --glass-border: rgba(var(--theme-rgb), 0.12);
   --glass-hover: rgba(var(--theme-rgb), 0.18);
-  --accent-color: #00E676;
-  --accent-rgb: 0, 230, 118;
+  --accent-color: #2ECC71;
+  --accent-rgb: 46, 204, 113;
   --accent-secondary: #E67E22;
   --accent-secondary-rgb: 230, 126, 34;
   --accent-gradient: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
-  --accent-color-alpha: rgba(0, 230, 118, 0.2);
-  --danger-color: #ff3366;
-  --warning-color: #ff9d00;
-  --success-color: #00ff88;
+  --accent-color-alpha: rgba(46, 204, 113, 0.12);
+  --danger-color: #E74C3C;
+  --warning-color: #F39C12;
+  --success-color: #2ECC71;
   --text-primary: #ffffff;
   --text-secondary: rgba(var(--theme-rgb), 0.55);
   --theme-rgb: 255, 255, 255;
@@ -101,7 +101,7 @@
 }
 
 .spatial-name-glow {
-  text-shadow: 0 0 25px var(--accent-color-alpha);
+  text-shadow: none;
 }
 
 .exercise-select-btn {
@@ -122,12 +122,12 @@
   0%, 100% { 
     opacity: 0.8; 
     transform: scale(1); 
-    text-shadow: 0 0 5px rgba(var(--accent-rgb), 0.2);
+    text-shadow: none;
   }
   50% { 
     opacity: 1; 
     transform: scale(1.05); 
-    text-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--accent-color-alpha);
+    text-shadow: none;
   }
 }
 
@@ -488,7 +488,7 @@ input[type=number] {
   height: 7px;
   border-radius: 50%;
   background: var(--accent-color);
-  box-shadow: 0 0 10px var(--accent-color);
+  box-shadow: none;
   animation: elite-pulse 2s infinite ease-in-out;
 }
 
@@ -506,7 +506,7 @@ input[type=number] {
   font-weight: 950;
   letter-spacing: 1px;
   text-transform: uppercase;
-  box-shadow: 0 0 12px var(--accent-color-alpha);
+  box-shadow: none;
   animation: prBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -736,15 +736,15 @@ input[type=number] {
 }
 
 @keyframes elite-pulse {
-  0% { transform: scale(1); opacity: 1; box-shadow: 0 0 5px var(--accent-color); }
-  50% { transform: scale(1.4); opacity: 0.6; box-shadow: 0 0 15px var(--accent-color); }
-  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 5px var(--accent-color); }
+  0% { transform: scale(1); opacity: 1; box-shadow: none; }
+  50% { transform: scale(1.4); opacity: 0.6; box-shadow: none; }
+  100% { transform: scale(1); opacity: 1; box-shadow: none; }
 }
 
 @keyframes timerPulse {
-  0% { box-shadow: 0 0 0 0 rgba(0, 229, 160, 0.4); }
-  70% { box-shadow: 0 0 0 20px rgba(0, 229, 160, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 229, 160, 0); }
+  0% { box-shadow: none; }
+  70% { box-shadow: none; }
+  100% { box-shadow: none; }
 }
 
 @keyframes slideDown {

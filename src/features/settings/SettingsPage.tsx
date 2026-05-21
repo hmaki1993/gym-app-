@@ -73,7 +73,8 @@ export function SettingsPage({ tracker }: Props) {
           onClick={() => setShowResetConfirm(false)}
           style={{
             position: 'fixed', inset: 0,
-            zIndex: 999999, background: 'rgba(0,0,0,0.95)',
+            zIndex: 999999, background: tracker.settings.themeMode === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.95)',
+            backdropFilter: 'blur(15px)',
             display: 'grid',
             placeItems: 'center', padding: '20px',
             animation: 'fadeIn 0.3s ease'
@@ -272,7 +273,7 @@ export function SettingsPage({ tracker }: Props) {
             <span>Appearance</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.16)', borderRadius: '16px', padding: '4px', width: '100%' }}>
-            {(['dark', 'light'] as const).map(mode => (
+            {(['dark', 'light', 'system'] as const).map(mode => (
               <button key={mode} onClick={() => tracker.setSettings({ themeMode: mode })} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: '12px', fontSize: '10px', fontWeight: '950', cursor: 'pointer', background: tracker.settings.themeMode === mode ? 'rgba(230, 126, 34, 0.18)' : 'transparent', color: tracker.settings.themeMode === mode ? '#E67E22' : ('rgba(var(--theme-rgb), 0.4)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
             ))}
           </div>

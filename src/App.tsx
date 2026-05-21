@@ -101,7 +101,9 @@ export default function App() {
     
     // In light mode, the default neon green (#00E676) lacks contrast.
     // We dynamically switch it to a premium medium-dark forest/olive green (#166E36) for light mode.
-    const isLightMode = tracker.settings.themeMode === 'light';
+    const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    const actualTheme = tracker.settings.themeMode === 'system' ? (systemPrefersLight ? 'light' : 'dark') : tracker.settings.themeMode;
+    const isLightMode = actualTheme === 'light';
     const displayAccent = (isLightMode && baseAccent.toUpperCase() === '#00E676') ? '#166E36' : baseAccent;
 
     root.style.setProperty('--accent-color', displayAccent);
@@ -123,7 +125,7 @@ export default function App() {
     root.style.setProperty('--accent-rgb', hexToRgb(displayAccent));
     
     // Update theme data-attribute
-    root.setAttribute('data-theme', tracker.settings.themeMode);
+    root.setAttribute('data-theme', actualTheme);
   }, [tracker.settings.accentColor, tracker.settings.themeMode]);
 
   // ── Entrance Animation (Removed for rocket speed launch) ──

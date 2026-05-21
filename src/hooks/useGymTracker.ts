@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog, WeightUnit } from '../types';
 import { THEME_COLORS, DEFAULT_EXERCISES } from '../data/exercises';
 
@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS: GymSettings = {
   language: 'en',
   accentColor: THEME_COLORS[0].hex,
   accentSecondary: THEME_COLORS[0].secondary,
-  themeMode: 'dark',
+  themeMode: 'system',
   defaultRestSeconds: 90,
   soundEnabled: true,
   dailyCalorieGoal: 2500,
@@ -31,6 +31,10 @@ const DEFAULT_STATE: GymState = {
     chest: [], back: [], legs: [], shoulders: [],
     arms: [], abs: [], cardio: [],
   },
+  deletedExercises: {
+    chest: [], back: [], legs: [], shoulders: [],
+    arms: [], abs: [], cardio: [],
+  },
   exerciseOrder: {
     chest: [], back: [], legs: [], shoulders: [],
     arms: [], abs: [], cardio: [],
@@ -39,80 +43,8 @@ const DEFAULT_STATE: GymState = {
   nutritionLogs: [],
 };
 
-function areSetsEqual(s1: SetLog, s2: SetLog): boolean {
-  return (
-    s1.weight === s2.weight &&
-    s1.reps === s2.reps &&
-    (s1.unit || 'kg') === (s2.unit || 'kg')
-  );
-}
-
-function isPrefix(sub: SetLog[], parent: SetLog[]): boolean {
-  if (sub.length > parent.length) return false;
-  for (let i = 0; i < sub.length; i++) {
-    if (!areSetsEqual(sub[i], parent[i])) return false;
-  }
-  return true;
-}
-
-function isValidPrefixConcatenation(R: SetLog[], P: SetLog[]): boolean {
-  if (R.length === 0) return true;
-  const n = R.length;
-  const dp = new Array(n + 1).fill(false);
-  dp[0] = true;
-  for (let i = 1; i <= n; i++) {
-    for (let j = 0; j < i; j++) {
-      if (dp[j]) {
-        const sub = R.slice(j, i);
-        if (isPrefix(sub, P)) {
-          dp[i] = true;
-          break;
-        }
-      }
-    }
-  }
-  return dp[n];
-}
-
-function deduplicateSets(sets: SetLog[]): SetLog[] {
-  if (!sets || sets.length <= 1) return sets;
-
-  const L = sets.length;
-  
-  // Helper to check if all sets in the array are identical
-  const allIdentical = sets.every(s => 
-    s.weight === sets[0].weight && 
-    s.reps === sets[0].reps && 
-    (s.unit || 'kg') === (sets[0].unit || 'kg')
-  );
-
-  if (allIdentical) {
-    // If all sets are identical, check if the length L is a triangular number > 1
-    // e.g. 3, 6, 10, 15, 21, 28, 36...
-    const doubleL8 = 1 + 8 * L;
-    const sqrt = Math.round(Math.sqrt(doubleL8));
-    if (sqrt * sqrt === doubleL8 && (sqrt - 1) % 2 === 0) {
-      const N = (sqrt - 1) / 2;
-      if (N < L) {
-        return sets.slice(0, N);
-      }
-    }
-    return sets;
-  }
-
-  // If sets are not all identical, look for the smallest K (from 1 to L)
-  // such that R is a valid prefix concatenation of P.
-  for (let K = 1; K <= L; K++) {
-    const P = sets.slice(L - K);
-    const R = sets.slice(0, L - K);
-
-    if (isValidPrefixConcatenation(R, P)) {
-      return P;
-    }
-  }
-
-  return sets;
-}
+// deduplicateSets was removed — it caused silent data loss on legitimate workouts.
+// Sets are now stored exactly as the user logs them.
 
 function loadState(): GymState {
   try {
@@ -124,12 +56,14 @@ function loadState(): GymState {
     const savedUnit = parsed.settings?.weightUnit || DEFAULT_SETTINGS.weightUnit;
     const migratedLogs = (parsed.logs || []).map(log => ({
       ...log,
+      // Ensure YYYY-MM-DD local date format on legacy ISO dates
+      date: log.date.includes('T') ? getLocalDateStr(new Date(log.date)) : log.date,
       exercises: log.exercises.map(ex => ({
         ...ex,
-        sets: deduplicateSets(ex.sets.map(set => ({
+        sets: ex.sets.map(set => ({
           ...set,
           unit: set.unit || savedUnit,
-        }))),
+        })),
       })),
     }));
 
@@ -241,14 +175,16 @@ export function useGymTracker() {
     saveState(state);
     // Apply theme & color
     const root = document.documentElement;
+    const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    const actualTheme = state.settings.themeMode === 'system' ? (systemPrefersLight ? 'light' : 'dark') : state.settings.themeMode;
+    const isLightMode = actualTheme === 'light';
     const baseAccent = (state.settings.accentColor || '#00E676').toUpperCase();
-    const isLightMode = state.settings.themeMode === 'light';
     const displayAccent = (isLightMode && baseAccent === '#00E676') ? '#166E36' : baseAccent;
 
     const theme = THEME_COLORS.find(c => c.hex === state.settings.accentColor);
     const secondaryColor = state.settings.accentSecondary || theme?.secondary || state.settings.accentColor;
     
-    root.setAttribute('data-theme', state.settings.themeMode);
+    root.setAttribute('data-theme', actualTheme);
     root.style.setProperty('--accent-color', displayAccent);
     root.style.setProperty('--accent-secondary', secondaryColor);
     root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${displayAccent}, ${secondaryColor})`);
@@ -278,9 +214,10 @@ export function useGymTracker() {
 
   // Initial sync to fix any "ghost" PRs from storage
   useEffect(() => {
-    const fixedPRs = syncPRsFromLogs(state.logs, state.customExercises);
-    // Force update to include units even if weight/reps are the same
-    setState(prev => ({ ...prev, prs: fixedPRs }));
+    setState(prev => {
+      const fixedPRs = syncPRsFromLogs(prev.logs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
+      return { ...prev, prs: fixedPRs };
+    });
   }, []); // Run once on mount
 
   const setSettings = useCallback((s: Partial<GymSettings>) => {
@@ -334,8 +271,8 @@ export function useGymTracker() {
         [muscle]: (prev.hiddenExercises[muscle] || []).filter(e => e !== name),
       },
       deletedExercises: {
-        ...(prev as any).deletedExercises || {},
-        [muscle]: ((prev as any).deletedExercises?.[muscle] || []).filter((e: string) => e !== name)
+        ...prev.deletedExercises || {},
+        [muscle]: (prev.deletedExercises?.[muscle] || []).filter((e: string) => e !== name)
       }
     }));
   }, []);
@@ -352,11 +289,11 @@ export function useGymTracker() {
         [muscle]: (prev.hiddenExercises[muscle] || []).filter(e => e !== name),
       },
       deletedExercises: {
-        ...(prev as any).deletedExercises || {},
-        [muscle]: [...((prev as any).deletedExercises?.[muscle] || []), name]
+        ...prev.deletedExercises || {},
+        [muscle]: [...(prev.deletedExercises?.[muscle] || []), name]
       },
       customTranslations: (() => {
-        const next = { ...(prev as any).customTranslations || {} };
+        const next = { ...(prev.customTranslations || {}) };
         delete next[name];
         return next;
       })()
@@ -369,7 +306,7 @@ export function useGymTracker() {
       
       let newCustom = [...(prev.customExercises[muscle] || [])];
       let newHidden = [...(prev.hiddenExercises?.[muscle] || [])];
-      let newDeleted = { ...((prev as any).deletedExercises || {}) };
+      let newDeleted = { ...(prev.deletedExercises || {}) };
       let muscleDeleted = [...(newDeleted[muscle] || [])];
 
       if (isDefault) {
@@ -455,41 +392,37 @@ export function useGymTracker() {
     return state.settings.weightUnit;
   }, [state.logs, state.settings.weightUnit]);
 
+  // Memoize the exercise-to-muscle mapping so it's built once per data change, not per call
+  const exerciseToMuscleMap = useMemo(() => {
+    const map: Record<string, MuscleGroup> = {};
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(e => { map[e.trim().toLowerCase()] = group as MuscleGroup; });
+    });
+    Object.entries(state.customExercises).forEach(([group, exercises]) => {
+      exercises.forEach(e => { map[e.trim().toLowerCase()] = group as MuscleGroup; });
+    });
+    return map;
+  }, [state.customExercises]);
+
   const getDisplayUnit = useCallback((exerciseName: string, muscle?: MuscleGroup): WeightUnit => {
+    const nameKey = exerciseName.trim().toLowerCase();
+
     // 1. Check the exercise's specific last used unit first
     for (const log of state.logs) {
-      const ex = log.exercises.find(e => e.name.trim().toLowerCase() === exerciseName.trim().toLowerCase());
+      const ex = log.exercises.find(e => e.name.trim().toLowerCase() === nameKey);
       if (ex && ex.sets.length > 0 && ex.sets[0].unit) {
         return ex.sets[0].unit;
       }
     }
 
     // Determine the muscle group if not provided
-    let targetMuscle = muscle;
-    if (!targetMuscle) {
-      const exerciseToMuscle: Record<string, string> = {};
-      Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-        exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
-      });
-      Object.entries(state.customExercises).forEach(([group, exercises]) => {
-        exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
-      });
-      targetMuscle = exerciseToMuscle[exerciseName.trim().toLowerCase()] as MuscleGroup;
-    }
+    const targetMuscle = muscle || exerciseToMuscleMap[nameKey];
 
     // 2. Fallback to the most recent set in the ENTIRE muscle group
     if (targetMuscle) {
-      const exerciseToMuscle: Record<string, string> = {};
-      Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-        exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
-      });
-      Object.entries(state.customExercises).forEach(([group, exercises]) => {
-        exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
-      });
-
       for (const log of state.logs) {
         for (const ex of log.exercises) {
-          const group = (ex as any).muscleGroup || exerciseToMuscle[ex.name.trim().toLowerCase()] || log.muscleGroup;
+          const group = ex.muscleGroup || exerciseToMuscleMap[ex.name.trim().toLowerCase()] || log.muscleGroup;
           if (group === targetMuscle && ex.sets.length > 0 && ex.sets[0].unit) {
             return ex.sets[0].unit;
           }
@@ -499,7 +432,7 @@ export function useGymTracker() {
 
     // 3. Fallback to global setting
     return state.settings.weightUnit;
-  }, [state.logs, state.settings.weightUnit, state.customExercises]);
+  }, [state.logs, state.settings.weightUnit, exerciseToMuscleMap]);
 
   const getExercisesByMuscle = useCallback((muscle: MuscleGroup) => {
     const defaults = (DEFAULT_EXERCISES[muscle] || []).map(name => ({ name, isCustom: false }));
@@ -518,22 +451,28 @@ export function useGymTracker() {
       }));
   }, [state.prs, state.settings.weightUnit]);
 
-  const syncPRsFromLogs = useCallback((logs: WorkoutLog[], customExercises: Record<MuscleGroup, string[]>) => {
+  // Plain function (no useCallback) — receives ALL data it needs as params to avoid stale closures
+  const syncPRsFromLogs = (
+    logs: WorkoutLog[],
+    customExercises: Record<MuscleGroup, string[]>,
+    hiddenExercises?: Record<MuscleGroup, string[]>,
+    deletedExercises?: Record<MuscleGroup, string[]>
+  ): PersonalRecord[] => {
     const prMap: Record<string, PersonalRecord> = {};
     
-    const mapping: Record<string, string> = {};
+    const mapping: Record<string, MuscleGroup> = {};
     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
+      exercises.forEach(ex => { mapping[ex.trim().toLowerCase()] = group as MuscleGroup; });
     });
     // Include all custom, hidden and deleted exercises for robust mapping
     const allCustomSources = [
       customExercises,
-      (state as any).hiddenExercises || {},
-      (state as any).deletedExercises || {}
+      hiddenExercises || {},
+      deletedExercises || {}
     ];
     allCustomSources.forEach(source => {
       Object.entries(source).forEach(([group, exercises]) => {
-        (exercises as string[]).forEach(ex => { mapping[ex.trim().toLowerCase()] = group; });
+        (exercises as string[]).forEach(ex => { mapping[ex.trim().toLowerCase()] = group as MuscleGroup; });
       });
     });
 
@@ -561,7 +500,7 @@ export function useGymTracker() {
         }).length;
 
         const existing = prMap[exNameClean];
-        const existingValInKg = existing ? convertWeight(existing.weight, (existing.unit as any) || 'kg', 'kg') : 0;
+        const existingValInKg = existing ? convertWeight(existing.weight, existing.unit || 'kg', 'kg') : 0;
 
         if (!existing || bestValInKg > existingValInKg || (bestValInKg === existingValInKg && bestSet.reps >= existing.reps)) {
           prMap[exNameClean] = { 
@@ -570,14 +509,14 @@ export function useGymTracker() {
             reps: bestSet.reps, 
             unit: bestSet.unit || 'kg',
             date: log.date,
-            muscleGroup: (ex as any).muscleGroup || mapping[exNameKey] || log.muscleGroup,
+            muscleGroup: ex.muscleGroup || mapping[exNameKey] || log.muscleGroup,
             setsCount: matchingSetsCount
           };
         }
       });
     });
     return Object.values(prMap);
-  }, []);
+  };
 
   const getExercisePR = useCallback((exerciseName: string): PersonalRecord | null => {
     return state.prs.find(p => p.exerciseName === exerciseName) ?? null;
@@ -640,7 +579,7 @@ export function useGymTracker() {
         updatedLogs = [newLog, ...prev.logs];
       }
 
-      const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises);
+      const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
       const newState = { ...prev, logs: updatedLogs, prs: updatedPRs };
 
       // Trigger n8n Webhook for workout
@@ -657,7 +596,26 @@ export function useGymTracker() {
     });
 
     setSessionStartTimeState(Date.now());
-  }, [syncPRsFromLogs, sessionStartTime]);
+  }, [sessionStartTime]);
+
+  const updateWorkoutUnit = useCallback((workoutId: string, newUnit: WeightUnit) => {
+    setState(prev => {
+      const newLogs = prev.logs.map(log => {
+        if (log.id === workoutId) {
+          return {
+            ...log,
+            exercises: log.exercises.map(ex => ({
+              ...ex,
+              sets: ex.sets.map(s => ({ ...s, unit: newUnit }))
+            }))
+          };
+        }
+        return log;
+      });
+      const newPRs = syncPRsFromLogs(newLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
+      return { ...prev, logs: newLogs, prs: newPRs };
+    });
+  }, []);
 
   const deleteWorkout = useCallback((id: string) => {
     setState(prev => {
@@ -665,26 +623,26 @@ export function useGymTracker() {
       if (logToDelete) setLastDeletedLog(logToDelete);
       
       const newLogs = prev.logs.filter(l => l.id !== id);
-      const newPRs = syncPRsFromLogs(newLogs, prev.customExercises);
+      const newPRs = syncPRsFromLogs(newLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
       return { 
         ...prev, 
         logs: newLogs,
         prs: newPRs
       };
     });
-  }, [syncPRsFromLogs]);
+  }, []);
 
   const restoreLastDeleted = useCallback(() => {
     if (!lastDeletedLog) return false;
     setState(prev => {
       if (prev.logs.find(l => l.id === lastDeletedLog.id)) return prev;
       const newLogs = [lastDeletedLog, ...prev.logs];
-      const newPRs = syncPRsFromLogs(newLogs, prev.customExercises);
+      const newPRs = syncPRsFromLogs(newLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
       return { ...prev, logs: newLogs, prs: newPRs };
     });
     setLastDeletedLog(null);
     return true;
-  }, [lastDeletedLog, syncPRsFromLogs]);
+  }, [lastDeletedLog]);
 
   const resetSessionTimer = useCallback(() => {
     setSessionStartTimeState(Date.now());
@@ -743,18 +701,11 @@ export function useGymTracker() {
     const workoutDays = new Set<number>();
     
     state.logs.forEach(l => {
-      let y: number, m: number, d: number;
-      if (l.date.includes('T')) {
-        const logDate = new Date(l.date);
-        y = logDate.getFullYear();
-        m = logDate.getMonth();
-        d = logDate.getDate();
-      } else {
-        const parts = l.date.split('-');
-        y = parseInt(parts[0], 10);
-        m = parseInt(parts[1], 10) - 1;
-        d = parseInt(parts[2], 10);
-      }
+      // All dates should now be YYYY-MM-DD format after migration
+      const parts = l.date.split('T')[0].split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
 
       if (y === currentYear && m === currentMonth) {
         if (d >= weekStartDay && d <= weekEndDay) {
@@ -786,11 +737,11 @@ export function useGymTracker() {
       if (!hasFake) return prev;
       
       const filteredLogs = prev.logs.filter(l => !l.id.startsWith('fake_') && !l.id.startsWith('dummy_wl_'));
-      const newPRs = syncPRsFromLogs(filteredLogs, prev.customExercises);
+      const newPRs = syncPRsFromLogs(filteredLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
       localStorage.removeItem('gymlog_fake_workouts_generated');
       return { ...prev, logs: filteredLogs, prs: newPRs };
     });
-  }, [syncPRsFromLogs]);
+  }, []);
 
   return {
     state,
@@ -813,24 +764,7 @@ export function useGymTracker() {
     getDisplayUnit,
     getExercisePR,
     saveWorkout,
-    updateWorkoutUnit: (workoutId: string, newUnit: WeightUnit) => {
-      setState(prev => {
-        const newLogs = prev.logs.map(log => {
-          if (log.id === workoutId) {
-            return {
-              ...log,
-              exercises: log.exercises.map(ex => ({
-                ...ex,
-                sets: ex.sets.map(s => ({ ...s, unit: newUnit }))
-              }))
-            };
-          }
-          return log;
-        });
-        const newPRs = syncPRsFromLogs(newLogs, prev.customExercises);
-        return { ...prev, logs: newLogs, prs: newPRs };
-      });
-    },
+    updateWorkoutUnit,
     deleteWorkout,
     restoreLastDeleted,
     logToDelete,
@@ -982,7 +916,7 @@ export function useGymTracker() {
         // Filter out existing dummy logs to prevent duplication
         const cleanLogs = prev.logs.filter(l => !l.id.startsWith('dummy_wl_'));
         const updatedLogs = [...pastWorkouts, ...cleanLogs];
-        const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises);
+        const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
 
         return {
           ...prev,
@@ -990,6 +924,6 @@ export function useGymTracker() {
           prs: updatedPRs
         };
       });
-    }, [syncPRsFromLogs]),
+    }, []),
   };
 }
