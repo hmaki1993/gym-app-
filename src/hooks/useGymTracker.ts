@@ -39,6 +39,81 @@ const DEFAULT_STATE: GymState = {
   nutritionLogs: [],
 };
 
+function areSetsEqual(s1: SetLog, s2: SetLog): boolean {
+  return (
+    s1.weight === s2.weight &&
+    s1.reps === s2.reps &&
+    (s1.unit || 'kg') === (s2.unit || 'kg')
+  );
+}
+
+function isPrefix(sub: SetLog[], parent: SetLog[]): boolean {
+  if (sub.length > parent.length) return false;
+  for (let i = 0; i < sub.length; i++) {
+    if (!areSetsEqual(sub[i], parent[i])) return false;
+  }
+  return true;
+}
+
+function isValidPrefixConcatenation(R: SetLog[], P: SetLog[]): boolean {
+  if (R.length === 0) return true;
+  const n = R.length;
+  const dp = new Array(n + 1).fill(false);
+  dp[0] = true;
+  for (let i = 1; i <= n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (dp[j]) {
+        const sub = R.slice(j, i);
+        if (isPrefix(sub, P)) {
+          dp[i] = true;
+          break;
+        }
+      }
+    }
+  }
+  return dp[n];
+}
+
+function deduplicateSets(sets: SetLog[]): SetLog[] {
+  if (!sets || sets.length <= 1) return sets;
+
+  const L = sets.length;
+  
+  // Helper to check if all sets in the array are identical
+  const allIdentical = sets.every(s => 
+    s.weight === sets[0].weight && 
+    s.reps === sets[0].reps && 
+    (s.unit || 'kg') === (sets[0].unit || 'kg')
+  );
+
+  if (allIdentical) {
+    // If all sets are identical, check if the length L is a triangular number > 1
+    // e.g. 3, 6, 10, 15, 21, 28, 36...
+    const doubleL8 = 1 + 8 * L;
+    const sqrt = Math.round(Math.sqrt(doubleL8));
+    if (sqrt * sqrt === doubleL8 && (sqrt - 1) % 2 === 0) {
+      const N = (sqrt - 1) / 2;
+      if (N < L) {
+        return sets.slice(0, N);
+      }
+    }
+    return sets;
+  }
+
+  // If sets are not all identical, look for the smallest K (from 1 to L)
+  // such that R is a valid prefix concatenation of P.
+  for (let K = 1; K <= L; K++) {
+    const P = sets.slice(L - K);
+    const R = sets.slice(0, L - K);
+
+    if (isValidPrefixConcatenation(R, P)) {
+      return P;
+    }
+  }
+
+  return sets;
+}
+
 function loadState(): GymState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -51,10 +126,10 @@ function loadState(): GymState {
       ...log,
       exercises: log.exercises.map(ex => ({
         ...ex,
-        sets: ex.sets.map(set => ({
+        sets: deduplicateSets(ex.sets.map(set => ({
           ...set,
           unit: set.unit || savedUnit,
-        })),
+        }))),
       })),
     }));
 
@@ -64,7 +139,6 @@ function loadState(): GymState {
         parsed.settings.accentColor = '#00E676';
       }
     }
-
 
     return {
       ...DEFAULT_STATE,
@@ -191,8 +265,7 @@ export function useGymTracker() {
       if (lastCheck && lastCheck !== today) {
         // IT IS A NEW DAY! Clear everything that shouldn't persist
         console.log('New day detected. Resetting session...');
-        // If there's a specific 'current workout' state in future, reset it here
-        // For now, we ensure 'today' logs are fresh by the natural date check
+        setSessionStartTimeState(Date.now());
       }
       localStorage.setItem('gymlog_last_check', today);
     };
@@ -531,10 +604,10 @@ export function useGymTracker() {
         log.exercises.forEach(newEx => {
           const exIdx = mergedExercises.findIndex(e => e.name === newEx.name);
           if (exIdx !== -1) {
-            // APPEND sets instead of overwriting
+            // FIX: Overwrite sets with the latest updated list to prevent duplication
             mergedExercises[exIdx] = {
               ...mergedExercises[exIdx],
-              sets: [...mergedExercises[exIdx].sets, ...newEx.sets]
+              sets: newEx.sets
             };
           } else {
             mergedExercises.push(newEx);

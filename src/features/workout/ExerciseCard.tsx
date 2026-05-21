@@ -49,22 +49,24 @@ const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: numbe
 
 // SetRow component (Ka from bundle)
 const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCycleUnit, onRemove, isCardio, lang }: any) => (
-  <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)', gap: 8, transformStyle: 'preserve-3d' }}>
-    <div style={{ width: 24, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif" }}>{index + 1}</div>
-    <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 12 }} />
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
+  <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)', gap: 6, transformStyle: 'preserve-3d' }}>
+    <div style={{ width: 16, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif", textAlign: 'center' }}>{index + 1}</div>
+    <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 6 }} />
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 22, fontWeight: 900, textAlign: 'center', width: 58, padding: '6px 0', borderRadius: 10, fontFamily: "'Montserrat', sans-serif",  }} />
       <div 
         onClick={onCycleUnit} 
         style={{ 
-          fontSize: 10, 
+          fontSize: 13.5, 
           fontWeight: 950, 
+          WebkitTextStroke: '0.4px currentColor',
           color: 'var(--accent-color)', 
           textTransform: 'uppercase', 
-          letterSpacing: 1, 
+          letterSpacing: 0.5, 
           cursor: 'pointer', 
-          width: 48, 
-          height: 48,
+          minWidth: 46, 
+          width: 'fit-content',
+          height: 44,
           display: 'flex', 
           flexDirection: 'column', 
           alignItems: 'center', 
@@ -74,38 +76,40 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
           transition: 'all 0.2s ease',
           background: 'transparent',
           border: '1.5px dashed #FF9800',
-          borderRadius: '50%',
-          padding: '0 4px',
+          borderRadius: 22,
+          padding: '0 10px',
           boxSizing: 'border-box'
         }} 
         onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.92)')} 
         onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')} 
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <span style={{ color: 'var(--text-primary)' }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 950 }}>
           {isCardio ? (lang === 'ar' ? 'مستوى' : 'LEVEL') : t(activeUnit)}
         </span>
       </div>
     </div>
     <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 24, fontWeight: 900, textAlign: 'center', width: 65, padding: '8px 0', borderRadius: 12, fontFamily: "'Montserrat', sans-serif",  }} />
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 22, fontWeight: 900, textAlign: 'center', width: 58, padding: '6px 0', borderRadius: 10, fontFamily: "'Montserrat', sans-serif",  }} />
       <div style={{ 
-        fontSize: 10, 
+        fontSize: 13.5, 
         fontWeight: 950, 
+        WebkitTextStroke: '0.4px currentColor',
         color: 'var(--text-primary)', 
         textTransform: 'uppercase', 
-        letterSpacing: '1px', 
+        letterSpacing: '0.5px', 
         fontFamily: "'Montserrat', sans-serif",
-        width: 48,
-        height: 48,
+        minWidth: 46,
+        width: 'fit-content',
+        height: 44,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'transparent',
-        border: '1.5px dashed rgba(var(--theme-rgb), 0.3)',
-        borderRadius: '50%',
-        padding: '0 4px',
+        border: '1.5px dashed rgba(var(--theme-rgb), 0.35)',
+        borderRadius: 22,
+        padding: '0 10px',
         boxSizing: 'border-box'
       }}>
         {isCardio ? (lang === 'ar' ? 'دقيقة' : 'MINS') : t('reps')}
@@ -113,7 +117,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
       {canRemove && (
-        <button onClick={onRemove} style={{ background: 'transparent', border: 'none', width: 28, height: 28, cursor: 'pointer', color: 'rgba(255,51,102,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: 0 }}>
+        <button onClick={onRemove} style={{ background: 'transparent', border: 'none', width: 28, height: 28, cursor: 'pointer', color: 'rgba(255,51,102,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
           <Trash2 size={16} />
         </button>
       )}
@@ -144,9 +148,14 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
 
   const initSets = () => {
     const lastUnit = tracker.getDisplayUnit(exerciseName, muscleGroup as MuscleGroup);
-    return initialSets && initialSets.length > 0
-      ? initialSets.map(s => ({ ...s, unit: (s.unit || lastUnit || weightUnit || 'kg') as any }))
-      : [{ weight: '', reps: '', unit: (lastUnit || weightUnit || 'kg') as any }];
+    
+    // 1. If we have initial sets (current draft/session data), use them
+    if (initialSets && initialSets.length > 0) {
+      return initialSets.map(s => ({ ...s, unit: (s.unit || lastUnit || weightUnit || 'kg') as any }));
+    }
+    
+    // 2. Otherwise, start with one single clean empty set (exactly like the original GitHub code)
+    return [{ weight: '', reps: '', unit: (lastUnit || weightUnit || 'kg') as any }];
   };
 
   const [sets, setSets] = useState(initSets);
@@ -310,49 +319,139 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
           </div>
         </div>
 
-        {/* PR bar */}
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '8px 20px 12px' }}>
-          {(() => {
-            const lastSession = tracker.getLastSession(exerciseName);
-            if (!lastSession || !lastSession.sets || lastSession.sets.length === 0) return null;
-            
-            const sets = lastSession.sets;
-            const maxWeight = Math.max(...sets.map(s => Number(s.weight) || 0));
-            const maxWeightSets = sets.filter(s => (Number(s.weight) || 0) === maxWeight);
-            const setsAtMaxWeight = maxWeightSets.length;
-            const maxRepsAtMaxWeight = Math.max(...maxWeightSets.map(s => Number(s.reps) || 0));
-            const bestSet = maxWeightSets[0];
-            const targetUnit = tracker.getDisplayUnit(exerciseName, muscleGroup as MuscleGroup);
-            const convertedWeight = tracker.convertWeight(maxWeight, bestSet.unit || 'kg', targetUnit);
-            const roundedWeight = Number(convertedWeight.toFixed(1));
+        {/* Last session compact display */}
+        {(() => {
+          const lastSession = tracker.getLastSession(exerciseName);
+          if (!lastSession || !lastSession.sets || lastSession.sets.length === 0) return null;
 
-            return (
-              <div style={{ 
-                background: 'transparent', 
-                borderRadius: 12, 
-                padding: '4px 0', 
-                color: 'var(--text-primary)', 
-                fontSize: 13, 
-                fontWeight: 900, 
-                fontFamily: "'Montserrat', sans-serif", 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 6, 
-                whiteSpace: 'nowrap',
-                border: 'none',
+          const prevSets = lastSession.sets.filter(s => Number(s.reps) > 0);
+          if (prevSets.length === 0) return null;
+
+          // Find max weight in kg across all sets
+          let maxWeightInKg = 0;
+          prevSets.forEach(s => {
+            const wInKg = tracker.convertWeight(Number(s.weight) || 0, s.unit || 'kg', 'kg');
+            if (wInKg > maxWeightInKg) {
+              maxWeightInKg = wInKg;
+            }
+          });
+
+          // Filter to keep only the sets matching the max weight (with 0.05kg tolerance for floating-point comparisons)
+          const maxWeightSets = prevSets.filter(s => {
+            const wInKg = tracker.convertWeight(Number(s.weight) || 0, s.unit || 'kg', 'kg');
+            return Math.abs(wInKg - maxWeightInKg) < 0.05;
+          });
+
+          if (maxWeightSets.length === 0) return null;
+
+          const targetUnit = tracker.getDisplayUnit(exerciseName, muscleGroup as MuscleGroup);
+          const displayWeight = Number(tracker.convertWeight(maxWeightInKg, 'kg', targetUnit).toFixed(1));
+          const hasWeight = displayWeight > 0;
+
+          // Natural Egyptian Arabic/English translation for sets count
+          const setsCount = maxWeightSets.length;
+          const setsText = lang === 'ar'
+            ? (setsCount === 1 ? 'سيت واحد' : setsCount === 2 ? 'سيتين' : `${setsCount} سيتات`)
+            : `${setsCount} ${setsCount === 1 ? 'set' : 'sets'}`;
+
+          return (
+            <div style={{
+              width: '100%',
+              padding: '0 20px 12px',
+              boxSizing: 'border-box',
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+                flexWrap: 'wrap',
+                rowGap: 5,
               }}>
-                <span style={{ color: 'var(--accent-color)', fontSize: 10, fontWeight: 950, letterSpacing: 1.5, opacity: isLight ? 0.95 : 0.9 }}>LAST:</span>
-                <span style={{ fontWeight: 950, fontSize: 15 }}>{setsAtMaxWeight} <span style={{ fontSize: 10, opacity: isLight ? 0.95 : 0.8, fontWeight: 900 }}>SETS</span></span>
-                <span style={{ opacity: isLight ? 0.65 : 0.4, fontSize: 10, fontWeight: 900 }}>×</span>
-                <span style={{ fontWeight: 950, fontSize: 15 }}>{maxRepsAtMaxWeight} <span style={{ fontSize: 10, opacity: isLight ? 0.95 : 0.8, fontWeight: 900 }}>REPS</span></span>
-                <div style={{ width: '1px', height: 12, background: isLight ? 'rgba(var(--theme-rgb), 0.3)' : 'rgba(var(--theme-rgb), 0.15)', margin: '0 6px' }} />
-                <span style={{ fontWeight: 950, fontSize: 17, color: 'var(--accent-color)' }}>{roundedWeight}</span>
-                <span style={{ fontSize: 11, opacity: isLight ? 0.95 : 0.7, color: 'var(--accent-color)', fontWeight: 950 }}>{t(targetUnit)}</span>
-                <img src="/assets/trophy-custom.png" style={{ width: 18, height: 18, marginLeft: 6, objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }} alt="Trophy" />
+                {/* LAST label */}
+                <span style={{
+                  color: 'var(--accent-color)',
+                  fontSize: 13,
+                  fontWeight: 950,
+                  letterSpacing: 1.5,
+                  fontFamily: "'Montserrat', sans-serif",
+                  opacity: isLight ? 0.95 : 0.9,
+                  flexShrink: 0,
+                }}>{lang === 'ar' ? 'السابق:' : 'LAST:'}</span>
+                <img src="/assets/trophy-custom.png" style={{ width: 17, height: 17, objectFit: 'contain', verticalAlign: 'middle', opacity: 0.75, flexShrink: 0 }} alt="" />
+
+                {/* Condensed format with same weight + sets count */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', rowGap: 3 }}>
+                  {hasWeight && (
+                    <>
+                      <span style={{
+                        fontSize: 18, fontWeight: 950,
+                        color: 'var(--text-primary)',
+                        fontFamily: "'Montserrat', sans-serif",
+                        lineHeight: 1,
+                      }}>{displayWeight}</span>
+                      <span style={{
+                        fontSize: 12, fontWeight: 800,
+                        color: 'var(--accent-color)',
+                        fontFamily: "'Montserrat', sans-serif",
+                        opacity: 0.85,
+                      }}>{t(targetUnit)}</span>
+                    </>
+                  )}
+
+                  {/* Gorgeous premium sets count badge */}
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'rgba(255, 152, 0, 0.15)',
+                    border: '1px solid rgba(255, 152, 0, 0.25)',
+                    borderRadius: '6px',
+                    padding: '2.5px 7px',
+                    fontSize: 11,
+                    fontWeight: 950,
+                    color: '#FF9800',
+                    fontFamily: "'Montserrat', sans-serif",
+                    lineHeight: 1,
+                    marginLeft: 2,
+                    marginRight: 2,
+                    textTransform: 'uppercase',
+                  }}>
+                    {setsText}
+                  </div>
+
+                  <span style={{
+                    fontSize: 15, fontWeight: 700,
+                    color: isLight ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)',
+                    margin: '0 3px',
+                  }}>→</span>
+
+                  {maxWeightSets.map((s, i) => (
+                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                      <span style={{
+                        fontSize: 18, fontWeight: 950,
+                        color: 'var(--text-primary)',
+                        fontFamily: "'Montserrat', sans-serif",
+                        lineHeight: 1,
+                      }}>{Number(s.reps)}</span>
+                      {i < maxWeightSets.length - 1 && (
+                        <span style={{
+                          fontSize: 14, fontWeight: 700,
+                          color: isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)',
+                          margin: '0 3px',
+                        }}>·</span>
+                      )}
+                    </span>
+                  ))}
+                  <span style={{
+                    fontSize: 11, fontWeight: 800,
+                    color: isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.35)',
+                    fontFamily: "'Montserrat', sans-serif",
+                    marginLeft: 3,
+                  }}>{lang === 'ar' ? 'عدات' : 'reps'}</span>
+                </div>
               </div>
-            );
-          })()}
-        </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Sets list */}

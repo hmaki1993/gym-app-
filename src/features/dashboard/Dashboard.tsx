@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
@@ -32,7 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
 
   // Removed unused volume memo
 
-  const recentGroups = React.useMemo(() => {
+  const recentGroupKeys = React.useMemo(() => {
     if (!recentLog) return [];
     const exerciseToMuscle: Record<string, string> = {};
     Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
@@ -41,24 +41,40 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
 
     const involvedGroups = new Set<string>();
     recentLog.exercises.forEach(ex => {
-      const group = exerciseToMuscle[ex.name];
+      const group = (ex as any).muscleGroup || exerciseToMuscle[ex.name] || recentLog.muscleGroup;
       if (group) involvedGroups.add(group);
-      else involvedGroups.add(recentLog.muscleGroup);
     });
 
-    return Array.from(involvedGroups).sort().map(g => {
+    return Array.from(involvedGroups).sort();
+  }, [recentLog]);
+
+  const recentGroups = React.useMemo(() => {
+    return recentGroupKeys.map(g => {
       const mg = MUSCLE_GROUPS.find(m => m.key === g);
       return mg?.[lang] ?? g;
     });
-  }, [recentLog, lang]);
+  }, [recentGroupKeys, lang]);
 
-  const todayStr = (() => {
+  const getTodayStr = () => {
     const now = new Date();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
     const d = String(now.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
-  })();
+  };
+
+  const [todayStr, setTodayStr] = useState(getTodayStr);
+
+  // Refresh todayStr every 60s and when app comes back to foreground
+  useEffect(() => {
+    const refresh = () => setTodayStr(getTodayStr());
+    const interval = setInterval(refresh, 60_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
 
   const hasWorkoutToday = tracker.logs.some(log => {
     const logDate = new Date(log.date);
@@ -234,27 +250,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                  {(() => {
-                    const exerciseToMuscle: Record<string, string> = {};
-                    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-                      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
-                    });
-                    const involvedGroups = new Set<string>();
-                    recentLog.exercises.forEach(ex => {
-                      const group = exerciseToMuscle[ex.name];
-                      if (group) involvedGroups.add(group);
-                      else involvedGroups.add(recentLog.muscleGroup);
-                    });
-                    return Array.from(involvedGroups).sort().map(g => {
-                      const mg = MUSCLE_GROUPS.find(m => m.key === g);
-                      return mg?.icon ? (
-                        <TransparentImage 
-                          key={g} src={mg.icon} alt="" width={48} height={48} threshold={45}
-                          style={{ filter: 'none' }}
-                        />
-                      ) : <span key={g} style={{ fontSize: '24px' }}>💪</span>;
-                    });
-                  })()}
+                  {recentGroupKeys.map(g => {
+                    const mg = MUSCLE_GROUPS.find(m => m.key === g);
+                    return mg?.icon ? (
+                      <TransparentImage 
+                        key={g} src={mg.icon} alt="" width={48} height={48} threshold={45}
+                        style={{ filter: 'none' }}
+                      />
+                    ) : <span key={g} style={{ fontSize: '24px' }}>💪</span>;
+                  })}
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ 

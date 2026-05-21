@@ -48,7 +48,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   }, [expandedLogId]);
 
   const [viewDate, setViewDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -61,15 +61,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   const monthName = viewDate.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { month: 'long', year: 'numeric' });
 
 
-  const mockLogDate = React.useMemo(() => {
-    const now = new Date();
-    const isCurrent = now.getFullYear() === currentYear && now.getMonth() === currentMonth;
-    const day = isCurrent 
-      ? (now.getDate() > 5 ? now.getDate() - 3 : 1) 
-      : 10;
-    return new Date(currentYear, currentMonth, day);
-  }, [currentYear, currentMonth]);
-
   const monthDayMuscles = React.useMemo(() => {
     const map: Record<number, string[]> = {};
     const exerciseToMuscle: Record<string, string> = {};
@@ -79,10 +70,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
     Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
       exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
     });
-
-    // Inject mock workout muscles
-    const mockDay = mockLogDate.getDate();
-    map[mockDay] = ['chest', 'back'];
 
     tracker.logs.forEach(log => {
       const d = new Date(log.date);
@@ -98,7 +85,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
       }
     });
     return map;
-  }, [tracker.logs, tracker.customExercises, currentYear, currentMonth, mockLogDate]);
+  }, [tracker.logs, tracker.customExercises, currentYear, currentMonth]);
 
   const isSelected = (day: number) => {
     if (!selectedDate) return false;
@@ -109,38 +96,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
   const filteredLogs = React.useMemo(() => {
     const logs = [...tracker.logs];
-    const mockDay = mockLogDate.getDate();
-    const mockDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(mockDay).padStart(2, '0')}`;
-    
-    const hasRealLog = logs.some(l => l.date.startsWith(mockDateStr));
-    if (!hasRealLog) {
-      logs.push({
-        id: 'mock-workout-id',
-        date: `${mockDateStr}T18:00:00.000Z`,
-        durationMinutes: 45,
-        durationSeconds: 2700,
-        exercises: [
-          {
-            name: 'Bench Press',
-            sets: [
-              { weight: 60, reps: 10, completed: true },
-              { weight: 70, reps: 8, completed: true },
-              { weight: 80, reps: 6, completed: true }
-            ],
-            muscleGroup: 'chest'
-          },
-          {
-            name: 'Pull Up',
-            sets: [
-              { weight: 0, reps: 12, completed: true },
-              { weight: 0, reps: 10, completed: true }
-            ],
-            muscleGroup: 'back'
-          }
-        ],
-        notes: 'Mock training session'
-      } as any);
-    }
 
     return selectedDate 
       ? logs.filter(l => {
@@ -151,7 +106,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           return logStr === selectedStr;
         })
       : [];
-  }, [tracker.logs, selectedDate, currentYear, currentMonth, mockLogDate]);
+  }, [tracker.logs, selectedDate, currentYear, currentMonth]);
 
   // Consolidate multiple logs for the same day into one (fixes old split-session bug)
   const consolidatedLogs = (() => {
@@ -186,6 +141,21 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingBottom: '120px' }}>
+      <style>{`
+        @keyframes premiumPopIn {
+          0% {
+            transform: translate(-50%, 15px) scale(0.85);
+            opacity: 0;
+          }
+          100% {
+            transform: translate(-50%, 4px) scale(1);
+            opacity: 1;
+          }
+        }
+        .premium-overlay-animate {
+          animation: premiumPopIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+      `}</style>
       {/* Weightless Elite Calendar - Compact */}
       <div style={{ 
         padding: '5px 0 15px', 
@@ -282,12 +252,12 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
         {/* Structured Calendar Grid with Dividers */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(7, 1fr)', 
+          gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', 
           gap: '4px', 
           padding: '4px',
           background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)',
           borderRadius: '16px',
-          overflow: 'hidden',
+          overflow: 'visible',
           border: tracker.settings.themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.08)',
           boxSizing: 'border-box',
           width: '100%',
@@ -330,70 +300,41 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
             const satStartOffset = offsetMap[firstDayOfWeek];
             const dayElements = [];
             
-            // 1. Initial Padding Cells (Motivational/Info Card)
+            // 1. Initial Padding Cells (Days from Previous Month)
             if (satStartOffset > 0) {
-              dayElements.push(
-                <div 
-                  key="calendar-intro-card" 
-                  style={{ 
-                    background: tracker.settings.themeMode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.03)' 
-                      : 'rgba(0, 0, 0, 0.04)',
-                    border: tracker.settings.themeMode === 'dark'
-                      ? '1px solid rgba(255, 255, 255, 0.06)'
-                      : '1px solid rgba(0, 0, 0, 0.04)',
-                    boxShadow: tracker.settings.themeMode === 'dark'
-                      ? 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'
-                      : 'none',
-                    gridColumn: `span ${satStartOffset}`,
-                    width: '100%',
-                    height: '100%',
-                    minHeight: '58px',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '10px',
-                    boxSizing: 'border-box',
-                    padding: '0 16px'
-                  }} 
-                >
-                  <div style={{
-                    width: '28px',
-                    height: '28px',
-                    backgroundColor: 'var(--text-secondary)',
-                    WebkitMask: 'url(/assets/dumbbell-intro.png) no-repeat center / contain',
-                    mask: 'url(/assets/dumbbell-intro.png) no-repeat center / contain',
-                    display: 'inline-block',
-                    transform: 'rotate(-35deg)',
-                    opacity: 0.9
-                  }} />
-                  {satStartOffset >= 4 && (
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {"SUCCESSFUL START".split("").map((char, index) => {
-                        const wobble = [3, -3, 2, -2, 4, -3, 3, 0, -2, 3, -3, 2, -2, 3, -3, 2][index % 16];
-                        return (
-                          <span 
-                            key={index} 
-                            style={{ 
-                              fontSize: 'clamp(14px, 4vw, 18px)', 
-                              fontWeight: '900', 
-                              marginRight: char === ' ' ? '8px' : '2px',
-                              color: 'var(--text-secondary)',
-                              fontFamily: '"Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif',
-                              WebkitTextStroke: '1.5px var(--text-secondary)',
-                              display: 'inline-block',
-                              transform: `rotate(${wobble}deg) translateY(${wobble * 0.3}px)`
-                            }}
-                          >
-                            {char === ' ' ? '\u00A0' : char}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
+              const prevMonthTotalDays = new Date(currentYear, currentMonth, 0).getDate();
+              for (let i = 0; i < satStartOffset; i++) {
+                const prevDay = prevMonthTotalDays - satStartOffset + 1 + i;
+                dayElements.push(
+                  <div 
+                    key={`prev-${i}`} 
+                    style={{ 
+                      background: tracker.settings.themeMode === 'dark' ? '#111114' : '#f5f5f5',
+                      width: '100%',
+                      aspectRatio: '1',
+                      padding: '4px 2px',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxSizing: 'border-box',
+                      position: 'relative',
+                      cursor: 'default'
+                    }} 
+                  >
+                    <span style={{
+                      position: 'absolute',
+                      top: '4px',
+                      left: '6px',
+                      fontSize: 'clamp(10px, 3vw, 12px)',
+                      fontWeight: '700',
+                      color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                      lineHeight: 1
+                    }}>{prevDay}</span>
+                  </div>
+                );
+              }
             }
 
             // 2. Actual Days
@@ -408,14 +349,20 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
               dayElements.push(
                 <div 
                   key={day}
-                  onClick={() => setSelectedDate(new Date(currentYear, currentMonth, day))}
+                  onClick={() => {
+                    if (isSelected(day)) {
+                      setSelectedDate(null);
+                    } else {
+                      setSelectedDate(new Date(currentYear, currentMonth, day));
+                    }
+                  }}
                   style={{
                     background: active 
                       ? 'var(--accent-color-alpha)' 
                       : (worked ? (tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)') : (tracker.settings.themeMode === 'dark' ? '#111114' : '#ffffff')),
                     width: '100%',
-                    height: '70px',
-                    padding: '6px 2px',
+                    aspectRatio: '1',
+                    padding: '4px 2px',
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'center', 
@@ -428,7 +375,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                     boxSizing: 'border-box',
                     borderRadius: '8px',
-                    zIndex: (active || isToday) ? 10 : 2,
+                    zIndex: active ? 30 : (isToday ? 10 : 2),
                     transform: (active || isToday) ? 'translateY(-2px)' : 'none',
                     border: active 
                       ? '2.5px solid var(--accent-color)' 
@@ -436,19 +383,109 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
                   }}
                 >
-                  <span style={{ lineHeight: 1, zIndex: 2 }}>{day}</span>
+                  <span style={{ 
+                    position: 'absolute',
+                    top: '4px',
+                    left: '6px',
+                    lineHeight: 1, 
+                    zIndex: 2,
+                    fontSize: '11px'
+                  }}>{day}</span>
                   {dayMuscles.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '0px', marginTop: '3px', height: '28px', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-                      {dayMuscles.slice(0, 3).map((g, _idx) => {
-                        const mg = MUSCLE_GROUPS.find(m => m.key === g);
-                        return mg?.icon ? (
-                          <TransparentImage key={g} src={mg.icon} alt="" width={28} height={28} threshold={45} style={{ filter: 'none', marginLeft: _idx > 0 ? '-7px' : '0px', zIndex: 10 - _idx }} />
-                        ) : <span key={g} style={{ fontSize: '10px' }}>•</span>;
-                      })}
-                    </div>
+                    <>
+                      {/* Icons: when selected with multiple muscles → horizontal pill overlay */}
+                      {active && dayMuscles.length > 1 ? (
+                        <div 
+                          className="premium-overlay-animate"
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            flexWrap: 'nowrap',
+                            gap: '4px',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: tracker.settings.themeMode === 'dark'
+                              ? 'rgba(20,20,24,0.85)'
+                              : 'rgba(255,255,255,0.85)',
+                            backdropFilter: 'blur(12px) saturate(180%)',
+                            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                            border: '1.5px solid var(--accent-color)',
+                            borderRadius: '16px',
+                            padding: '6px 9px',
+                            zIndex: 100,
+                            boxShadow: tracker.settings.themeMode === 'dark'
+                              ? '0 8px 32px rgba(0,0,0,0.45), 0 0 10px rgba(46, 204, 113, 0.2)'
+                              : '0 8px 32px rgba(31,38,135,0.15), 0 0 10px rgba(46, 204, 113, 0.15)',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {/* Caret pointing up to the middle of the cell */}
+                          <div style={{
+                            position: 'absolute',
+                            top: '-5px',
+                            left: '50%',
+                            transform: 'translateX(-50%) rotate(45deg)',
+                            width: '8px',
+                            height: '8px',
+                            background: tracker.settings.themeMode === 'dark'
+                              ? 'rgba(20,20,24,0.85)'
+                              : 'rgba(255,255,255,0.85)',
+                            borderLeft: '1.5px solid var(--accent-color)',
+                            borderTop: '1.5px solid var(--accent-color)',
+                            zIndex: 99
+                          }} />
+                          {dayMuscles.map((g, _idx) => {
+                            const mg = MUSCLE_GROUPS.find(m => m.key === g);
+                            const iconSize = dayMuscles.length <= 2 ? 26 : 22;
+                            return mg?.icon ? (
+                              <TransparentImage key={g} src={mg.icon} alt="" width={iconSize} height={iconSize} threshold={45} style={{ filter: 'none', transform: 'scale(1)', transition: 'transform 0.2s' }} />
+                            ) : <span key={g} style={{ fontSize: '10px' }}>•</span>;
+                          })}
+                        </div>
+                      ) : (
+                        /* Single icon (not selected, or selected with only 1 muscle) */
+                        <div style={{ 
+                          marginTop: '12px', 
+                          display: 'flex', 
+                          flexDirection: 'row',
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '2px',
+                          zIndex: 2,
+                          width: '100%'
+                        }}>
+                          {(() => {
+                            const mg = MUSCLE_GROUPS.find(m => m.key === dayMuscles[0]);
+                            return (
+                              <>
+                                {mg?.icon ? (
+                                  <TransparentImage src={mg.icon} alt="" width={22} height={22} threshold={45} style={{ filter: 'none', zIndex: 10 }} />
+                                ) : (
+                                  <span style={{ fontSize: '10px' }}>•</span>
+                                )}
+                                {!active && dayMuscles.length > 1 && (
+                                  <span style={{
+                                    color: 'var(--accent-color)',
+                                    fontSize: '9px',
+                                    fontWeight: '950',
+                                    lineHeight: 1,
+                                    marginLeft: '1px'
+                                  }}>
+                                    x{dayMuscles.length}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     isPast && !isToday && (
-                      <div style={{ marginTop: '3px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, zIndex: 2 }}>
+                      <div style={{ marginTop: '10px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, zIndex: 2 }}>
                         <div style={{
                           width: '22px',
                           height: '22px',
@@ -470,25 +507,31 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
             for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
               dayElements.push(
                 <div 
-                  key={`empty-end-${dayNum}`} 
+                  key={`next-${dayNum}`} 
                   style={{ 
-                    background: tracker.settings.themeMode === 'dark' ? '#111114' : '#ffffff',
+                    background: tracker.settings.themeMode === 'dark' ? '#111114' : '#f5f5f5',
                     width: '100%',
-                    height: '70px',
-                    padding: '6px 2px',
+                    aspectRatio: '1',
+                    padding: '4px 2px',
                     borderRadius: '8px',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 'clamp(14px, 3.8vw, 16px)', 
-                    fontWeight: '800',
-                    color: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-                    cursor: 'default',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    position: 'relative',
+                    cursor: 'default'
                   }} 
                 >
-                  <span style={{ lineHeight: 1 }}>{dayNum}</span>
+                  <span style={{
+                    position: 'absolute',
+                    top: '4px',
+                    left: '6px',
+                    fontSize: 'clamp(10px, 3vw, 12px)',
+                    fontWeight: '700',
+                    color: tracker.settings.themeMode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                    lineHeight: 1
+                  }}>{dayNum}</span>
                 </div>
               );
             }
@@ -791,38 +834,74 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                                 {ex.isFirstInGroup && exIdx > 0 && (
                                   <div style={{ height: '8px' }} />
                                 )}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)', transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`, background: 'rgba(var(--theme-rgb), 0.1)', padding: '10px 12px', borderRadius: '12px', borderLeft: ex.isFirstInGroup ? '2px solid var(--accent-color)' : 'none' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                      <span style={{ fontSize: '15px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.name}</span>
-                                      <span style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.95, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px' }}>{lang === 'ar' ? mg?.ar : mg?.en}</span>
-                                    </div>
-                                    {isPR && (
-                                      <div style={{ fontSize: '8px', fontWeight: '950', color: '#E67E22', background: 'rgba(230, 126, 34, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>PR</div>
-                                    )}
-                                  </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                      <div style={{ textAlign: 'right' }}>
-                                        <span style={{ fontSize: '16px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.sets.length}</span>
-                                        <span style={{ fontSize: '10px', fontWeight: '950', color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: isLight ? 1 : 0.9, marginLeft: '4px' }}>SETS</span>
+                                {/* Exercise summary row */}
+                                <div style={{ opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateX(0)' : 'translateX(-10px)', transition: `all 0.4s ease ${0.1 + exIdx * 0.05}s`, background: 'rgba(var(--theme-rgb), 0.06)', borderRadius: '14px', borderLeft: ex.isFirstInGroup ? '3px solid var(--accent-color)' : '3px solid rgba(var(--theme-rgb), 0.15)', overflow: 'hidden' }}>
+                                  {/* Exercise name + summary */}
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                      <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22' }} />
+                                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: '15px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.name}</span>
+                                        <span style={{ fontSize: '9px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.95, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px' }}>{lang === 'ar' ? mg?.ar : mg?.en}</span>
                                       </div>
-                                      <div style={{ width: '1px', height: '12px', background: 'rgba(var(--theme-rgb), 0.1)' }} />
-                                      {(() => {
-                                        const displayUnit = tracker.getDisplayUnit(ex.name, ex.groupKey as any);
-                                        const convertedWeight = tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', displayUnit);
-                                        const roundedWeight = Number(convertedWeight.toFixed(1));
-                                        return (
-                                          <div style={{ textAlign: 'right' }}>
-                                             <span style={{ fontSize: '16px', fontWeight: '950', color: 'var(--accent-color)' }}>{roundedWeight}</span>
-                                             <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', marginLeft: '2px' }}> {t(displayUnit as any)}</span>
-                                          </div>
-                                        );
-                                      })()}
+                                      {isPR && (
+                                        <div style={{ fontSize: '8px', fontWeight: '950', color: '#E67E22', background: 'rgba(230, 126, 34, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>PR</div>
+                                      )}
                                     </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <div style={{ textAlign: 'right' }}>
+                                        <span style={{ fontSize: '14px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{ex.sets.length}</span>
+                                        <span style={{ fontSize: '9px', fontWeight: '950', color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', marginLeft: '3px' }}>{lang === 'ar' ? 'مجموعات' : 'SETS'}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Per-set breakdown grid */}
+                                  <div style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '6px',
+                                    padding: '0 12px 12px',
+                                  }}>
+                                    {ex.sets.map((set, setIdx) => {
+                                      const displayUnit = tracker.getDisplayUnit(ex.name, ex.groupKey as any);
+                                      const convertedWeight = tracker.convertWeight(set.weight, (set as any).unit || 'kg', displayUnit);
+                                      const roundedWeight = Number(convertedWeight.toFixed(1));
+                                      const isThisBest = set === bestSet || (convertedWeight === tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', displayUnit));
+                                      return (
+                                        <div key={setIdx} style={{
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          padding: '6px 10px',
+                                          borderRadius: '10px',
+                                          background: isThisBest
+                                            ? 'rgba(var(--accent-rgb), 0.12)'
+                                            : 'rgba(var(--theme-rgb), 0.07)',
+                                          border: isThisBest
+                                            ? '1px solid rgba(var(--accent-rgb), 0.3)'
+                                            : '1px solid rgba(var(--theme-rgb), 0.08)',
+                                          minWidth: '58px',
+                                          gap: '2px',
+                                        }}>
+                                          <span style={{ fontSize: '8px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                            {lang === 'ar' ? `${setIdx + 1}` : `S${setIdx + 1}`}
+                                          </span>
+                                          <span style={{ fontSize: '13px', fontWeight: '950', color: isThisBest ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)'), fontFamily: "'Montserrat', sans-serif", lineHeight: 1 }}>
+                                            {roundedWeight}<span style={{ fontSize: '8px', fontWeight: '800', marginLeft: '1px' }}>{t(displayUnit as any)}</span>
+                                          </span>
+                                          <span style={{ fontSize: '10px', fontWeight: '950', color: 'var(--text-secondary)', marginTop: '1px' }}>
+                                            × {set.reps} <span style={{ fontSize: '8px' }}>{lang === 'ar' ? 'عدات' : 'reps'}</span>
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
                               </React.Fragment>
                             );
+
                           });
                         })() }
                       </div>

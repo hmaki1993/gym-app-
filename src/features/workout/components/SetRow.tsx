@@ -34,15 +34,15 @@ export const SetRow: React.FC<Props> = ({
     <div style={{
       display: 'flex', alignItems: 'center', padding: '12px 0',
       borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)',
-      gap: '8px',
+      gap: '6px',
       transformStyle: 'preserve-3d'
     }}>
-      <div style={{ width: '24px', fontSize: '14px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif" }}>
+      <div style={{ width: '16px', fontSize: '14px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif", textAlign: 'center' }}>
         {index + 1}
       </div>
-      <div style={{ width: '1.5px', height: '20px', background: 'rgba(var(--theme-rgb), 0.15)', marginRight: '12px' }} />
+      <div style={{ width: '1.5px', height: '20px', background: 'rgba(var(--theme-rgb), 0.15)', marginRight: '6px' }} />
       
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
         <input
           type="number"
           inputMode="decimal"
@@ -53,10 +53,10 @@ export const SetRow: React.FC<Props> = ({
             border: '1.5px solid rgba(var(--theme-rgb), 0.3)',
             outline: 'none',
             color: 'var(--text-primary)',
-            fontSize: '24px',
+            fontSize: '22px',
             fontWeight: '900',
             textAlign: 'center',
-            width: '65px',
+            width: '58px',
             padding: '4px 0',
             borderRadius: '8px',
             fontFamily: "'Montserrat', sans-serif",
@@ -66,13 +66,13 @@ export const SetRow: React.FC<Props> = ({
         <div
           onClick={onCycleUnit}
           style={{
-            fontSize: '11px',
+            fontSize: '13.5px',
             fontWeight: '950',
-            color: '#666',
+            color: 'var(--text-primary)',
             textTransform: 'uppercase',
             letterSpacing: '1px',
             cursor: 'pointer',
-            minWidth: '40px',
+            minWidth: '46px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -87,13 +87,13 @@ export const SetRow: React.FC<Props> = ({
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           {t(activeUnit)}
-          <div style={{ width: '12px', height: '2px', background: '#666', marginTop: '3px', borderRadius: '1px' }} />
+          <div style={{ width: '16px', height: '2px', background: 'var(--accent-color)', marginTop: '3px', borderRadius: '1px' }} />
         </div>
       </div>
 
       <div style={{ width: '1.5px', height: '24px', background: 'rgba(var(--theme-rgb), 0.15)' }} />
       
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
         <input
           type="number"
           inputMode="numeric"
@@ -104,17 +104,17 @@ export const SetRow: React.FC<Props> = ({
             border: '1.5px solid rgba(var(--theme-rgb), 0.3)',
             outline: 'none',
             color: 'var(--text-primary)',
-            fontSize: '24px',
+            fontSize: '22px',
             fontWeight: '900',
             textAlign: 'center',
-            width: '65px',
+            width: '58px',
             padding: '4px 0',
             borderRadius: '8px',
             fontFamily: "'Montserrat', sans-serif",
             
           }}
         />
-        <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '0.5px', fontFamily: "'Montserrat', sans-serif" }}>
+        <div style={{ fontSize: '13.5px', fontWeight: '950', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: "'Montserrat', sans-serif" }}>
           {t('reps')}
         </div>
       </div>
@@ -134,7 +134,7 @@ export const SetRow: React.FC<Props> = ({
         )}
 
         {canRemove && (
-          <button onClick={onRemove} style={{ background: 'transparent', border: 'none', width: '28px', height: '28px', cursor: 'pointer', color: 'rgba(255,51,102,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: 0 }}>
+          <button onClick={onRemove} style={{ background: 'transparent', border: 'none', width: '28px', height: '28px', cursor: 'pointer', color: 'rgba(255,51,102,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
             <Trash2 size={16} />
           </button>
         )}

@@ -16,6 +16,7 @@
     "@capacitor/camera": "^8.2.0",
     "@capacitor/cli": "^7.6.2",
     "@capacitor/core": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.1",
     "@google/generative-ai": "^0.24.1",
     "@ionic/pwa-elements": "^3.4.0",
     "gsap": "^3.15.0",

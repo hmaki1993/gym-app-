@@ -12,6 +12,7 @@ import gsap from 'gsap';
 import './index.css';
 import { preWarmImages } from './features/workout/components/TransparentImage';
 import { MUSCLE_GROUPS } from './data/exercises';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 // Pre-process muscle icons immediately on app load (runs once, cached forever)
 preWarmImages(MUSCLE_GROUPS.map(mg => mg.icon), 45);
@@ -29,12 +30,16 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>(tracker.settings.userName ? 'home' : 'settings');
   const [showWorkout, setShowWorkout] = useState(false);
+  const [appLocalDate, setAppLocalDate] = useState(() => tracker.getLocalDateStr());
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
 
   // ── Unified Navigation & History System ──
   useEffect(() => {
+    // Hide splash screen smoothly after the app is mounted and ready
+    SplashScreen.hide().catch(err => console.log('Splash hide error:', err));
+
     let startX = 0;
     let startY = 0;
     const EDGE_THRESHOLD = 30;
@@ -121,15 +126,24 @@ export default function App() {
     root.setAttribute('data-theme', tracker.settings.themeMode);
   }, [tracker.settings.accentColor, tracker.settings.themeMode]);
 
-  // ── Entrance Fade-In & Premium Spatial Scale Animation ──
+  // ── Entrance Animation (Removed for rocket speed launch) ──
   useEffect(() => {
-    if (appRef.current) {
-      gsap.fromTo(appRef.current,
-        { opacity: 0, y: 50, scale: 0.88, filter: 'blur(12px)' },
-        { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.55, ease: 'power4.out', force3D: true, clearProps: 'transform,filter' }
-      );
-    }
+    // App loads instantly for maximum performance
   }, []);
+
+  // ── Midnight Reset Logic to clear active yesterday's session ──
+  useEffect(() => {
+    const checkNewDay = () => {
+      const today = tracker.getLocalDateStr();
+      if (appLocalDate !== today) {
+        setShowWorkout(false);
+        setAppLocalDate(today);
+      }
+    };
+    checkNewDay();
+    window.addEventListener('focus', checkNewDay);
+    return () => window.removeEventListener('focus', checkNewDay);
+  }, [appLocalDate, tracker]);
 
   // When opening workout, push a state so back gesture can close it
   useEffect(() => {
@@ -299,7 +313,7 @@ export default function App() {
         background: 'var(--primary-bg)',
         touchAction: 'auto',
         overscrollBehaviorX: 'none',
-        opacity: 0
+        opacity: 1
       }}>
 
       {!showWorkout && (

@@ -85,77 +85,176 @@ function MiniChart({ data, color, title }: { data: { date: string; value: number
   );
 }
 
-function RecordDateAccordion({ dateStr, prs, today, lang, t, isLight, tracker }: { dateStr: string, prs: any[], today: string, lang: string, t: any, isLight: boolean, tracker: ReturnType<typeof useGymTracker> }) {
-  const [isDateOpen, setIsDateOpen] = useState(dateStr === today);
-  const displayDate = new Date(dateStr).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  
+function ExerciseHistoryDetails({ exerciseName, logs, tracker, lang, t }: { exerciseName: string; logs: any[]; tracker: any; lang: string; t: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const sessions = React.useMemo(() => {
+    const list: { date: string; sets: any[] }[] = [];
+    logs.forEach(log => {
+      const ex = log.exercises.find((e: any) => e.name.toLowerCase() === exerciseName.toLowerCase());
+      if (ex && ex.sets && ex.sets.length > 0) {
+        list.push({
+          date: log.date,
+          sets: ex.sets
+        });
+      }
+    });
+    return list;
+  }, [logs, exerciseName]);
+
+  if (sessions.length === 0) return null;
+
   return (
-    <div style={{ background: 'rgba(var(--theme-rgb), 0.1)', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(var(--theme-rgb), 0.14)' }}>
-      <button onClick={() => setIsDateOpen(!isDateOpen)} style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer' }}>
-        <div style={{ fontSize: '11px', fontWeight: '950', color: 'var(--text-primary)', opacity: isLight ? 0.95 : 0.8, textTransform: 'uppercase' }}>
-          {dateStr === today ? (lang === 'ar' ? 'اليوم' : 'TODAY') : displayDate}
-          <span style={{ 
-            marginLeft: '8px', 
-            opacity: isLight ? 0.95 : 0.4, 
-            color: isLight ? '#E67E22' : 'inherit', 
-            fontWeight: isLight ? '950' : 'inherit' 
-          }}>({prs.length})</span>
-        </div>
-        <img src="/assets/arrow-custom.png" alt="Toggle" style={{ width: '16px', height: '16px', objectFit: 'contain', opacity: 0.8, transform: isDateOpen ? 'rotate(270deg)' : 'rotate(90deg)', transition: 'transform 0.3s ease' }} />
+    <div style={{ marginTop: '12px' }}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%',
+          padding: '10px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'rgba(var(--theme-rgb), 0.05)',
+          border: '1px solid rgba(var(--theme-rgb), 0.1)',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          color: 'var(--text-primary)',
+          fontSize: '11.5px',
+          fontWeight: '950',
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase',
+          transition: 'all 0.2s ease',
+          outline: 'none'
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <img src="/assets/calendar-custom.png" style={{ width: '14px', height: '14px', objectFit: 'contain' }} alt="Sessions" />
+          {lang === 'ar' ? 'عرض تفاصيل المجاميع والعدات' : 'SHOW SETS & REPS'} 
+          <span style={{ color: 'var(--accent-color)', marginLeft: '4px' }}>({sessions.length})</span>
+        </span>
+        <img 
+          src="/assets/arrow-custom.png" 
+          alt="Toggle" 
+          style={{ 
+            width: '12px', 
+            height: '12px', 
+            objectFit: 'contain', 
+            opacity: 0.8, 
+            transform: isOpen ? 'rotate(270deg)' : 'rotate(90deg)', 
+            transition: 'transform 0.3s ease' 
+          }} 
+        />
       </button>
-      {isDateOpen && (
-        <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: '0' }}>
-          {(() => {
-            const groups: Record<string, any[]> = {};
-            prs.forEach(pr => {
-              const mgKey = pr.muscleGroup || 'other';
-              if (!groups[mgKey]) groups[mgKey] = [];
-              groups[mgKey].push(pr);
+
+      {isOpen && (
+        <div style={{
+          marginTop: '10px',
+          padding: '12px 14px',
+          background: 'rgba(var(--theme-rgb), 0.03)',
+          border: '1.5px dashed rgba(var(--theme-rgb), 0.08)',
+          borderRadius: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          animation: 'slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+        }}>
+          {sessions.map((sess, sIdx) => {
+            const displayDate = new Date(sess.date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { 
+              weekday: 'short', 
+              day: 'numeric', 
+              month: 'short',
+              year: '2-digit'
             });
-            const sortedEntries = Object.entries(groups).sort();
-            return sortedEntries.map(([mgKey, items], groupIdx) => {
-              const mg = MUSCLE_GROUPS.find(m => m.key === mgKey);
-              const groupName = mg ? (lang === 'ar' ? mg.ar : mg.en) : (lang === 'ar' ? 'أخرى' : 'OTHER');
-              return (
-                <React.Fragment key={mgKey}>
-                  <div style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '3px', textTransform: 'uppercase', marginTop: groupIdx === 0 ? '12px' : '24px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ whiteSpace: 'nowrap' }}>{groupName}</span>
-                    <div style={{ flex: 1, height: '1.5px', background: 'var(--accent-color)', opacity: 0.15, borderRadius: '1px' }} />
-                  </div>
-                  {items.map((pr, idx) => {
-                    const displayUnit = tracker.getDisplayUnit(pr.exerciseName, pr.muscleGroup);
-                    const convertedWeight = tracker.convertWeight(pr.weight, pr.unit || 'kg', displayUnit);
+
+            return (
+              <div 
+                key={sIdx} 
+                style={{ 
+                  paddingBottom: sIdx === sessions.length - 1 ? '0' : '12px', 
+                  borderBottom: sIdx === sessions.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.08)' 
+                }}
+              >
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  marginBottom: '8px' 
+                }}>
+                  <span style={{ 
+                    fontSize: '11px', 
+                    fontWeight: '950', 
+                    color: 'var(--text-primary)',
+                    opacity: 0.9
+                  }}>
+                    {displayDate}
+                  </span>
+                  <span style={{ 
+                    fontSize: '9px', 
+                    fontWeight: '950', 
+                    background: 'var(--accent-color)', 
+                    color: 'var(--primary-bg)', 
+                    padding: '2px 8px', 
+                    borderRadius: '8px',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {sess.sets.length} {lang === 'ar' ? 'مجموعات' : 'SETS'}
+                  </span>
+                </div>
+
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', 
+                  gap: '6px' 
+                }}>
+                  {sess.sets.map((set, setIdx) => {
+                    const displayUnit = tracker.getDisplayUnit(exerciseName);
+                    const convertedWeight = tracker.convertWeight(set.weight, set.unit || 'kg', displayUnit);
                     const roundedWeight = Number(convertedWeight.toFixed(1));
                     return (
-                      <div key={pr.exerciseName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx === items.length - 1 ? 'none' : '1px solid rgba(var(--theme-rgb), 0.1)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)', opacity: 1 }}>{pr.exerciseName}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--accent-color)', fontWeight: '950', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{groupName}</span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                          <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>
-                            {roundedWeight} {t(displayUnit as any)} × {pr.reps}
-                          </span>
-                          {pr.setsCount && pr.setsCount > 0 && (
-                            <span style={{ 
-                              fontSize: '10px', 
-                              fontWeight: '950', 
-                              color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', 
-                              opacity: isLight ? 0.95 : 0.7, 
-                              letterSpacing: '0.5px', 
-                              textTransform: 'uppercase' 
-                            }}>
-                              {pr.setsCount} {lang === 'ar' ? 'مجموعات' : 'SETS'}
-                            </span>
-                          )}
-                        </div>
+                      <div 
+                        key={setIdx} 
+                        style={{
+                          background: 'rgba(var(--theme-rgb), 0.05)',
+                          border: '1px solid rgba(var(--theme-rgb), 0.06)',
+                          borderRadius: '8px',
+                          padding: '6px 8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '2px'
+                        }}
+                      >
+                        <span style={{ 
+                          fontSize: '8px', 
+                          fontWeight: '800', 
+                          color: 'var(--text-secondary)',
+                          textTransform: 'uppercase'
+                        }}>
+                          {lang === 'ar' ? `مجموعة ${setIdx + 1}` : `SET ${setIdx + 1}`}
+                        </span>
+                        <span style={{ 
+                          fontSize: '12px', 
+                          fontWeight: '950', 
+                          color: 'var(--accent-color)',
+                          fontFamily: "'Montserrat', sans-serif"
+                        }}>
+                          {roundedWeight} <span style={{ fontSize: '9px', fontWeight: '800' }}>{t(displayUnit as any)}</span>
+                        </span>
+                        <span style={{ 
+                          fontSize: '10px', 
+                          fontWeight: '950', 
+                          color: 'var(--text-primary)'
+                        }}>
+                          × {set.reps}
+                        </span>
                       </div>
                     );
                   })}
-                </React.Fragment>
-              );
-            });
-          })()}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -322,109 +421,6 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
         <style>{`@keyframes pulse-orange { 0% { box-shadow: 0 0 5px rgba(255, 140, 0, 0.2); border-color: rgba(255, 140, 0, 0.3); } 50% { box-shadow: 0 0 15px rgba(255, 140, 0, 0.6); border-color: rgba(255, 140, 0, 0.8); } 100% { box-shadow: 0 0 5px rgba(255, 140, 0, 0.2); border-color: rgba(255, 140, 0, 0.3); } } .day-column:active { transform: scale(0.9); }`}</style>
       </div>
 
-      {tracker.prs.length > 0 && (
-        <div style={{ padding: '24px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.15)' }}>
-          {(() => {
-            const today = new Date().toDateString();
-            const todayPRs = tracker.prs.filter(pr => new Date(pr.date).toDateString() === today);
-            const hasWinsToday = todayPRs.length > 0;
-            const [isMasterOpen, setIsMasterOpen] = useState(hasWinsToday);
-            return (
-              <div style={{ position: 'relative' }}>
-                <div onClick={() => setIsMasterOpen(!isMasterOpen)} style={{ background: hasWinsToday ? 'rgba(255, 149, 0, 0.15)' : 'rgba(var(--theme-rgb), 0.1)', borderRadius: '20px', padding: '18px 20px', border: hasWinsToday ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(var(--theme-rgb), 0.1)', cursor: 'pointer', transition: 'all 0.3s ease' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <img src="/assets/badge-custom.png" style={{ width: 30, height: 30, objectFit: 'contain', filter: hasWinsToday ? 'drop-shadow(0 4px 12px rgba(255, 149, 0, 0.5))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))', transition: 'all 0.3s ease' }} alt="Badge" />
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: '950', color: hasWinsToday ? '#E67E22' : 'var(--text-primary)', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                          {hasWinsToday ? (lang === 'ar' ? 'إنجازات اليوم! 🔥' : "TODAY'S WINS! 🔥") : t('personalRecord')}
-                        </div>
-                        {!hasWinsToday && <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '800', marginTop: '4px', letterSpacing: '0.5px' }}>{lang === 'ar' ? 'اضغط لعرض الأرقام القياسية' : 'TAP TO VIEW ALL RECORDS'}</div>}
-                      </div>
-                    </div>
-                    <img src="/assets/trophy-custom.png" style={{ width: 36, height: 36, objectFit: 'contain', opacity: hasWinsToday ? 1 : 0.85, transform: hasWinsToday ? 'scale(1.1) rotate(5deg)' : 'rotate(0deg)', filter: hasWinsToday ? 'drop-shadow(0 4px 12px rgba(255, 149, 0, 0.4))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))', transition: 'all 0.3s ease' }} alt="Trophy" />
-                  </div>
-                </div>
-                {isMasterOpen && (
-                  <div style={{ marginTop: '12px', animation: 'slideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '5px', paddingLeft: '10px' }}>{lang === 'ar' ? 'سجل التدريبات الزمني' : 'CHRONOLOGICAL WORKOUTS'}</div>
-                    {(() => {
-                      const dateGroups: Record<string, any[]> = {};
-                      
-                      tracker.logs.forEach(log => {
-                        const dateStr = new Date(log.date).toDateString();
-                        if (!dateGroups[dateStr]) {
-                          dateGroups[dateStr] = [];
-                        }
-                        
-                        log.exercises.forEach(ex => {
-                          if (ex.sets.length === 0) return;
-                          
-                          // Find the best set of this day for this exercise (highest weight, then reps)
-                          let bestSet = ex.sets[0];
-                          ex.sets.forEach(s => {
-                            const sWeight = tracker.convertWeight(s.weight, s.unit || 'kg', 'kg');
-                            const bWeight = tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', 'kg');
-                            if (sWeight > bWeight) {
-                              bestSet = s;
-                            } else if (sWeight === bWeight && s.reps > bestSet.reps) {
-                              bestSet = s;
-                            }
-                          });
-                          
-                          // Determine the muscle group
-                          const exerciseToMuscle: Record<string, string> = {};
-                          Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-                            exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
-                          });
-                          Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
-                            exercises.forEach(e => { exerciseToMuscle[e.trim().toLowerCase()] = group; });
-                          });
-                          const muscleGroup = (ex as any).muscleGroup || exerciseToMuscle[ex.name.trim().toLowerCase()] || log.muscleGroup || 'other';
-                          
-                          // Prevent duplication on the same day: merge sets count and take the absolute best set
-                          const existingIdx = dateGroups[dateStr].findIndex(item => item.exerciseName === ex.name);
-                          if (existingIdx > -1) {
-                            const existing = dateGroups[dateStr][existingIdx];
-                            existing.setsCount += ex.sets.length;
-                            const currentBestWeightKg = tracker.convertWeight(bestSet.weight, (bestSet as any).unit || 'kg', 'kg');
-                            const existingBestWeightKg = tracker.convertWeight(existing.weight, existing.unit || 'kg', 'kg');
-                            if (currentBestWeightKg > existingBestWeightKg) {
-                              existing.weight = bestSet.weight;
-                              existing.reps = bestSet.reps;
-                              existing.unit = (bestSet as any).unit || tracker.settings.weightUnit;
-                            } else if (currentBestWeightKg === existingBestWeightKg && bestSet.reps > existing.reps) {
-                              existing.reps = bestSet.reps;
-                            }
-                          } else {
-                            dateGroups[dateStr].push({
-                              exerciseName: ex.name,
-                              muscleGroup: muscleGroup,
-                              weight: bestSet.weight,
-                              reps: bestSet.reps,
-                              unit: (bestSet as any).unit || tracker.settings.weightUnit,
-                              setsCount: ex.sets.length,
-                              date: log.date
-                            });
-                          }
-                        });
-                      });
-
-                      const sortedDates = Object.keys(dateGroups)
-                        .filter(d => dateGroups[d].length > 0)
-                        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-
-                      return sortedDates.map(dateStr => (
-                        <RecordDateAccordion key={dateStr} dateStr={dateStr} prs={dateGroups[dateStr]} today={today} lang={lang} t={t} isLight={tracker.settings.themeMode === 'light'} tracker={tracker} />
-                      ));
-                    })()}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </div>
-      )}
 
       {loggedMuscles.length > 0 && (
         <div style={{ padding: '24px 0' }}>
@@ -467,23 +463,43 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
               (() => {
                 const charts = topExercises.map(name => {
                   const history = getExerciseHistory(name);
-                  if (history.length < 2) return null;
+                  if (history.length === 0) return null;
                   const latest = history[history.length - 1].value;
                   const first = history[0].value;
-                  const diff = Number((latest - first).toFixed(1));
+                  const diff = history.length >= 2 ? Number((latest - first).toFixed(1)) : 0;
                   const exerciseUnit = tracker.getDisplayUnit(name);
                   return (
-                    <div key={name}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{name}</span>
+                    <div key={name} style={{ background: 'rgba(var(--theme-rgb), 0.04)', padding: '16px 16px 20px', borderRadius: '24px', border: '1.5px solid rgba(var(--theme-rgb), 0.08)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: '950', color: 'var(--text-primary)' }}>{name}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--accent-color)', fontFamily: 'Inter, sans-serif' }}>{latest} {t(exerciseUnit as any)}</span>
-                          {diff !== 0 && (
-                            <span style={{ fontSize: '11px', fontWeight: '800', color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)', fontFamily: 'Inter, sans-serif' }}>{diff > 0 ? '+' : ''}{diff} {t(exerciseUnit as any)}</span>
+                          <span style={{ fontSize: '17px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>{latest} {t(exerciseUnit as any)}</span>
+                          {history.length >= 2 && diff !== 0 && (
+                            <span style={{ fontSize: '11px', fontWeight: '950', color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)', fontFamily: 'Inter, sans-serif' }}>{diff > 0 ? '+' : ''}{diff} {t(exerciseUnit as any)}</span>
                           )}
                         </div>
                       </div>
-                      <MiniChart data={history} color="var(--accent-color)" title={name} />
+                      
+                      {history.length >= 2 ? (
+                        <MiniChart data={history} color="var(--accent-color)" title={name} />
+                      ) : (
+                        <div style={{ 
+                          fontSize: '10px', 
+                          color: 'var(--text-secondary)', 
+                          fontWeight: '900', 
+                          marginTop: '6px', 
+                          opacity: 0.8, 
+                          letterSpacing: '0.5px',
+                          textAlign: 'center',
+                          padding: '12px 0',
+                          border: '1.5px dashed rgba(var(--theme-rgb), 0.08)',
+                          borderRadius: '16px',
+                          background: 'rgba(var(--theme-rgb), 0.01)'
+                        }}>
+                          {lang === 'ar' ? 'سجل تمرينتين على الأقل لنفس العضلة عشان تشوف الرسم البياني للتطور' : 'LOG 2+ SESSIONS FOR CHART PROGRESS'}
+                        </div>
+                      )}
+                      <ExerciseHistoryDetails exerciseName={name} logs={tracker.logs} tracker={tracker} lang={lang} t={t} />
                     </div>
                   );
                 }).filter(Boolean);
