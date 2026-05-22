@@ -744,7 +744,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 }}>
                   <button onClick={(e) => { e.stopPropagation(); onDeleteWorkout(log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,51,102,0.6)', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={16} /></button>
                   <div style={{ width: '1px', height: '12px', background: 'rgba(var(--theme-rgb), 0.1)', margin: '0 2px' }} />
-                  <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                  <button onClick={(e) => { e.stopPropagation(); setExpandedLogId(expandedLogId === log.id ? null : log.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)', transform: expandedLogId === log.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
                     <img src="/assets/arrow-custom.png" alt="Toggle" style={{ width: '22px', height: '22px', objectFit: 'contain', transform: 'rotate(90deg)' }} />
                   </button>
                 </div>
@@ -778,7 +778,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateRows: expandedLogId === log.id ? '1fr' : '0fr', transition: 'grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1)', overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateRows: expandedLogId === log.id ? '1fr' : '0fr', transition: 'grid-template-rows 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)', overflow: 'hidden' }}>
                   <div style={{ minHeight: 0 }}>
                     <div style={{ paddingTop: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.18)' : '1px solid rgba(0, 0, 0, 0.18)', borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.18)' : '1px solid rgba(0, 0, 0, 0.18)', marginBottom: '24px', gap: '4px', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.4s ease' }}>

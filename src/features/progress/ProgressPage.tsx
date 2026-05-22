@@ -124,7 +124,10 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
     <>
       <div 
         style={{
-          display: isOpen ? 'block' : 'none',
+          display: 'grid',
+          gridTemplateRows: isOpen ? '1fr' : '0fr',
+          transition: 'grid-template-rows 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)',
+          overflow: 'hidden',
           marginTop: '6px'
         }}
       >
@@ -336,7 +339,7 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
 
     if (prevOpenRef.current !== isOpen) {
       if (isOpen) {
-        // Scroll to fit the expanded card
+        // Scroll instantly to fit the expanded card without blocking threads, waiting for the 220ms height transition to complete
         const timer = setTimeout(() => {
           const cardRect = card.getBoundingClientRect();
           const parentRect = scrollParent.getBoundingClientRect();
@@ -356,26 +359,11 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
               behavior: 'smooth'
             });
           }
-        }, 50);
+        }, 220);
         prevOpenRef.current = isOpen;
         return () => clearTimeout(timer);
       } else {
-        // Scroll back up to show the card at the top when closing
-        const timer = setTimeout(() => {
-          const cardRect = card.getBoundingClientRect();
-          const parentRect = scrollParent.getBoundingClientRect();
-          const cardTopInParent = cardRect.top - parentRect.top + scrollParent.scrollTop;
-          const targetScroll = Math.max(0, cardTopInParent - 55);
-
-          if (Math.abs(scrollParent.scrollTop - targetScroll) > 5) {
-            scrollParent.scrollTo({
-              top: targetScroll,
-              behavior: 'smooth'
-            });
-          }
-        }, 50);
         prevOpenRef.current = isOpen;
-        return () => clearTimeout(timer);
       }
     }
     prevOpenRef.current = isOpen;
@@ -393,20 +381,18 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
       style={{ 
         padding: '20px',
         background: isOpen 
-          ? (isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)')
+          ? (isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)')
           : (isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)'),
         border: isOpen
           ? '1.5px solid rgba(255, 140, 0, 0.7)'
           : (isDark ? '1.5px solid rgba(255, 255, 255, 0.08)' : '1.5px solid rgba(0, 0, 0, 0.08)'),
-        backdropFilter: isOpen ? 'blur(10px)' : 'none',
-        WebkitBackdropFilter: isOpen ? 'blur(10px)' : 'none',
         boxShadow: isDark
           ? '0 8px 24px rgba(0,0,0,0.5)'
           : '0 8px 24px rgba(0, 0, 0, 0.08)',
         borderRadius: '20px',
         margin: '0 4px 16px 4px',
         position: 'relative',
-        transition: 'background-color 0.2s ease, border-color 0.2s ease',
+        transition: 'background-color 0.15s ease, border-color 0.15s ease',
         overflow: 'hidden'
       }}
     >
@@ -425,7 +411,7 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
             display: 'flex', alignItems: 'center', justifyContent: 'center', 
             color: 'var(--accent-color)', 
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
-            transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' 
+            transition: 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)' 
           }}
         >
           <img src="/assets/arrow-custom.png" alt="Toggle" style={{ width: '22px', height: '22px', objectFit: 'contain', transform: 'rotate(90deg)' }} />
