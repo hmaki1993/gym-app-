@@ -481,6 +481,16 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     });
   };
 
+  const getExerciseMuscleGroup = (name: string): MuscleGroup => {
+    for (const [k, v] of Object.entries(DEFAULT_EXERCISES)) {
+      if ((v as string[]).includes(name)) return k as MuscleGroup;
+    }
+    for (const [k, v] of Object.entries(tracker.customExercises)) {
+      if (v.includes(name)) return k as MuscleGroup;
+    }
+    return selectedMuscle;
+  };
+
   const musclesWithExercises = React.useMemo(() => {
     const set = new Set<MuscleGroup>();
     const exerciseToMuscle: Record<string, MuscleGroup> = {};
@@ -577,7 +587,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 width: '100%'
               }}>
                 <ExerciseCard
-                  key={openExercise} exerciseName={openExercise} muscleGroup={selectedMuscle!}
+                  key={openExercise} exerciseName={openExercise} muscleGroup={getExerciseMuscleGroup(openExercise)}
                   tracker={tracker} 
                   initialSets={draftData[openExercise] || loggedData[openExercise]}
                   isCompleted={!!loggedData[openExercise]}

@@ -759,7 +759,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
 
       {loggedMuscles.length > 0 && (
         <div style={{ padding: '24px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', width: '100%' }}>
             <div style={{ 
               width: '32px', height: '32px',
               backgroundColor: 'var(--accent-color)', 
@@ -770,26 +770,25 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
               maskPosition: 'center', WebkitMaskPosition: 'center',
               flexShrink: 0
             }} />
-            <span className="section-label" style={{ fontSize: '20px' }}>{t('progress')}</span>
-          </div>
-          <div className="hide-scroll" style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '16px' }}>
-            {loggedMuscles.map(mgKey => {
-              const m = MUSCLE_GROUPS.find(mg => mg.key === mgKey);
-              if (!m) return null;
-              const isActive = selectedMuscle === m.key;
-              return (
-                <button key={m.key} onClick={() => setSelectedMuscle(m.key)} style={{ flexShrink: 0, padding: '4px', borderRadius: '14px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={m.icon} alt={m.en} style={{ 
-                    width: '50px', height: '50px', 
-                    objectFit: 'contain',
-                    opacity: isActive ? 1 : 0.4,
-                    filter: isActive ? 'none' : 'grayscale(100%)',
-                    transform: isActive ? 'scale(1.15)' : 'scale(0.95)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                  }} />
-                </button>
-              );
-            })}
+            <div className="hide-scrollbar" style={{ display: 'flex', gap: '16px', overflowX: 'auto', flex: 1, alignItems: 'center', paddingBottom: '4px' }}>
+              {loggedMuscles.map(mgKey => {
+                const m = MUSCLE_GROUPS.find(mg => mg.key === mgKey);
+                if (!m) return null;
+                const isActive = selectedMuscle === m.key;
+                return (
+                  <button key={m.key} onClick={() => setSelectedMuscle(m.key)} style={{ flexShrink: 0, padding: '4px', borderRadius: '14px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img src={m.icon} alt={m.en} style={{ 
+                      width: '46px', height: '46px', 
+                      objectFit: 'contain',
+                      opacity: isActive ? 1 : 0.35,
+                      filter: isActive ? 'none' : 'grayscale(100%)',
+                      transform: isActive ? 'scale(1.15)' : 'scale(0.95)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }} />
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div ref={chartsContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {exercisesHistoryData.length === 0 ? (
