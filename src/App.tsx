@@ -14,9 +14,6 @@ import { preWarmImages } from './features/workout/components/TransparentImage';
 import { MUSCLE_GROUPS } from './data/exercises';
 import { SplashScreen } from '@capacitor/splash-screen';
 
-// Pre-process muscle icons immediately on app load (runs once, cached forever)
-preWarmImages(MUSCLE_GROUPS.map(mg => mg.icon), 45);
-
 import { Header } from './features/common/Header';
 import { ConfirmModal } from './features/common/ConfirmModal';
 
@@ -34,12 +31,21 @@ export default function App() {
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-
-  // ── Unified Navigation & History System ──
+  // ── One-time App Mount Initialization ──
   useEffect(() => {
     // Hide splash screen smoothly after the app is mounted and ready
     SplashScreen.hide().catch(err => console.log('Splash hide error:', err));
 
+    // Defer CPU-intensive image pre-processing to prevent blocking startup
+    const timer = setTimeout(() => {
+      preWarmImages(MUSCLE_GROUPS.map(mg => mg.icon), 45);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ── Unified Navigation & History System ──
+  useEffect(() => {
     let startX = 0;
     let startY = 0;
     const EDGE_THRESHOLD = 30;

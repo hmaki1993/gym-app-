@@ -13,23 +13,17 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
-        
-        // Force clear WebView cache and storage for assets
-        // Note: This does NOT delete localStorage where your workouts are kept
-        WebView webView = new WebView(this);
-        webView.clearCache(true);
 
         // Customize splash screen exit animation (Rocket Launch Effect)
         splashScreen.setOnExitAnimationListener(splashScreenViewProvider -> {
             final android.view.View splashScreenView = splashScreenViewProvider.getView();
             final android.view.View iconView = splashScreenViewProvider.getIconView();
 
-            // Background slide up & fade out
+            // Background slide up & fade out (Instant Majestic Rocket Launch)
             splashScreenView.animate()
                 .alpha(0f)
                 .translationY(-splashScreenView.getHeight() * 0.25f)
-                .setDuration(450)
-                .setStartDelay(300)
+                .setDuration(400)
                 .setInterpolator(new AnticipateInterpolator(1.2f))
                 .withEndAction(splashScreenViewProvider::remove)
                 .start();
@@ -41,8 +35,7 @@ public class MainActivity extends BridgeActivity {
                     .scaleY(2.2f)
                     .alpha(0f)
                     .translationY(-splashScreenView.getHeight() * 0.7f)
-                    .setDuration(450)
-                    .setStartDelay(300)
+                    .setDuration(400)
                     .setInterpolator(new AccelerateInterpolator())
                     .start();
             }

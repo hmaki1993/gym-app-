@@ -1,3 +1,7 @@
+import { SplashScreen } from '@capacitor/splash-screen';
+// Dismiss native splash screen the millisecond the JS bundle executes
+SplashScreen.hide().catch(err => console.log('Early splash hide error:', err));
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
