@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
+import gsap from 'gsap';
 import type { WorkoutLog } from '../../types';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 import { translations } from '../../translations';
@@ -34,16 +35,62 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
 
   // Auto-scroll to expanded log
   useEffect(() => {
-    if (expandedLogId) {
-      setTimeout(() => {
-        const element = document.getElementById(`log-${expandedLogId}`);
-        if (element) {
-          element.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          });
-        }
-      }, 300);
+    if (!expandedLogId) return;
+
+    const element = document.getElementById(`log-${expandedLogId}`);
+    if (!element) return;
+
+    const getScrollParent = (node: HTMLElement | null): HTMLElement | null => {
+      if (!node) return null;
+      let parent = node.parentElement;
+      while (parent) {
+        const style = window.getComputedStyle(parent);
+        if (/(auto|scroll)/.test(style.overflowY || '')) return parent;
+        parent = parent.parentElement;
+      }
+      return document.documentElement;
+    };
+
+    const scrollParent = getScrollParent(element);
+    if (!scrollParent) return;
+
+    // Run immediately in sync with the grid height expansion
+    const elementRect = element.getBoundingClientRect();
+    const parentRect = scrollParent.getBoundingClientRect();
+    const detailsInner = element.querySelector('.log-details-inner') as HTMLElement;
+    const detailsHeight = detailsInner ? detailsInner.scrollHeight : 0;
+
+    const BOTTOM_NAV_HEIGHT = 80;
+    const elementBottomInParent = elementRect.bottom - parentRect.top + scrollParent.scrollTop;
+    const elementTopInParent    = elementRect.top    - parentRect.top + scrollParent.scrollTop;
+
+    // Target scroll to align top of the log card (offset by 55px)
+    const scrollForTop = elementTopInParent - 55;
+    // Target scroll to align bottom of the log card (including expanded details)
+    const scrollForBottom = (elementBottomInParent + detailsHeight) - (parentRect.height - BOTTOM_NAV_HEIGHT);
+
+    const visibleHeight = parentRect.height - BOTTOM_NAV_HEIGHT - 55;
+    const expandedElementHeight = elementRect.height + detailsHeight;
+
+    let targetScroll = scrollParent.scrollTop;
+
+    if (expandedElementHeight > visibleHeight) {
+      // If the expanded card is taller than the screen, align top
+      targetScroll = scrollForTop;
+    } else {
+      // Otherwise, align bottom
+      targetScroll = Math.max(scrollForTop, scrollForBottom);
+    }
+
+    targetScroll = Math.max(0, targetScroll);
+
+    if (Math.abs(scrollParent.scrollTop - targetScroll) > 2) {
+      gsap.to(scrollParent, {
+        scrollTop: targetScroll,
+        duration: 0.22, // Perfectly matches the 0.22s CSS transition
+        ease: 'power2.out',
+        overwrite: 'auto'
+      });
     }
   }, [expandedLogId]);
 
@@ -779,7 +826,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateRows: expandedLogId === log.id ? '1fr' : '0fr', transition: 'grid-template-rows 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)', overflow: 'hidden' }}>
-                  <div style={{ minHeight: 0 }}>
+                  <div className="log-details-inner" style={{ minHeight: 0 }}>
                     <div style={{ paddingTop: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderTop: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.18)' : '1px solid rgba(0, 0, 0, 0.18)', borderBottom: tracker.settings.themeMode === 'dark' ? '1px solid rgba(var(--theme-rgb), 0.18)' : '1px solid rgba(0, 0, 0, 0.18)', marginBottom: '24px', gap: '4px', opacity: expandedLogId === log.id ? 1 : 0, transform: expandedLogId === log.id ? 'translateY(0)' : 'translateY(-10px)', transition: 'all 0.4s ease' }}>
                         {[

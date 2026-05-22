@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
+import gsap from 'gsap';
 
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 
@@ -132,6 +133,7 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
         }}
       >
         <div 
+          className="details-inner"
           style={{
             minHeight: 0,
             padding: '4px 0 0 0',
@@ -339,34 +341,47 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
 
     if (prevOpenRef.current !== isOpen) {
       if (isOpen) {
-        // Scroll instantly to fit the expanded card without blocking threads, waiting for the 220ms height transition to complete
-        const timer = setTimeout(() => {
-          const cardRect = card.getBoundingClientRect();
-          const parentRect = scrollParent.getBoundingClientRect();
+        // Run immediately in sync with the grid height expansion
+        const cardRect = card.getBoundingClientRect();
+        const parentRect = scrollParent.getBoundingClientRect();
+        const detailsInner = card.querySelector('.details-inner') as HTMLElement;
+        const detailsHeight = detailsInner ? detailsInner.scrollHeight : 0;
 
-          const BOTTOM_NAV_HEIGHT = 80;
-          const cardBottomInParent = cardRect.bottom - parentRect.top + scrollParent.scrollTop;
-          const cardTopInParent    = cardRect.top    - parentRect.top + scrollParent.scrollTop;
+        const BOTTOM_NAV_HEIGHT = 80;
+        const cardBottomInParent = cardRect.bottom - parentRect.top + scrollParent.scrollTop;
+        const cardTopInParent    = cardRect.top    - parentRect.top + scrollParent.scrollTop;
 
-          const scrollForBottom = cardBottomInParent - (parentRect.height - BOTTOM_NAV_HEIGHT);
-          const scrollForTop = cardTopInParent - 55;
-          let targetScroll = Math.max(scrollForTop, scrollForBottom);
-          targetScroll = Math.max(0, targetScroll);
+        // Target scroll to align top of the card (offset by 55px)
+        const scrollForTop = cardTopInParent - 55;
+        // Target scroll to align bottom of the card (including expanded details)
+        const scrollForBottom = (cardBottomInParent + detailsHeight) - (parentRect.height - BOTTOM_NAV_HEIGHT);
 
-          if (Math.abs(scrollParent.scrollTop - targetScroll) > 5) {
-            scrollParent.scrollTo({
-              top: targetScroll,
-              behavior: 'smooth'
-            });
-          }
-        }, 220);
-        prevOpenRef.current = isOpen;
-        return () => clearTimeout(timer);
-      } else {
-        prevOpenRef.current = isOpen;
+        const visibleHeight = parentRect.height - BOTTOM_NAV_HEIGHT - 55;
+        const expandedCardHeight = cardRect.height + detailsHeight;
+
+        let targetScroll = scrollParent.scrollTop;
+
+        if (expandedCardHeight > visibleHeight) {
+          // If the card is taller than the screen, align top
+          targetScroll = scrollForTop;
+        } else {
+          // Otherwise, align bottom
+          targetScroll = Math.max(scrollForTop, scrollForBottom);
+        }
+
+        targetScroll = Math.max(0, targetScroll);
+
+        if (Math.abs(scrollParent.scrollTop - targetScroll) > 2) {
+          gsap.to(scrollParent, {
+            scrollTop: targetScroll,
+            duration: 0.22, // Perfectly matches the 0.22s CSS transition
+            ease: 'power2.out',
+            overwrite: 'auto'
+          });
+        }
       }
+      prevOpenRef.current = isOpen;
     }
-    prevOpenRef.current = isOpen;
   }, [isOpen, getScrollParent]);
 
   const handleCardClick = (e: React.MouseEvent) => {
