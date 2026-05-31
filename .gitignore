@@ -33,3 +33,13 @@ dist-ssr
 
 # Scratch directory
 scratch/
+
+# Android Capacitor build output
+android/
+
+# Temp data files
+board_videos.json
+board_videos_all.json
+pws_data.json
+script_state_1.json
+search_data.json

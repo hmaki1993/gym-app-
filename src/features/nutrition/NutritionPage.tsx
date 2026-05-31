@@ -6,6 +6,7 @@ import { GeminiService } from '../../services/gemini';
 import { Search } from 'lucide-react';
 import { FatSecretService } from '../../services/fatsecret';
 import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
+import { translations } from '../../translations';
 
 const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: number; color?: string }) => (
   <svg 
@@ -36,7 +37,7 @@ function EliteSelect({ id, defaultValue, options }: { id: string, defaultValue: 
           width: '100%', background: 'rgba(var(--theme-rgb), 0.1)', border: '1px solid rgba(var(--theme-rgb), 0.1)',
           borderRadius: '16px', padding: '16px', color: 'var(--text-primary)', fontWeight: '800', fontSize: '15px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
-          transition: 'all 0.3s ease', fontFamily: "'Montserrat', sans-serif"
+          transition: 'all 0.3s ease', fontFamily: "var(--heading-font)"
         }}
       >
         {selected.label}
@@ -96,6 +97,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   const nutritionLogs = tracker.nutritionLogs || [];
   const todayDateStr = new Date().toLocaleDateString('en-CA');
   const isLight = tracker.settings.themeMode === 'light';
+  const lang = tracker.settings.language || 'en';
+  const t = (k: string) => (translations[lang as 'en' | 'ar'] as Record<string, string>)[k] ?? k;
 
   // Unique recent meals for instant suggestions
   const COMMON_FOODS = [
@@ -174,11 +177,10 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           searchCache.current[q] = results;
           setSearchResults(results);
         } catch (error: any) {
-          console.error('AI Search Error:', error);
           if (error.message?.includes('429')) {
             setCustomAlert({
-              title: 'API Limit Reached',
-              message: 'Google API Limit Reached. Please wait 60 seconds.'
+              title: t('apiLimitError'),
+              message: t('apiLimitErrorMessage')
             });
           }
           setSearchResults([]);
@@ -274,7 +276,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
     } catch (err: any) {
       const msg = err?.message || '';
       if (!msg.includes('cancelled') && !msg.includes('User cancelled')) {
-        console.error('Analysis failed:', err);
+        setCustomAlert({ title: t('scanError'), message: t('scanErrorMessage') });
       }
     } finally {
       setScanning(false);
@@ -347,8 +349,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
       const isSupported = await BarcodeScanner.isSupported();
       if (!isSupported.supported) {
         setCustomAlert({
-          title: 'Scanner Info',
-          message: 'Scanner requires a mobile device. This feature uses native ML Kit which only works on Android/iOS app builds. Once you build the APK, you can scan any food barcode! 📱'
+          title: t('barcodeScannerInfo'),
+          message: t('barcodeScannerInfoMsg')
         });
         return;
       }
@@ -356,8 +358,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
       const permission = await BarcodeScanner.requestPermissions();
       if (permission.camera !== 'granted') {
         setCustomAlert({
-          title: 'Permission Denied',
-          message: 'Camera permission is required to scan barcodes'
+          title: t('permissionDenied'),
+          message: t('permissionDeniedMsg')
         });
         return;
       }
@@ -374,25 +376,23 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           setShowResult(true);
         } else {
           setCustomAlert({
-            title: 'Barcode Not Found',
-            message: "AI couldn't identify this barcode yet. Try searching for it by name!"
+            title: t('barcodeNotFound'),
+            message: t('barcodeNotFoundMsg')
           });
         }
       }
     } catch (err: any) {
-      console.error('Barcode Scan Error:', err);
-      // If it still fails with module error, it might need one last sync
       if (err.message?.includes('Module')) {
          setCustomAlert({
-           title: 'جاري التهيئة',
-           message: 'جاري تهيئة السكنر لأول مرة، جرب كمان ثانية'
+           title: t('scannerError'),
+           message: t('barcodeScannerInfoMsg')
          });
          await BarcodeScanner.installGoogleBarcodeScannerModule();
       } else {
-         setCustomAlert({
-           title: 'Scanner Error',
-           message: 'Scanner Error: ' + (err.message || 'Unknown error')
-         });
+          setCustomAlert({
+            title: t('scannerError'),
+            message: t('unknownScanError')
+          });
       }
     } finally {
       setScanning(false);
@@ -416,7 +416,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             }}>
               {/* Meal Name */}
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>
+                <div style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "var(--heading-font)" }}>
                   {scanResult.name}
                 </div>
                 {scanResult.nameAr && (
@@ -428,27 +428,27 @@ export function NutritionPage({ tracker }: { tracker: any }) {
 
               {/* Calories */}
               <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '42px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: 1, fontFamily: "'Montserrat', sans-serif" }}>
+                <div style={{ fontSize: '42px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: 1, fontFamily: "var(--heading-font)" }}>
                   {scanResult.calories}
                 </div>
                 <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', opacity: 1, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '6px' }}>
-                  Total KCAL
+                  {t('totalKcal')}
                 </div>
               </div>
 
               {/* Simple Macros Row */}
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 10px', marginBottom: '24px' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#ffcc00', fontSize: '20px', fontWeight: '950', fontFamily: "'Montserrat', sans-serif" }}>{(scanResult.fats * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Fats</div>
+                  <div style={{ color: '#ffcc00', fontSize: '20px', fontWeight: '950', fontFamily: "var(--heading-font)" }}>{(scanResult.fats * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('fats')}</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#4da6ff', fontSize: '20px', fontWeight: '950', fontFamily: "'Montserrat', sans-serif" }}>{(scanResult.carbs * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Carbs</div>
+                  <div style={{ color: '#4da6ff', fontSize: '20px', fontWeight: '950', fontFamily: "var(--heading-font)" }}>{(scanResult.carbs * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('carbs')}</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#ff0033', fontSize: '20px', fontWeight: '950', fontFamily: "'Montserrat', sans-serif" }}>{(scanResult.protein * (servingSize || 1)).toFixed(1)}g</div>
-                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>Protein</div>
+                  <div style={{ color: '#ff0033', fontSize: '20px', fontWeight: '950', fontFamily: "var(--heading-font)" }}>{(scanResult.protein * (servingSize || 1)).toFixed(1)}g</div>
+                  <div style={{ color: 'rgba(var(--theme-rgb), 0.6)', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('protein')}</div>
                 </div>
               </div>
 
@@ -464,8 +464,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                   -
                 </button>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>x{servingSize}</div>
-                  <div style={{ fontSize: '11px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Servings</div>
+                  <div style={{ fontSize: '20px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "var(--heading-font)" }}>x{servingSize}</div>
+                  <div style={{ fontSize: '11px', fontWeight: '900', color: 'rgba(var(--theme-rgb), 0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('servings')}</div>
                 </div>
                 <button 
                   onClick={() => setServingSize(servingSize + 0.5)}
@@ -494,7 +494,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    {cat.substring(0, 3)}
+                    {t(cat.toLowerCase())}
                   </button>
                 ))}
               </div>
@@ -509,7 +509,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     color: 'var(--text-primary)', fontWeight: '900', fontSize: '14px'
                   }}
                 >
-                  Scan New
+                  {t('scanNew')}
                 </button>
                 <button
                   onClick={() => handleAddLog()}
@@ -521,7 +521,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     textTransform: 'uppercase', letterSpacing: '1px'
                   }}
                 >
-                  Log Meal
+                  {t('logMeal')}
                 </button>
               </div>
 
@@ -535,7 +535,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                   textTransform: 'uppercase', letterSpacing: '1px'
                 }}
               >
-                Cancel
+                {t('cancel')}
               </button>
             </div>
           </div>,
@@ -559,7 +559,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 fontSize: '18px', 
                 fontWeight: '950', 
                 color: 'var(--accent-color)', 
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "var(--heading-font)",
                 letterSpacing: '1.5px',
                 textTransform: 'uppercase',
                 marginBottom: '16px'
@@ -588,14 +588,14 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 fontWeight: '950',
                 border: 'none',
                 cursor: 'pointer',
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "var(--heading-font)",
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
                 boxShadow: '0 8px 24px rgba(0, 255, 170, 0.25)',
                 transition: 'all 0.2s ease'
               }}
             >
-              OK
+              {t('ok')}
             </button>
           </div>
         </div>,
@@ -615,7 +615,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             borderTop: '3px solid var(--accent-color)',
             animation: 'spin 0.8s linear infinite'
           }} />
-          <div style={{ color: 'var(--accent-color)', fontWeight: '900', letterSpacing: '3px', fontSize: '12px' }}>ANALYZING...</div>
+          <div style={{ color: 'var(--accent-color)', fontWeight: '900', letterSpacing: '3px', fontSize: '12px' }}>{t('analyzing')}</div>
         </div>,
         document.getElementById('scanner-root')!
       )}
@@ -628,7 +628,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           <div style={{ flex: 1, position: 'relative' }}>
             <input 
               type="text"
-              placeholder="Search food..."
+              placeholder={t('searchFood')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {
@@ -687,9 +687,9 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                           }}
                           className="nutrition-dropdown-item"
                         >
-                          <div style={{ fontWeight: '900', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "'Montserrat', sans-serif" }}>{item.name}</div>
+                          <div style={{ fontWeight: '900', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "var(--heading-font)" }}>{item.name}</div>
                           {item.nameAr && <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '700', opacity: 0.8 }}>{item.nameAr}</div>}
-                          <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '950', marginTop: '4px', letterSpacing: '0.5px' }}>{item.calories} KCAL</div>
+                          <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '950', marginTop: '4px', letterSpacing: '0.5px' }}>{item.calories} {t('kcal')}</div>
                         </div>
                       ))}
                     </div>
@@ -699,7 +699,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 {isSearching ? (
                   <div style={{ padding: '24px', textAlign: 'center' }}>
                     <div style={{ width: '22px', height: '22px', border: '2.5px solid rgba(0,255,170,0.1)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto' }} />
-                    <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginTop: '12px', letterSpacing: '2px', opacity: 0.6 }}>SEARCHING...</div>
+                    <div style={{ fontSize: '9px', fontWeight: '800', color: 'var(--accent-color)', marginTop: '12px', letterSpacing: '2px', opacity: 0.6 }}>{t('searching')}</div>
                   </div>
                 ) : (
                   <>
@@ -714,7 +714,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                           }} />
                         )}
                         
-                        <div style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>Search Results</div>
+                        <div style={{ fontSize: '10px', fontWeight: '950', color: 'var(--accent-color)', letterSpacing: '2px', padding: '8px 12px', textTransform: 'uppercase' }}>{t('searchResults')}</div>
                         <div style={{ overflow: 'hidden' }}>
                           {searchResults.map((item, idx) => {
                             const normalizedItem = {
@@ -738,10 +738,10 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                                 }}
                                 className="nutrition-dropdown-item"
                               >
-                                <div style={{ fontWeight: '950', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-0.3px' }}>{normalizedItem.name}</div>
+                                <div style={{ fontWeight: '950', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "var(--heading-font)", letterSpacing: '-0.3px' }}>{normalizedItem.name}</div>
                                 {normalizedItem.nameAr && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '700', opacity: 0.9 }}>{normalizedItem.nameAr}</div>}
                                 <div style={{ fontSize: '12px', color: 'var(--accent-color)', fontWeight: '950', letterSpacing: '0.5px' }}>
-                                  {normalizedItem.calories} <span style={{opacity: 0.9}}>KCAL</span> 
+                                  {normalizedItem.calories} <span style={{opacity: 0.9}}>{t('kcal')}</span> 
                                   <span style={{ opacity: 0.85, margin: '0 8px' }}>•</span> 
                                   {normalizedItem.portion || 100}<span style={{opacity: 0.9}}>G</span>
                                 </div>
@@ -778,7 +778,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           position: 'relative'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-             <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', opacity: 1 }}>SMART TRACKER</div>
+             <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '3px', opacity: 1 }}>{t('smartTracker')}</div>
              <button 
               onClick={() => setShowSetup(true)}
               style={{ 
@@ -793,7 +793,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 textTransform: 'uppercase'
               }}
              >
-               {profile ? 'UPDATE PROFILE' : 'START SETUP'}
+               {profile ? t('updateProfile') : t('startSetup')}
              </button>
           </div>
 
@@ -821,8 +821,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 })()}
               </svg>
               <div style={{ position: 'absolute', textAlign: 'center' }}>
-                <div style={{ fontSize: '34px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif", lineHeight: 1, letterSpacing: '-1.5px' }}>{remainingCal}</div>
-                <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px', marginTop: '4px', opacity: 1 }}>LEFT</div>
+                <div style={{ fontSize: '34px', fontWeight: '950', color: 'var(--text-primary)', fontFamily: "var(--heading-font)", lineHeight: 1, letterSpacing: '-1.5px' }}>{remainingCal}</div>
+                <div style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', letterSpacing: '2px', marginTop: '4px', opacity: 1 }}>{t('left')}</div>
               </div>
             </div>
 
@@ -838,12 +838,12 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             {/* Stats on the Right */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', paddingRight: '15px', textAlign: 'right' }}>
               <div>
-                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>DAILY GOAL</div>
-                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif" }}>{calorieGoal}</div>
+                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>{t('dailyGoal')}</div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: "var(--heading-font)" }}>{calorieGoal}</div>
               </div>
               <div>
-                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>CONSUMED</div>
-                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif" }}>{consumedCal}</div>
+                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.8)', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' }}>{t('consumed')}</div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--accent-color)', fontFamily: "var(--heading-font)" }}>{consumedCal}</div>
               </div>
             </div>
           </div>
@@ -857,9 +857,9 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             padding: '0 5px'
           }}>
             {[
-              { label: 'PROTEIN', val: consumedPro, color: '#ff3300' },
-              { label: 'CARBS', val: consumedCarb, color: '#4da6ff' },
-              { label: 'FATS', val: consumedFat, color: '#ffcc00' }
+              { label: 'protein', val: consumedPro, color: '#ff3300' },
+              { label: 'carbs', val: consumedCarb, color: '#4da6ff' },
+              { label: 'fats', val: consumedFat, color: '#ffcc00' }
             ].map((m, idx) => (
               <div key={m.label} style={{ 
                 flex: 1,
@@ -868,8 +868,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 alignItems: idx === 0 ? 'flex-start' : (idx === 2 ? 'flex-end' : 'center'),
                 position: 'relative'
               }}>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: m.color, fontFamily: "'Montserrat', sans-serif" }}>{m.val.toFixed(1)}<span style={{fontSize: '10px', opacity: 0.75, fontWeight: '700', marginLeft: '2px'}}>g</span></div>
-                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.85)', fontWeight: '900', letterSpacing: '1px' }}>{m.label}</div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: m.color, fontFamily: "var(--heading-font)" }}>{m.val.toFixed(1)}<span style={{fontSize: '10px', opacity: 0.75, fontWeight: '700', marginLeft: '2px'}}>g</span></div>
+                <div style={{ fontSize: '10px', color: 'rgba(var(--theme-rgb), 0.85)', fontWeight: '900', letterSpacing: '1px' }}>{t(m.label).toUpperCase()}</div>
               </div>
             ))}
           </div>
@@ -905,7 +905,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap'
                 }}>
-                  {category}
+                  {t(category.toLowerCase())}
                 </div>
                 <div style={{ 
                   flex: 1, 
@@ -917,9 +917,9 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                     fontSize: '10px', 
                     fontWeight: '900', 
                     color: 'rgba(var(--theme-rgb), 0.6)',
-                    fontFamily: "'Montserrat', sans-serif"
+                    fontFamily: "var(--heading-font)"
                   }}>
-                    {catCal} KCAL
+                    {catCal} {t('kcal')}
                   </div>
                 )}
               </div>
@@ -951,7 +951,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                         }}
                       >
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "'Montserrat', sans-serif" }}>{meal.name}</div>
+                          <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '2px', fontFamily: "var(--heading-font)" }}>{meal.name}</div>
                           {meal.nameAr && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700', marginBottom: '8px', opacity: 1 }}>{meal.nameAr}</div>}
                           
                           {/* Quick Quantity Toggle - Now below name for better width */}
@@ -969,7 +969,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                             >
                               -
                             </button>
-                            <span style={{ fontSize: '12px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif", minWidth: '24px', textAlign: 'center' }}>x{meal.servingSize || 1}</span>
+                            <span style={{ fontSize: '12px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "var(--heading-font)", minWidth: '24px', textAlign: 'center' }}>x{meal.servingSize || 1}</span>
                             <button 
                               onClick={(e) => { e.stopPropagation(); updateLogQuantity(meal.id, 1); }}
                               style={{ 
@@ -986,7 +986,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                           {!isExpanded && (
                             <div style={{ textAlign: 'right', minWidth: '50px' }}>
                               <div style={{ fontSize: '15px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.9 }}>{meal.calories}</div>
-                                <div style={{ fontSize: '10px', opacity: 0.6, fontWeight: '900', letterSpacing: '1px' }}>FAT</div>
+                                <div style={{ fontSize: '10px', opacity: 0.6, fontWeight: '900', letterSpacing: '1px' }}>{t('fatLabel')}</div>
                             </div>
                           )}
                           <img src="/assets/arrow-custom.png" alt="Expand" style={{ width: '18px', height: '18px', objectFit: 'contain', opacity: 0.8, transform: isExpanded ? 'rotate(270deg)' : 'rotate(90deg)', transition: 'transform 0.3s ease' }} />
@@ -1004,24 +1004,24 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
                             <div style={{ textAlign: 'center' }}>
-                              <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "'Montserrat', sans-serif", lineHeight: 1 }}>{meal.calories}</div>
-                              <div style={{ fontSize: '9px', fontWeight: '950', opacity: 1, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '4px' }}>Kcal</div>
+                              <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', fontFamily: "var(--heading-font)", lineHeight: 1 }}>{meal.calories}</div>
+                              <div style={{ fontSize: '9px', fontWeight: '950', opacity: 1, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '4px' }}>{t('kcal')}</div>
                             </div>
                             
                             <div style={{ width: '2px', background: 'rgba(var(--theme-rgb), 0.15)', height: '24px' }} />
                             
                             <div style={{ display: 'flex', gap: '24px' }}>
                               <div style={{ textAlign: 'center' }}>
-                                <div style={{ color: '#ff4d4d', fontSize: '15px', fontWeight: '900', fontFamily: "'Montserrat', sans-serif" }}>{meal.protein}g</div>
-                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>PRO</div>
+                                <div style={{ color: '#ff4d4d', fontSize: '15px', fontWeight: '900', fontFamily: "var(--heading-font)" }}>{meal.protein}g</div>
+                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>{t('proLabel')}</div>
                               </div>
                               <div style={{ textAlign: 'center' }}>
-                                <div style={{ color: '#4da6ff', fontSize: '15px', fontWeight: '900', fontFamily: "'Montserrat', sans-serif" }}>{meal.carbs}g</div>
-                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>CARB</div>
+                                <div style={{ color: '#4da6ff', fontSize: '15px', fontWeight: '900', fontFamily: "var(--heading-font)" }}>{meal.carbs}g</div>
+                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>{t('carbLabel')}</div>
                               </div>
                               <div style={{ textAlign: 'center' }}>
-                                <div style={{ color: '#ffcc00', fontSize: '15px', fontWeight: '900', fontFamily: "'Montserrat', sans-serif" }}>{meal.fats}g</div>
-                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>FAT</div>
+                                <div style={{ color: '#ffcc00', fontSize: '15px', fontWeight: '900', fontFamily: "var(--heading-font)" }}>{meal.fats}g</div>
+                                <div style={{ fontSize: '8px', opacity: 1, fontWeight: '950', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>{t('fatLabel')}</div>
                               </div>
                             </div>
                           </div>
@@ -1131,52 +1131,52 @@ export function NutritionPage({ tracker }: { tracker: any }) {
             <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'var(--accent-color)', filter: 'blur(80px)', opacity: 0.15 }} />
 
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '32px', fontWeight: '950', color: 'var(--text-primary)', marginBottom: '8px', letterSpacing: '-1px', fontFamily: "'Montserrat', sans-serif" }}>Smart Setup</h2>
+              <h2 style={{ fontSize: '32px', fontWeight: '950', color: 'var(--text-primary)', marginBottom: '8px', letterSpacing: '-1px', fontFamily: "var(--heading-font)" }}>{t('smartSetup')}</h2>
               <div style={{ width: '40px', height: '3px', background: 'var(--accent-color)', margin: '0 auto', borderRadius: '2px', opacity: 0.8 }} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
               {[
-                { id: 'setup-weight', label: 'Weight', val: profile?.weight || 80, unit: 'kg' },
-                { id: 'setup-height', label: 'Height', val: profile?.height || 180, unit: 'cm' },
-                { id: 'setup-age', label: 'Age', val: profile?.age || 25, unit: 'yr' }
+                { id: 'setup-weight', label: 'bodyWeight', val: profile?.weight || 80, unit: 'kg' },
+                { id: 'setup-height', label: 'height', val: profile?.height || 180, unit: 'cm' },
+                { id: 'setup-age', label: 'age', val: profile?.age || 25, unit: 'yr' }
               ].map(field => (
                 <div key={field.id}>
-                  <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>{field.label.toUpperCase()}</label>
+                  <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>{t(field.label).toUpperCase()}</label>
                   <div style={{ position: 'relative' }}>
                     <input 
                       type="number" defaultValue={field.val}
                       id={field.id}
-                      style={{ width: '100%', background: 'rgba(var(--theme-rgb), 0.1)', border: '1px solid rgba(var(--theme-rgb), 0.1)', borderRadius: '16px', padding: '16px', color: 'var(--text-primary)', fontWeight: '800', fontSize: '16px', outline: 'none', transition: 'all 0.3s ease', fontFamily: "'Montserrat', sans-serif" }}
+                      style={{ width: '100%', background: 'rgba(var(--theme-rgb), 0.1)', border: '1px solid rgba(var(--theme-rgb), 0.1)', borderRadius: '16px', padding: '16px', color: 'var(--text-primary)', fontWeight: '800', fontSize: '16px', outline: 'none', transition: 'all 0.3s ease', fontFamily: "var(--heading-font)" }}
                       onFocus={(e) => { e.currentTarget.style.border = '1px solid var(--accent-color)'; e.currentTarget.style.background = 'rgba(var(--theme-rgb), 0.07)'; }}
                       onBlur={(e) => { e.currentTarget.style.border = '1px solid rgba(var(--theme-rgb), 0.1)'; e.currentTarget.style.background = 'rgba(var(--theme-rgb), 0.1)'; }}
                     />
-                    <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.7, color: 'var(--text-primary)' }}>{field.unit}</span>
+                    <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: '900', opacity: 0.7, color: 'var(--text-primary)' }}>{t(field.unit)}</span>
                   </div>
                 </div>
               ))}
               <div>
-                <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>GENDER</label>
+                <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>{t('gender')}</label>
                 <EliteSelect 
                   id="setup-gender"
                   defaultValue={profile?.gender || 'male'}
                   options={[
-                    { value: 'male', label: 'Male' },
-                    { value: 'female', label: 'Female' }
+                    { value: 'male', label: t('male') },
+                    { value: 'female', label: t('female') }
                   ]}
                 />
               </div>
             </div>
 
             <div style={{ marginBottom: '32px' }}>
-              <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>FITNESS GOAL</label>
+              <label style={{ fontSize: '10px', fontWeight: '900', color: 'var(--accent-color)', display: 'block', marginBottom: '10px', letterSpacing: '1px', opacity: 0.9 }}>{t('fitnessGoal')}</label>
               <EliteSelect 
                 id="setup-goal"
                 defaultValue={profile?.goal || 'maintain'}
                 options={[
-                  { value: 'lose', label: 'Lose Weight (Cutting)' },
-                  { value: 'maintain', label: 'Maintain Weight' },
-                  { value: 'gain', label: 'Gain Weight (Bulking)' }
+                  { value: 'lose', label: t('loseWeight') },
+                  { value: 'maintain', label: t('maintainWeight') },
+                  { value: 'gain', label: t('gainWeight') }
                 ]}
               />
             </div>
@@ -1210,14 +1210,14 @@ export function NutritionPage({ tracker }: { tracker: any }) {
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
             >
-              Save & Start Progress
+              {t('saveStartProgress')}
             </button>
 
             <button
               onClick={() => setShowSetup(false)}
               style={{ width: '100%', background: 'none', border: 'none', color: 'rgba(var(--theme-rgb), 0.4)', fontSize: '13px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer' }}
             >
-              Maybe Later
+              {t('maybeLater')}
             </button>
           </div>
         </div>,
@@ -1239,7 +1239,7 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           font-weight: 600;
           outline: none;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          font-family: 'Montserrat', sans-serif;
+          font-family: var(--heading-font);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         .premium-search-input:focus {

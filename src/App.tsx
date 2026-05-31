@@ -27,7 +27,7 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>(tracker.settings.userName ? 'home' : 'settings');
   const [showWorkout, setShowWorkout] = useState(false);
-  const [appLocalDate, setAppLocalDate] = useState(() => tracker.getLocalDateStr());
+
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -139,19 +139,7 @@ export default function App() {
     // App loads instantly for maximum performance
   }, []);
 
-  // ── Midnight Reset Logic to clear active yesterday's session ──
-  useEffect(() => {
-    const checkNewDay = () => {
-      const today = tracker.getLocalDateStr();
-      if (appLocalDate !== today) {
-        setShowWorkout(false);
-        setAppLocalDate(today);
-      }
-    };
-    checkNewDay();
-    window.addEventListener('focus', checkNewDay);
-    return () => window.removeEventListener('focus', checkNewDay);
-  }, [appLocalDate, tracker]);
+
 
   // When opening workout, push a state so back gesture can close it
   useEffect(() => {
@@ -211,7 +199,7 @@ export default function App() {
           }} 
         />
       ), 
-      label: lang === 'ar' ? 'الرئيسية' : 'Home' 
+      label: t('homeTab') 
     },
     { 
       key: 'history', 
@@ -379,10 +367,10 @@ export default function App() {
       {/* Delete Confirm Dialog */}
       {tracker.logToDelete && (
         <ConfirmModal
-          title={lang === 'ar' ? 'مسح التمرينة؟' : 'DELETE WORKOUT?'}
-          message={lang === 'ar' ? 'هل أنت متأكد أنك تريد مسح هذه التمرينة نهائياً؟' : 'Are you sure you want to permanently delete this workout?'}
-          confirmLabel={lang === 'ar' ? 'مسح الآن' : 'DELETE NOW'}
-          cancelLabel={lang === 'ar' ? 'إلغاء' : 'CANCEL'}
+          title={t('deleteWorkoutQ')}
+          message={t('deleteWorkoutConfirmPermanent')}
+          confirmLabel={t('deleteNow')}
+          cancelLabel={t('cancel')}
           onConfirm={() => {
             tracker.deleteWorkout(tracker.logToDelete!);
             tracker.setLogToDelete(null);

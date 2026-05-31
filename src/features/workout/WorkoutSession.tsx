@@ -520,7 +520,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       zIndex: 1000,
       overflowX: 'hidden', 
       overflowY: 'auto', 
-      padding: 'calc(env(safe-area-inset-top) + 25px) 20px 0', 
+      padding: 'calc(env(safe-area-inset-top) + 12px) 16px 0', 
       touchAction: 'auto', 
       overscrollBehavior: 'none' 
     }}>
@@ -609,8 +609,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           position: 'relative',
           width: '100%',
           minHeight: '48px',
-          marginBottom: '32px', 
-          transformStyle: 'preserve-3d',
+          marginBottom: '16px', 
           boxSizing: 'border-box',
           display: 'flex',
           alignItems: 'center'
@@ -619,7 +618,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             display: 'flex', 
             alignItems: 'center', 
             gap: '10px', 
-            transform: 'translateZ(20px)',
             paddingRight: '60px',
             boxSizing: 'border-box',
             width: '100%'
@@ -651,7 +649,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               position: 'absolute',
               top: '50%',
               right: '0px',
-              transform: 'translateY(-50%) translateZ(20px)',
+              transform: 'translateY(-50%)',
               width: '48px', height: '48px', borderRadius: '50%', 
               background: 'none', border: 'none', padding: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -669,7 +667,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           flexDirection: 'column',
           gap: '12px',
           marginBottom: '24px', 
-          transformStyle: 'preserve-3d',
           position: 'relative',
           width: '100%',
           boxSizing: 'border-box'
@@ -679,7 +676,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             display: 'flex', 
             alignItems: 'center', 
             gap: '10px', 
-            transform: 'translateZ(20px)',
             width: '100%'
           }}>
             <div style={{ 
@@ -706,7 +702,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             display: 'flex', 
             justifyContent: 'center',
             width: '100%',
-            transform: 'translateZ(20px)'
           }}>
             <div style={{ 
               display: 'flex', 
@@ -729,7 +724,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               }}>
                 <img src="/assets/clock-custom.png" alt="timer" style={{ width: 22, height: 22, objectFit: 'contain' }} />
                 <span style={{ 
-                  fontFamily: "'Montserrat', sans-serif", 
+                  fontFamily: "var(--heading-font)", 
                   fontSize: '17px', 
                   fontWeight: '900', 
                   color: 'var(--text-primary)',
@@ -774,7 +769,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         </div>
       )}
 
-      <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
+      <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
         {phase === 'exercises' && (
           <>
             <MuscleSelector 
@@ -794,7 +789,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               tracker={tracker}
               t={t as any}
             />
-             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'max(24px, env(safe-area-inset-bottom))', marginTop: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'max(12px, env(safe-area-inset-bottom))', marginTop: '8px' }}>
                <img
                  src={hasStartedSession ? "/assets/button-resume-rect.png" : "/assets/button-start-rect.png"}
                  alt={hasStartedSession ? "Resume Workout" : "Start Workout"}

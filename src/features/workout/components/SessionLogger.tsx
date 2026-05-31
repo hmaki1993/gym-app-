@@ -92,7 +92,7 @@ export function SessionLogger({
                     fontSize: '18px', 
                     fontWeight: '900', 
                     color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)', 
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "var(--heading-font)",
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',

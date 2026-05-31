@@ -192,25 +192,7 @@ export function useGymTracker() {
     root.style.setProperty('--accent-color-alpha-heavy', `${displayAccent}50`);
   }, [state]);
 
-  // Midnight Reset Logic: Clear session if day changed
-  useEffect(() => {
-    const checkNewDay = () => {
-      const lastCheck = localStorage.getItem('gymlog_last_check');
-      const today = new Date().toISOString().split('T')[0];
-      
-      if (lastCheck && lastCheck !== today) {
-        // IT IS A NEW DAY! Clear everything that shouldn't persist
-        console.log('New day detected. Resetting session...');
-        setSessionStartTimeState(Date.now());
-      }
-      localStorage.setItem('gymlog_last_check', today);
-    };
 
-    checkNewDay();
-    // Also check when app comes back to focus
-    window.addEventListener('focus', checkNewDay);
-    return () => window.removeEventListener('focus', checkNewDay);
-  }, []);
 
   // Initial sync to fix any "ghost" PRs from storage
   useEffect(() => {

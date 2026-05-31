@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { translations } from '../../translations';
-import gsap from 'gsap';
 
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 
@@ -42,19 +41,30 @@ const MiniChart = React.memo(function MiniChart({ data, color, title }: { data: 
   const gridId = `grid-${title.replace(/[^a-zA-Z0-9]/g, '')}`;
 
   return (
-    <div style={{ width: '100%', background: 'transparent', borderRadius: '20px', border: '1.5px solid rgba(var(--theme-rgb), 0.1)', padding: '24px 0 4px', marginTop: '16px', overflow: 'hidden', boxShadow: 'none' }}>
-      <svg width="100%" viewBox={`0 0 ${W} 155`} style={{ overflow: 'visible' }}>
+    <div style={{ 
+      width: '100%', 
+      background: 'rgba(0, 0, 0, 0.25)', 
+      borderRadius: '20px', 
+      border: '1.5px solid rgba(var(--theme-rgb), 0.12)', 
+      padding: '20px 12px 8px', 
+      marginTop: '16px', 
+      overflow: 'hidden', 
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+      transform: 'translate3d(0, 0, 0)',
+      willChange: 'transform',
+    }}>
+      <svg width="100%" viewBox={`0 0 ${W} 155`} style={{ overflow: 'visible', transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}>
         <defs>
           {/* Subtle technical grid background */}
           <pattern id={gridId} width="16" height="16" patternUnits="userSpaceOnUse">
-            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(var(--theme-rgb), 0.15)" strokeWidth="1" />
+            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(var(--theme-rgb), 0.3)" strokeWidth="0.8" shapeRendering="optimizeSpeed" />
           </pattern>
         </defs>
 
-        <rect width="100%" height={H} fill={`url(#${gridId})`} />
+        <rect width="100%" height={H} fill={`url(#${gridId})`} opacity="0.6" shapeRendering="optimizeSpeed" />
         
         {/* Step Line */}
-        <path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" shapeRendering="optimizeSpeed" />
 
         {pts.map((p, i) => {
           const isMax = p.val === max;
@@ -66,8 +76,8 @@ const MiniChart = React.memo(function MiniChart({ data, color, title }: { data: 
           return (
             <React.Fragment key={i}>
               {/* Connector Nodes */}
-              <circle cx={p.x} cy={p.y} r={isMax || isLast ? "6" : "4"} fill="var(--primary-bg)" stroke={isMax ? '#ff9500' : color} strokeWidth="2" />
-              <circle cx={p.x} cy={p.y} r={isMax || isLast ? "2.5" : "1.5"} fill={isMax ? '#ff9500' : color} />
+              <circle cx={p.x} cy={p.y} r={isMax || isLast ? "6" : "4"} fill="var(--primary-bg)" stroke={isMax ? '#ff9500' : color} strokeWidth="2" shapeRendering="optimizeSpeed" />
+              <circle cx={p.x} cy={p.y} r={isMax || isLast ? "2.5" : "1.5"} fill={isMax ? '#ff9500' : color} shapeRendering="optimizeSpeed" />
               
               {/* Values */}
               <text x={p.x} y={p.y - 12} fill={isMax ? '#ff9500' : "var(--text-primary)"} fontSize={isMax ? "12" : "10"} fontWeight="950" textAnchor={textAnchor}>
@@ -87,123 +97,72 @@ const MiniChart = React.memo(function MiniChart({ data, color, title }: { data: 
 });
 
 const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({ 
-  exerciseName, 
-  logs, 
-  tracker, 
+  sessions, 
   lang, 
-  t,
   isOpen,
-  onToggle
+  toggleOpen
 }: { 
-  exerciseName: string; 
-  logs: any[]; 
-  tracker: any; 
+  sessions: any[]; 
   lang: string; 
-  t: any;
   isOpen: boolean;
-  onToggle: () => void;
+  toggleOpen: () => void;
 }) {
-  const isLight = tracker.settings.themeMode === 'light';
+  const t = (k: keyof typeof translations.en) => (translations[lang as 'en' | 'ar'] as any)[k] ?? k;
+  const [showAll, setShowAll] = useState(false);
 
-  const sessions = React.useMemo(() => {
-    const list: { date: string; sets: any[] }[] = [];
-    logs.forEach(log => {
-      const ex = log.exercises.find((e: any) => e.name.toLowerCase() === exerciseName.toLowerCase());
-      if (ex && ex.sets && ex.sets.length > 0) {
-        list.push({
-          date: log.date,
-          sets: ex.sets
-        });
-      }
-    });
-    return list;
-  }, [logs, exerciseName]);
+  const visibleSessions = showAll ? sessions : sessions.slice(0, 3);
 
   if (sessions.length === 0) return null;
 
   return (
     <>
-      <div 
-        style={{
-          display: 'grid',
-          gridTemplateRows: isOpen ? '1fr' : '0fr',
-          transition: 'grid-template-rows 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)',
-          overflow: 'hidden',
-          marginTop: '6px'
-        }}
-      >
-        <div 
-          className="details-inner"
-          style={{
-            minHeight: 0,
-            padding: '4px 0 0 0',
-            background: 'transparent',
-            borderTop: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {sessions.map((sess, sIdx) => {
-              const displayDate = new Date(sess.date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { 
-                weekday: 'short', 
-                day: 'numeric', 
-                month: 'short',
-                year: '2-digit'
-              });
+      <style>{`
+        @keyframes fadeSlideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      {isOpen && (
+        <div style={{ marginTop: '6px' }}>
+          <div 
+            className="details-inner"
+            style={{
+              padding: '4px 0 0 0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              animation: 'fadeSlideDown 0.15s ease-out forwards',
+            }}
+          >
 
-              // Find the best set of this session
-              const bestSet = sess.sets.reduce((best, s) => {
-                const sInKg = tracker.convertWeight(s.weight, s.unit || 'kg', 'kg');
-                const bestInKg = tracker.convertWeight(best.weight, best.unit || 'kg', 'kg');
-                return sInKg > bestInKg ? s : best;
-              }, sess.sets[0]);
-
-              return (
-                <div 
-                  key={sIdx} 
-                  style={{ 
-                    background: 'rgba(var(--theme-rgb), 0.06)',
-                    borderRadius: '14px',
-                    borderLeft: '3px solid var(--accent-color)',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {/* Session Date + summary */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22' }} />
-                      <span style={{ fontSize: '13px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{displayDate}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{sess.sets.length}</span>
-                        <span style={{ fontSize: '9px', fontWeight: '950', color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', marginLeft: '3px' }}>{lang === 'ar' ? 'مجموعات' : 'SETS'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Per-set breakdown grid */}
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '5px',
-                    padding: '0 10px 8px',
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {visibleSessions.map((sess: any, sIdx: number) => (
+                  <div key={sIdx} style={{ 
+                    background: 'rgba(var(--theme-rgb), 0.02)', 
+                    borderRadius: '16px', 
+                    padding: '12px',
+                    border: '1px solid rgba(var(--theme-rgb), 0.05)',
                   }}>
-                    {sess.sets.map((set, setIdx) => {
-                      const displayUnit = tracker.getDisplayUnit(exerciseName);
-                      const convertedWeight = tracker.convertWeight(set.weight, set.unit || 'kg', displayUnit);
-                      const roundedWeight = Number(convertedWeight.toFixed(1));
-                      
-                      const isThisBest = set === bestSet || (
-                        Math.abs(
-                          tracker.convertWeight(set.weight, set.unit || 'kg', 'kg') - 
-                          tracker.convertWeight(bestSet.weight, bestSet.unit || 'kg', 'kg')
-                        ) < 0.01
-                      );
-
-                      return (
+                    <div style={{ 
+                      fontSize: '12px', 
+                      fontWeight: '800', 
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '12px'
+                    }}>
+                      <div style={{ 
+                        width: '4px', 
+                        height: '14px', 
+                        background: 'var(--accent-color)', 
+                        borderRadius: '4px',
+                        opacity: 0.7 
+                      }} />
+                      {sess.displayDate}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                      {sess.sets.map((set: any, setIdx: number) => (
                         <div 
                           key={setIdx} 
                           style={{
@@ -213,10 +172,10 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
                             justifyContent: 'center',
                             padding: '4px 8px',
                             borderRadius: '10px',
-                            background: isThisBest
+                            background: set.isThisBest
                               ? 'rgba(var(--accent-rgb), 0.12)'
                               : 'rgba(var(--theme-rgb), 0.07)',
-                            border: isThisBest
+                            border: set.isThisBest
                               ? '1px solid rgba(var(--accent-rgb), 0.3)'
                               : '1px solid rgba(var(--theme-rgb), 0.08)',
                             minWidth: '52px',
@@ -230,38 +189,65 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px'
                           }}>
-                            {lang === 'ar' ? `${setIdx + 1}` : `S${setIdx + 1}`}
+                            {lang === 'ar' ? `${set.setNumber}` : `S${set.setNumber}`}
                           </span>
                           <span style={{ 
                             fontSize: '13px', 
-                            fontWeight: '950', 
-                            color: isThisBest ? 'var(--accent-color)' : (tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)'),
-                            fontFamily: "'Montserrat', sans-serif",
-                            lineHeight: 1
+                            fontWeight: '900', 
+                            color: set.isThisBest ? 'var(--accent-color)' : 'var(--text-primary)',
+                            fontVariantNumeric: 'tabular-nums',
+                            letterSpacing: '-0.3px',
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: '1px'
                           }}>
-                            {roundedWeight}<span style={{ fontSize: '8px', fontWeight: '800', marginLeft: '1px' }}>{t(displayUnit as any)}</span>
+                            {set.weightText}<span style={{ fontSize: '9px', fontWeight: '800', color: set.isThisBest ? 'var(--accent-color)' : 'var(--text-secondary)', opacity: set.isThisBest ? 0.9 : 0.6 }}>{set.unitText}</span>
                           </span>
                           <span style={{ 
-                            fontSize: '10px', 
-                            fontWeight: '950', 
+                            fontSize: '11px', 
+                            fontWeight: '800', 
                             color: 'var(--text-secondary)',
-                            marginTop: '1px'
+                            marginTop: '2px',
+                            opacity: 0.9
                           }}>
-                            × {set.reps} <span style={{ fontSize: '8px' }}>{lang === 'ar' ? 'عدات' : 'reps'}</span>
+                            {set.reps} {t('reps')}
                           </span>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                ))}
+              </div>
+              {sessions.length > 3 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowAll(prev => !prev); }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    marginTop: '4px',
+                    background: 'rgba(var(--theme-rgb), 0.04)',
+                    border: '1px dashed rgba(var(--theme-rgb), 0.15)',
+                    borderRadius: '10px',
+                    color: 'var(--accent-color)',
+                    fontSize: '11px',
+                    fontWeight: '900',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s ease',
+                    textAlign: 'center',
+                    outline: 'none'
+                  }}
+                >
+                  {showAll 
+                    ? t('showFewerSessions')
+                    : `${t('showOlderSessions')} (+${sessions.length - 3})`}
+                </button>
+              )}
           </div>
         </div>
-      </div>
+      )}
 
       <button 
-        onClick={(e) => { e.stopPropagation(); onToggle(); }}
+        onClick={(e) => { e.stopPropagation(); toggleOpen(); }}
         style={{
           width: '100%',
           marginTop: isOpen ? '20px' : '4px',
@@ -278,14 +264,14 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
           fontWeight: '950',
           letterSpacing: '1px',
           textTransform: 'uppercase',
-          transition: 'all 0.2s ease',
+          transition: 'color 0.25s ease, background-color 0.25s ease',
           outline: 'none',
           gap: '6px'
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <img src="/assets/gears-custom.png" style={{ width: '16px', height: '16px', objectFit: 'contain' }} alt="Sessions" />
-          {lang === 'ar' ? 'عرض تفاصيل المجاميع والعدات' : 'SHOW SETS & REPS'} 
+          {t('showSetsReps')} 
           <span style={{ color: 'var(--accent-color)', marginLeft: '4px' }}>({sessions.length})</span>
         </span>
       </button>
@@ -296,93 +282,31 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
 const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
   name,
   history,
+  sessions,
   latest,
   diff,
   exerciseUnit,
-  isOpen,
-  onToggle,
   tracker,
   lang,
-  t
+  t,
+  isOpen,
+  onToggle
 }: {
   name: string;
   history: any[];
+  sessions: any[];
   latest: number;
   diff: number;
   exerciseUnit: string;
-  isOpen: boolean;
-  onToggle: () => void;
   tracker: any;
   lang: string;
   t: any;
+  isOpen: boolean;
+  onToggle: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const isLight = tracker.settings.themeMode === 'light';
   const isDark = tracker.settings.themeMode === 'dark';
-  const prevOpenRef = useRef<boolean>(isOpen);
-
-  // Find the nearest scrollable ancestor for smooth native scroll
-  const getScrollParent = useCallback((node: HTMLElement | null): HTMLElement | null => {
-    if (!node) return null;
-    let parent = node.parentElement;
-    while (parent) {
-      const style = window.getComputedStyle(parent);
-      if (/(auto|scroll)/.test(style.overflowY || '')) return parent;
-      parent = parent.parentElement;
-    }
-    return document.documentElement;
-  }, []);
-
-  useEffect(() => {
-    if (!cardRef.current) return;
-    const card = cardRef.current;
-    const scrollParent = getScrollParent(card);
-    if (!scrollParent) return;
-
-    if (prevOpenRef.current !== isOpen) {
-      if (isOpen) {
-        // Run immediately in sync with the grid height expansion
-        const cardRect = card.getBoundingClientRect();
-        const parentRect = scrollParent.getBoundingClientRect();
-        const detailsInner = card.querySelector('.details-inner') as HTMLElement;
-        const detailsHeight = detailsInner ? detailsInner.scrollHeight : 0;
-
-        const BOTTOM_NAV_HEIGHT = 80;
-        const cardBottomInParent = cardRect.bottom - parentRect.top + scrollParent.scrollTop;
-        const cardTopInParent    = cardRect.top    - parentRect.top + scrollParent.scrollTop;
-
-        // Target scroll to align top of the card (offset by 55px)
-        const scrollForTop = cardTopInParent - 55;
-        // Target scroll to align bottom of the card (including expanded details)
-        const scrollForBottom = (cardBottomInParent + detailsHeight) - (parentRect.height - BOTTOM_NAV_HEIGHT);
-
-        const visibleHeight = parentRect.height - BOTTOM_NAV_HEIGHT - 55;
-        const expandedCardHeight = cardRect.height + detailsHeight;
-
-        let targetScroll = scrollParent.scrollTop;
-
-        if (expandedCardHeight > visibleHeight) {
-          // If the card is taller than the screen, align top
-          targetScroll = scrollForTop;
-        } else {
-          // Otherwise, align bottom
-          targetScroll = Math.max(scrollForTop, scrollForBottom);
-        }
-
-        targetScroll = Math.max(0, targetScroll);
-
-        if (Math.abs(scrollParent.scrollTop - targetScroll) > 2) {
-          gsap.to(scrollParent, {
-            scrollTop: targetScroll,
-            duration: 0.22, // Perfectly matches the 0.22s CSS transition
-            ease: 'power2.out',
-            overwrite: 'auto'
-          });
-        }
-      }
-      prevOpenRef.current = isOpen;
-    }
-  }, [isOpen, getScrollParent]);
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -391,6 +315,7 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
 
   return (
     <div 
+      id={`exercise-${name.replace(/[^a-zA-Z0-9]/g, '')}`}
       ref={cardRef}
       onClick={handleCardClick}
       style={{ 
@@ -407,8 +332,11 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
         borderRadius: '20px',
         margin: '0 4px 16px 4px',
         position: 'relative',
-        transition: 'background-color 0.15s ease, border-color 0.15s ease',
-        overflow: 'hidden'
+        transition: 'background-color 0.22s ease, border-color 0.22s ease',
+        overflow: 'hidden',
+        transform: 'translate3d(0, 0, 0)',
+        backfaceVisibility: 'hidden',
+        willChange: 'background-color, border-color'
       }}
     >
       {/* Top-right expand/collapse control */}
@@ -459,7 +387,7 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
                 fontSize: '22px', 
                 fontWeight: '950', 
                 color: 'var(--accent-color)', 
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "var(--heading-font)",
                 lineHeight: 1
               }}>
                 {latest}
@@ -480,7 +408,7 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
                   fontSize: '12px', 
                   fontWeight: '950', 
                   color: diff > 0 ? 'var(--success-color)' : 'var(--danger-color)', 
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "var(--heading-font)",
                   background: diff > 0 ? 'rgba(46, 204, 113, 0.1)' : 'rgba(231, 76, 60, 0.1)',
                   padding: '2px 8px',
                   borderRadius: '6px'
@@ -498,57 +426,35 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
                   color: isLight ? 'rgba(var(--theme-rgb), 0.5)' : 'rgba(var(--theme-rgb), 0.4)',
                   letterSpacing: '0.5px'
                 }}>
-                  {history.length} {lang === 'ar' ? 'جلسات' : 'sessions'}
+                  {history.length} {t('sessions')}
                 </span>
               </>
             )}
           </div>
         </div>
-
-        {/* Chart */}
-        <div>
-          {history.length >= 2 ? (
-            <MiniChart data={history} color="var(--accent-color)" title={name} />
-          ) : (
-            <div style={{ 
-              fontSize: '10px', 
-              color: 'var(--text-secondary)', 
-              fontWeight: '900', 
-              marginTop: '16px', 
-              opacity: 0.8, 
-              letterSpacing: '0.5px',
-              textAlign: 'center',
-              padding: '12px 0',
-              border: '1.5px dashed rgba(var(--theme-rgb), 0.08)',
-              borderRadius: '16px',
-              background: 'rgba(var(--theme-rgb), 0.01)'
-            }}>
-              {lang === 'ar' ? 'سجل تمرينتين على الأقل لنفس العضلة عشان تشوف الرسم البياني للتطور' : 'LOG 2+ SESSIONS FOR CHART PROGRESS'}
-            </div>
-          )}
-        </div>
       </div>
 
+      {/* Chart always visible in card - pre-rendered, zero cost on open */}
+      {history.length >= 2 && (
+        <div style={{ marginTop: '12px' }}>
+          <MiniChart data={history} color="var(--accent-color)" title={name} />
+        </div>
+      )}
+
       <ExerciseHistoryDetails 
-        exerciseName={name} 
-        logs={tracker.logs} 
-        tracker={tracker} 
+        sessions={sessions} 
         lang={lang} 
-        t={t} 
         isOpen={isOpen}
-        onToggle={onToggle}
+        toggleOpen={onToggle}
       />
     </div>
   );
 }, (prevProps, nextProps) => {
   return (
     prevProps.isOpen === nextProps.isOpen &&
-    prevProps.name === nextProps.name &&
-    prevProps.latest === nextProps.latest &&
-    prevProps.diff === nextProps.diff &&
-    prevProps.exerciseUnit === nextProps.exerciseUnit &&
     prevProps.lang === nextProps.lang &&
     prevProps.history === nextProps.history &&
+    prevProps.sessions === nextProps.sessions &&
     prevProps.tracker.settings.themeMode === nextProps.tracker.settings.themeMode &&
     prevProps.tracker.logs === nextProps.tracker.logs
   );
@@ -561,7 +467,23 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
   const chartsContainerRef = useRef<HTMLDivElement>(null);
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [openExercises, setOpenExercises] = useState<Record<string, boolean>>({});
+  const [expandedExerciseName, setExpandedExerciseName] = useState<string | null>(null);
+
+  // Auto-scroll natively AFTER the CSS transition to avoid layout thrashing
+  useEffect(() => {
+    if (!expandedExerciseName) return;
+
+    // Wait exactly 250ms for the 0.22s CSS transition to fully complete
+    const timer = setTimeout(() => {
+      const elementId = `exercise-${expandedExerciseName.replace(/[^a-zA-Z0-9]/g, '')}`;
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [expandedExerciseName]);
 
   // Memoize week calculations to avoid re-running date logic on every card toggle
   const weekDays = React.useMemo(() => {
@@ -591,13 +513,6 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
   const weeklyCount = React.useMemo(() => {
     return tracker.getWeeklyCount();
   }, [tracker.logs]);
-
-  // Click handler for container to avoid redundant state updates if everything is already closed
-  const handleContainerClick = useCallback(() => {
-    if (Object.keys(openExercises).length > 0) {
-      setOpenExercises({});
-    }
-  }, [openExercises]);
 
   const loggedMuscles = React.useMemo(() => {
     const mapping: Record<string, string> = {};
@@ -644,6 +559,11 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
     }
   }, [tracker.logs.length]);
 
+  // Reset expanded exercise card when changing filters
+  useEffect(() => {
+    setExpandedExerciseName(null);
+  }, [selectedMuscle, selectedDay]);
+
   const { topExercises, exerciseToMuscle } = React.useMemo(() => {
     const freq: Record<string, number> = {};
     const mapping: Record<string, string> = {};
@@ -674,18 +594,59 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
   }, [tracker.logs, selectedMuscle, tracker.customExercises]);
 
   // Memoize history computation for all top exercises in active muscle group
+  // Pre-compute EVERYTHING here (sessions, dates, sets) so clicking a card triggers ZERO computation
   const exercisesHistoryData = React.useMemo(() => {
     return topExercises.map(name => {
       const history: { date: string; value: number }[] = [];
+      const sessions: { date: string; sets: any[]; displayDate: string }[] = [];
       const exerciseUnit = tracker.getDisplayUnit(name);
       
       for (const log of [...tracker.logs].reverse()) {
-        const ex = log.exercises.find(e => e.name === name);
+        const ex = log.exercises.find(e => e.name.toLowerCase() === name.toLowerCase());
         const group = exerciseToMuscle[name.toLowerCase()] || log.muscleGroup;
         if (group !== selectedMuscle) continue;
-        if (ex && ex.sets.length > 0) {
+        if (ex && ex.sets && ex.sets.length > 0) {
           const max = Math.max(...ex.sets.map(s => tracker.convertWeight(s.weight, s.unit || 'kg', exerciseUnit)));
           history.push({ date: log.date, value: Number(max.toFixed(1)) });
+
+          const bestSet = ex.sets.reduce((best, s) => {
+            const sInKg = tracker.convertWeight(s.weight, s.unit || 'kg', 'kg');
+            const bestInKg = tracker.convertWeight(best.weight, best.unit || 'kg', 'kg');
+            return sInKg > bestInKg ? s : best;
+          }, ex.sets[0]);
+
+          const displayDate = new Date(log.date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { 
+            weekday: 'short', 
+            day: 'numeric', 
+            month: 'short',
+            year: '2-digit'
+          });
+
+          const precomputedSets = ex.sets.map((set, setIdx) => {
+            const convertedWeight = tracker.convertWeight(set.weight, set.unit || 'kg', exerciseUnit);
+            const roundedWeight = Number(convertedWeight.toFixed(1));
+            
+            const isThisBest = set === bestSet || (
+              Math.abs(
+                tracker.convertWeight(set.weight, set.unit || 'kg', 'kg') - 
+                tracker.convertWeight(bestSet.weight, bestSet.unit || 'kg', 'kg')
+              ) < 0.01
+            );
+
+            return {
+              weightText: `${roundedWeight}`,
+              unitText: t(exerciseUnit as any),
+              reps: set.reps,
+              isThisBest,
+              setNumber: setIdx + 1
+            };
+          });
+
+          sessions.push({
+            date: log.date,
+            displayDate,
+            sets: precomputedSets
+          });
         }
       }
 
@@ -698,35 +659,31 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
       return {
         name,
         history,
+        sessions,
         latest,
         diff,
         exerciseUnit
       };
-    }).filter(Boolean) as { name: string; history: { date: string; value: number }[]; latest: number; diff: number; exerciseUnit: string }[];
-  }, [tracker.logs, selectedMuscle, topExercises, exerciseToMuscle]);
-
-  const handleToggle = useCallback((name: string) => {
-    setOpenExercises(prev => ({ ...prev, [name]: !prev[name] }));
-  }, []);
+    }).filter(Boolean) as { name: string; history: { date: string; value: number }[]; sessions: any[]; latest: number; diff: number; exerciseUnit: string }[];
+  }, [tracker.logs, selectedMuscle, topExercises, exerciseToMuscle, lang, t]);
 
   return (
     <div
       ref={containerRef}
-      onClick={handleContainerClick}
       style={{ display: 'flex', flexDirection: 'column', padding: '10px 4px 200px 4px' }}
     >
       <div style={{ position: 'relative' }}>
         {selectedDay && (
-          <button onClick={() => setSelectedDay(null)} style={{ position: 'absolute', top: '-15px', right: '0', background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '10px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>{lang === 'ar' ? 'عرض الكل ✓' : 'SHOW ALL ✓'}</button>
+          <button onClick={() => setSelectedDay(null)} style={{ position: 'absolute', top: '-15px', right: '0', background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '10px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('showAll')} ✓</button>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px', background: 'rgba(var(--theme-rgb), 0.16)', borderRadius: '24px', border: '1.5px solid rgba(var(--theme-rgb), 0.12)',  }}>
           {[
-            { label: selectedDay ? (lang === 'ar' ? 'تمارين اليوم' : 'DAY LOGS') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: <img src="/assets/calendar-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="Calendar" /> },
-            { label: selectedDay ? (lang === 'ar' ? 'تاريخ اليوم' : 'LOG DATE') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: <img src="/assets/trophy-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="Trophy" /> },
+            { label: selectedDay ? t('dayLogs') : t('thisWeek'), value: selectedDay ? totalWorkouts : weeklyCount, sub: t('workouts'), icon: <img src="/assets/calendar-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="" /> },
+            { label: selectedDay ? t('logDate') : t('allTime'), value: selectedDay ? new Date(selectedDay).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : tracker.logs.length, sub: t('workouts'), icon: <img src="/assets/trophy-custom.png" style={{ width: 22, height: 22, objectFit: 'contain', margin: '0 auto' }} alt="" /> },
           ].map((card, index) => (
             <div key={card.label} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
               <div style={{ fontSize: '20px', marginBottom: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '24px' }}>{card.icon}</div>
-              <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: '1', letterSpacing: '-0.5px', fontFamily: "'Montserrat', sans-serif" }}>{card.value}</div>
+              <div style={{ fontSize: '24px', fontWeight: '950', color: 'var(--accent-color)', lineHeight: '1', letterSpacing: '-0.5px', fontFamily: "var(--heading-font)" }}>{card.value}</div>
               <div style={{ fontSize: '9px', fontWeight: '950', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '8px' }}>{card.label}</div>
               {index < 1 && <div style={{ position: 'absolute', right: 0, top: '15%', bottom: '15%', width: '1.5px', background: 'rgba(var(--theme-rgb), 0.2)' }} />}
             </div>
@@ -797,21 +754,20 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
             ) : (
               (() => {
                 const charts = exercisesHistoryData.map(item => {
-                  const isSessOpen = !!openExercises[item.name];
-
                   return (
                     <ExerciseProgressCard
                       key={item.name}
                       name={item.name}
                       history={item.history}
+                      sessions={item.sessions}
                       latest={item.latest}
                       diff={item.diff}
                       exerciseUnit={item.exerciseUnit}
-                      isOpen={isSessOpen}
-                      onToggle={() => handleToggle(item.name)}
                       tracker={tracker}
                       lang={lang}
                       t={t}
+                      isOpen={expandedExerciseName === item.name}
+                      onToggle={() => setExpandedExerciseName(expandedExerciseName === item.name ? null : item.name)}
                     />
                   );
                 });
@@ -819,8 +775,8 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
                   return (
                     <div style={{ textAlign: 'center', padding: '30px 20px', opacity: 0.8 }}>
                       <div style={{ fontSize: '24px', marginBottom: '10px' }}>📈</div>
-                      <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'محتاج تتمرن أكتر!' : 'More Workouts Needed!'}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{lang === 'ar' ? 'سجل تمرينتين على الأقل لنفس العضلة عشان نقدر نوريك رسم بياني لتطور مستواك.' : 'Complete at least 2 sessions for this muscle group to see your progress charts.'}</div>
+                      <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>{t('moreWorkoutsNeeded')}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{t('noChartDescription')}</div>
                     </div>
                   );
                 }

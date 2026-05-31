@@ -35,9 +35,8 @@ export const SetRow: React.FC<Props> = ({
       display: 'flex', alignItems: 'center', padding: '12px 0',
       borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)',
       gap: '6px',
-      transformStyle: 'preserve-3d'
     }}>
-      <div style={{ width: '16px', fontSize: '14px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif", textAlign: 'center' }}>
+      <div style={{ width: '16px', fontSize: '14px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8, fontFamily: "var(--heading-font)", textAlign: 'center' }}>
         {index + 1}
       </div>
       <div style={{ width: '1.5px', height: '20px', background: 'rgba(var(--theme-rgb), 0.15)', marginRight: '6px' }} />
@@ -59,7 +58,7 @@ export const SetRow: React.FC<Props> = ({
             width: '58px',
             padding: '4px 0',
             borderRadius: '8px',
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "var(--heading-font)",
             
           }}
         />
@@ -77,7 +76,7 @@ export const SetRow: React.FC<Props> = ({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "var(--heading-font)",
             filter: 'none',
             lineHeight: '1',
             transition: 'transform 0.2s ease'
@@ -110,18 +109,18 @@ export const SetRow: React.FC<Props> = ({
             width: '58px',
             padding: '4px 0',
             borderRadius: '8px',
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "var(--heading-font)",
             
           }}
         />
-        <div style={{ fontSize: '13.5px', fontWeight: '950', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: "'Montserrat', sans-serif" }}>
+        <div style={{ fontSize: '13.5px', fontWeight: '950', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: "var(--heading-font)" }}>
           {t('reps')}
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         {restTime ? (
-          <div style={{ fontSize: '10px', color: 'var(--accent-color)', fontWeight: '900', background: 'rgba(0,229,160,0.1)', padding: '2px 4px', borderRadius: '4px', fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: '10px', color: 'var(--accent-color)', fontWeight: '900', background: 'rgba(0,229,160,0.1)', padding: '2px 4px', borderRadius: '4px', fontFamily: "var(--heading-font)" }}>
             {restTime}s
           </div>
         ) : (

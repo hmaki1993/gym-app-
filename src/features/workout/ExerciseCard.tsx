@@ -48,12 +48,12 @@ const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: numbe
 );
 
 // SetRow component (Ka from bundle)
-const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCycleUnit, onRemove, isCardio, lang }: any) => (
+const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCycleUnit, onRemove, isCardio, lang: _lang }: any) => (
   <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1.5px solid rgba(var(--theme-rgb), 0.1)', gap: 6, transformStyle: 'preserve-3d' }}>
-    <div style={{ width: 16, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: "'Montserrat', sans-serif", textAlign: 'center' }}>{index + 1}</div>
+    <div style={{ width: 16, fontSize: 14, fontWeight: 900, color: 'var(--accent-color)', opacity: 0.8, fontFamily: "var(--heading-font)", textAlign: 'center' }}>{index + 1}</div>
     <div style={{ width: '1.5px', height: 20, background: 'rgba(var(--theme-rgb), 0.15)', marginRight: 6 }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 22, fontWeight: 900, textAlign: 'center', width: 58, padding: '6px 0', borderRadius: 10, fontFamily: "'Montserrat', sans-serif",  }} />
+      <input type="number" inputMode="decimal" value={weight} onChange={e => onUpdate('weight', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 22, fontWeight: 900, textAlign: 'center', width: 58, padding: '6px 0', borderRadius: 10, fontFamily: "var(--heading-font)",  }} />
       <div 
         onClick={onCycleUnit} 
         style={{ 
@@ -71,7 +71,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
           flexDirection: 'column', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          fontFamily: "'Montserrat', sans-serif", 
+          fontFamily: "var(--heading-font)", 
           lineHeight: 1, 
           transition: 'all 0.2s ease',
           background: 'transparent',
@@ -85,13 +85,13 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
       >
         <span style={{ color: 'var(--text-primary)', fontWeight: 950 }}>
-          {isCardio ? (lang === 'ar' ? 'مستوى' : 'LEVEL') : t(activeUnit)}
+          {isCardio ? t('cardioLevel') : t(activeUnit)}
         </span>
       </div>
     </div>
     <div style={{ width: '1.5px', height: 24, background: 'rgba(var(--theme-rgb), 0.15)' }} />
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 22, fontWeight: 900, textAlign: 'center', width: 58, padding: '6px 0', borderRadius: 10, fontFamily: "'Montserrat', sans-serif",  }} />
+      <input type="number" inputMode="numeric" value={reps} onChange={e => onUpdate('reps', e.target.value)} style={{ background: 'rgba(var(--theme-rgb), 0.14)', border: '1.5px solid rgba(var(--theme-rgb), 0.2)', outline: 'none', color: 'var(--text-primary)', fontSize: 22, fontWeight: 900, textAlign: 'center', width: 58, padding: '6px 0', borderRadius: 10, fontFamily: "var(--heading-font)",  }} />
       <div style={{ 
         fontSize: 13.5, 
         fontWeight: 950, 
@@ -99,7 +99,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
         color: 'var(--text-primary)', 
         textTransform: 'uppercase', 
         letterSpacing: '0.5px', 
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "var(--heading-font)",
         minWidth: 46,
         width: 'fit-content',
         height: 44,
@@ -112,7 +112,7 @@ const SetRow = ({ index, weight, reps, activeUnit, canRemove, t, onUpdate, onCyc
         padding: '0 10px',
         boxSizing: 'border-box'
       }}>
-        {isCardio ? (lang === 'ar' ? 'دقيقة' : 'MINS') : t('reps')}
+        {isCardio ? t('mins') : t('reps')}
       </div>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -271,7 +271,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
   };
 
   const wrapStyle: React.CSSProperties = fullPage
-    ? { display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%', overflow: 'hidden', background: 'var(--primary-bg)', padding: 0, touchAction: 'none', boxSizing: 'border-box' }
+    ? { display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%', overflow: 'hidden', background: 'var(--primary-bg)', padding: 0, touchAction: 'none', boxSizing: 'border-box', contain: 'layout style paint' }
     : inline
       ? { padding: '16px 0', marginBottom: 12, background: 'transparent', border: 'none', animation: 'slideDown 0.3s ease' }
       : { padding: 24, marginBottom: 20, background: 'var(--glass-bg)', border: 'none', borderRadius: 28 };
@@ -279,7 +279,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
   return (
     <div ref={cardRef} className={fullPage ? '' : inline ? 'antigravity-card' : 'glass-card antigravity-card'} style={wrapStyle}>
       {/* Header */}
-      <div style={{ flexShrink: 0, transformStyle: 'preserve-3d' }}>
+      <div style={{ flexShrink: 0 }}>
         <div style={{ 
           display: 'flex', 
           flexDirection: 'column', 
@@ -309,7 +309,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
               {elapsedSeconds !== undefined && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px', minWidth: 75, justifyContent: 'center', flexShrink: 0 }}>
                   <img src="/assets/clock-custom.png" alt="timer" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                  <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 17, fontWeight: 900, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsedSeconds)}</span>
+                  <span style={{ fontFamily: "var(--heading-font)", fontSize: 17, fontWeight: 900, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsedSeconds)}</span>
                 </div>
               )}
               <button onClick={onClose} onPointerDown={e => e.stopPropagation()} style={{ background: 'none', border: 'none', padding: 0, width: 40, height: 40, borderRadius: '50%', color: '#ff3366', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -350,9 +350,11 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
 
           // Natural Egyptian Arabic/English translation for sets count
           const setsCount = maxWeightSets.length;
-          const setsText = lang === 'ar'
-            ? (setsCount === 1 ? 'سيت واحد' : setsCount === 2 ? 'سيتين' : `${setsCount} سيتات`)
-            : `${setsCount} ${setsCount === 1 ? 'set' : 'sets'}`;
+          const setsText = setsCount === 1
+            ? t('oneSet')
+            : setsCount === 2
+              ? t('twoSets')
+              : `${setsCount} ${t('xSets')}`;
 
           return (
             <div style={{
@@ -373,10 +375,10 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                   fontSize: 13,
                   fontWeight: 950,
                   letterSpacing: 1.5,
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "var(--heading-font)",
                   opacity: isLight ? 0.95 : 0.9,
                   flexShrink: 0,
-                }}>{lang === 'ar' ? 'السابق:' : 'LAST:'}</span>
+                }}>{t('lastLabel')}</span>
                 <img src="/assets/trophy-custom.png" style={{ width: 17, height: 17, objectFit: 'contain', verticalAlign: 'middle', opacity: 0.75, flexShrink: 0 }} alt="" />
 
                 {/* Condensed format with same weight + sets count */}
@@ -386,13 +388,13 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                       <span style={{
                         fontSize: 18, fontWeight: 950,
                         color: 'var(--text-primary)',
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "var(--heading-font)",
                         lineHeight: 1,
                       }}>{displayWeight}</span>
                       <span style={{
                         fontSize: 12, fontWeight: 800,
                         color: 'var(--accent-color)',
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "var(--heading-font)",
                         opacity: 0.85,
                       }}>{t(targetUnit)}</span>
                     </>
@@ -409,7 +411,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                     fontSize: 11,
                     fontWeight: 950,
                     color: '#FF9800',
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "var(--heading-font)",
                     lineHeight: 1,
                     marginLeft: 2,
                     marginRight: 2,
@@ -429,7 +431,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                       <span style={{
                         fontSize: 18, fontWeight: 950,
                         color: 'var(--text-primary)',
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "var(--heading-font)",
                         lineHeight: 1,
                       }}>{Number(s.reps)}</span>
                       {i < maxWeightSets.length - 1 && (
@@ -444,9 +446,9 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
                   <span style={{
                     fontSize: 11, fontWeight: 800,
                     color: isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.35)',
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "var(--heading-font)",
                     marginLeft: 3,
-                  }}>{lang === 'ar' ? 'عدات' : 'reps'}</span>
+                  }}>{t('reps')}</span>
                 </div>
               </div>
             </div>
@@ -455,18 +457,18 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
       </div>
 
       {/* Sets list */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 20px 16px', WebkitOverflowScrolling: 'touch', minHeight: 0, maxHeight: 'calc(100dvh - 240px)', transformStyle: 'preserve-3d', touchAction: 'pan-y' }}>
-        <div ref={setsRef} style={{ display: 'flex', flexDirection: 'column', gap: 0, transformStyle: 'preserve-3d' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 20px 16px', WebkitOverflowScrolling: 'touch', minHeight: 0, maxHeight: 'calc(100dvh - 240px)', touchAction: 'pan-y' }}>
+        <div ref={setsRef} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {sets.map((s, i) => (
             <SetRow key={i} index={i} weight={s.weight} reps={s.reps} restTime={s.restTime} activeUnit={activeUnit} isResting={restingSetIndex === i} canRemove={sets.length > 1} t={t} onUpdate={(field: string, val: any) => updateSet(i, field, val)} onCycleUnit={cycleUnit} onStartRest={() => startRest(i)} onRemove={() => { const updated = sets.filter((_, j) => j !== i); setSets(updated); onChange && onChange(updated, true); }} isCardio={muscleGroup === 'cardio'} lang={lang} />
           ))}
         </div>
-        <button onClick={() => { const updated = [...sets, { weight: '', reps: '', unit: activeUnit }]; setSets(updated); onChange && onChange(updated, true); }} style={{ width: '100%', padding: 14, background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: 16, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', marginTop: 12, fontFamily: "'Montserrat', sans-serif" }}>
+        <button onClick={() => { const updated = [...sets, { weight: '', reps: '', unit: activeUnit }]; setSets(updated); onChange && onChange(updated, true); }} style={{ width: '100%', padding: 14, background: 'transparent', border: '2px dashed rgba(var(--theme-rgb), 0.45)', borderRadius: 16, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', marginTop: 12, fontFamily: "var(--heading-font)" }}>
           <CustomPlus size={16} color="var(--accent-color)" /> {t('addSet')}
         </button>
         {sets.length <= 1 && (
           <div style={{ padding: '20px 0', opacity: 0.65, pointerEvents: 'none', userSelect: 'none', textAlign: 'center', marginTop: 30 }}>
-            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: 2, textTransform: 'uppercase', lineHeight: 1.4, fontFamily: "'Montserrat', sans-serif" }}>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: 2, textTransform: 'uppercase', lineHeight: 1.4, fontFamily: "var(--heading-font)" }}>
               STAY FOCUSED<br />{tracker.settings.userName.toUpperCase()}
             </div>
           </div>
@@ -474,7 +476,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
       </div>
 
       {/* Footer */}
-      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%', background: 'var(--primary-bg)', borderTop: 'none', transformStyle: 'preserve-3d' }}>
+      <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%', background: 'var(--primary-bg)', borderTop: 'none' }}>
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px 0 0 0' }}>
           <img
             src="/assets/button-done-rect.png"

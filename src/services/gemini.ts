@@ -59,7 +59,7 @@ export function parseJsonFromAIResponse<T = any>(text: string, mode: 'object' | 
  */
 async function geminiRequest(
   buildBody: (modelName: string) => object,
-  models: string[] = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro']
+  models: string[] = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-pro']
 ): Promise<any> {
   let lastError: Error | null = null;
 
@@ -84,26 +84,23 @@ async function geminiRequest(
       if (!response.ok) {
         const err = await response.json();
         if (response.status === 404) {
-          // Model not available for this key, try next model
           lastError = new Error(err.error?.message || `Model ${modelName} not found`);
           continue;
         }
         if (response.status === 429 || response.status === 403 || response.status === 401) {
-          // Rotate key and try the next model (which will pick up the new key)
           rotateKey();
           lastError = new Error(err.error?.message || `API error ${response.status}`);
           continue;
         }
-        throw new Error(err.error?.message || 'Gemini API Error');
+        // Model doesn't support this input type (e.g. image) — try next
+        lastError = new Error(err.error?.message || `Model ${modelName} failed`);
+        continue;
       }
 
       return await response.json();
     } catch (err: any) {
       lastError = err;
-      if (err.message?.includes('404')) continue;
-      // For network errors, try the next model
-      if (err instanceof TypeError) continue;
-      throw err;
+      continue;
     }
   }
   throw lastError || new Error('All models failed');
@@ -125,35 +122,39 @@ export const GeminiService = {
   analyzeMeal: async (base64Image: string, mimeType: string = 'image/jpeg'): Promise<any> => {
     const prompt = `Analyze this food image. Return ONLY a valid JSON object: {"name":"food name","nameAr":"الاسم بالعربي","calories":number,"protein":number,"carbs":number,"fats":number,"portion":number}. Be highly accurate.`;
 
-    const result = await geminiRequest((_model) => ({
-      contents: [{
-        parts: [
-          { text: prompt },
-          { inline_data: { mime_type: mimeType, data: base64Image } }
-        ]
-      }]
-    }));
+    try {
+      const result = await geminiRequest((_model) => ({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: mimeType, data: base64Image } }
+          ]
+        }]
+      }));
 
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = parseJsonFromAIResponse<any>(text, 'object');
-    if (parsed) {
-      return {
-        name: parsed.name || 'Analyzed Meal',
-        nameAr: parsed.nameAr || '',
-        calories: Math.round(parsed.calories) || 0,
-        protein: Math.round(parsed.protein) || 0,
-        carbs: Math.round(parsed.carbs) || 0,
-        fats: Math.round(parsed.fats) || 0,
-        portion: Math.round(parsed.portion) || 300
-      };
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const parsed = parseJsonFromAIResponse<any>(text, 'object');
+      if (parsed) {
+        return {
+          name: parsed.name || 'Analyzed Meal',
+          nameAr: parsed.nameAr || '',
+          calories: Math.round(parsed.calories) || 0,
+          protein: Math.round(parsed.protein) || 0,
+          carbs: Math.round(parsed.carbs) || 0,
+          fats: Math.round(parsed.fats) || 0,
+          portion: Math.round(parsed.portion) || 300
+        };
+      }
+      throw new Error('Invalid response format');
+    } catch {
+      throw new Error('analysis_failed');
     }
-    throw new Error('Invalid response format');
   },
 
   generateText: async (prompt: string): Promise<string> => {
     const result = await geminiRequest((_model) => ({
       contents: [{ parts: [{ text: prompt }] }]
-    }));
+    }), ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']);
 
     return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
   },

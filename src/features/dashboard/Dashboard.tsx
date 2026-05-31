@@ -11,11 +11,11 @@ interface DashboardProps {
   onTabSwitch: (tab: 'home' | 'history' | 'progress' | 'nutrition' | 'settings') => void;
 }
 
-function formatTime(timeStr: string, lang: 'ar' | 'en') {
+function formatTime(timeStr: string, _lang: 'ar' | 'en') {
   if (!timeStr) return '';
   const [hours, minutes] = timeStr.split(':');
   const h = parseInt(hours);
-  const ampm = h >= 12 ? (lang === 'ar' ? 'م' : 'pm') : (lang === 'ar' ? 'ص' : 'am');
+  const ampm = h >= 12 ? 'pm' : 'am';
   const displayH = h % 12 || 12;
   return `${displayH}:${minutes} ${ampm}`;
 }
@@ -126,17 +126,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                 transition: 'color 0.3s ease'
               }}>
                 {isGoalCompleted 
-                  ? (lang === 'ar' ? 'اكتمل هدف الأسبوع! 🎉' : 'WEEKLY GOAL COMPLETED! 🎉') 
-                  : (lang === 'ar' ? 'الهدف الأسبوعي للتمرين' : 'WEEKLY TRAINING GOAL')}
+                  ? t('weeklyGoalCompleted') 
+                  : t('weeklyTrainingGoal')}
               </span>
               <span style={{ 
                 fontSize: '12px', 
                 fontWeight: '950', 
                 color: isGoalCompleted ? 'var(--accent-color)' : 'var(--text-secondary)', 
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "var(--heading-font)",
                 transition: 'color 0.3s ease'
               }}>
-                {weeklyCount} / 4 {lang === 'ar' ? 'تمارين' : 'WORKOUTS'}
+                {weeklyCount} / 4 {t('workouts').toUpperCase()}
               </span>
             </div>
             <div style={{ 
@@ -203,14 +203,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
           <div 
           style={{ 
             padding: '24px 20px 16px 32px', 
-            background: tracker.settings.themeMode === 'dark' ? '#0a0a0a' : '#ffffff',
-            border: 'none',
+            background: 'rgba(var(--theme-rgb), 0.03)',
+            backdropFilter: 'var(--glass-blur)',
+            WebkitBackdropFilter: 'var(--glass-blur)',
+            border: '1px solid var(--glass-border)',
             borderTop: tracker.settings.themeMode === 'dark' 
-              ? '1px solid rgba(230, 126, 34, 0.3)' 
-              : '1px solid rgba(0,0,0,0.1)',
-            boxShadow: tracker.settings.themeMode === 'dark'
-              ? '0 -20px 40px rgba(0,0,0,0.8)'
-              : '0 -10px 30px rgba(0, 0, 0, 0.14)',
+              ? '1px solid rgba(230, 126, 34, 0.2)' 
+              : '1px solid rgba(0,0,0,0.08)',
+            boxShadow: 'var(--elite-shadow)',
             margin: '0 0 -10px',
             width: '100%',
             position: 'relative',
@@ -231,7 +231,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <img src="/assets/flame-custom.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
-                <span style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: "'Montserrat', sans-serif" }}>{t('lastSession')}</span>
+                <span style={{ fontSize: '11px', fontWeight: '950', color: 'var(--accent-secondary)', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: "var(--heading-font)" }}>{t('lastSession')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'rgba(var(--theme-rgb), 0.6)', fontWeight: '800' }}>
@@ -263,7 +263,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                 <div style={{ minWidth: 0 }}>
                   <div style={{ 
                     fontSize: '21px', fontWeight: '950', color: tracker.settings.themeMode === 'dark' ? '#fff' : 'var(--text-primary)', 
-                    letterSpacing: '-0.8px', fontFamily: "'Montserrat', sans-serif", lineHeight: 1,
+                    letterSpacing: '-0.8px', fontFamily: "var(--heading-font)", lineHeight: 1,
                     whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px'
                   }}>
                     {recentGroups.length === 0 ? (

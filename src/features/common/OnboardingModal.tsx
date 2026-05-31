@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
 import { THEME_COLORS } from '../../data/exercises';
 import gsap from 'gsap';
+import { translations } from '../../translations';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -10,10 +11,11 @@ interface Props {
 
 export function OnboardingModal({ tracker, onComplete }: Props) {
   const [name, setName] = useState('');
-  const [language, setLanguage] = useState<'ar' | 'en'>('en');
+  const [language, setLanguage] = useState<'ar' | 'en'>(tracker.settings.language || 'en');
   const [weight, setWeight] = useState<string>('');
   const [height, setHeight] = useState<string>('');
   const [age, setAge] = useState<string>('');
+  const t = (k: string) => (translations[language] as Record<string, string>)[k] ?? k;
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain'>('maintain');
   const [goalRate] = useState(0.5);
@@ -131,14 +133,14 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
               </div>
               <span style={{ color: '#E67E22' }}>GRID</span>
             </h1>
-            <div style={{ fontSize: '13px', color: '#E67E22', fontWeight: '950', letterSpacing: '8px', marginTop: '16px', textTransform: 'uppercase', opacity: 1 }}>{language === 'ar' ? 'الإعداد الذكي' : 'SMART SETUP'}</div>
+            <div style={{ fontSize: '13px', color: '#E67E22', fontWeight: '950', letterSpacing: '8px', marginTop: '16px', textTransform: 'uppercase', opacity: 1 }}>{t('smartSetup')}</div>
           </div>
         </div>
 
         <div style={cardStyle}>
           <div style={labelStyle}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
-            <span style={{ fontSize: '14px', fontWeight: '950' }}>{language === 'ar' ? 'اللغة' : 'LANGUAGE'}</span>
+            <span style={{ fontSize: '14px', fontWeight: '950' }}>{t('language').toUpperCase()}</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.1)', borderRadius: '14px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.14)' }}>
             {(['ar', 'en'] as const).map(lg => (
@@ -150,39 +152,39 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
         <div style={cardStyle}>
           <div style={labelStyle}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
-            <span style={{ fontSize: '13px', fontWeight: '950' }}>{language === 'ar' ? 'الاسم الشخصي' : 'PROFILE IDENTITY'}</span>
+            <span style={{ fontSize: '13px', fontWeight: '950' }}>{t('profileIdentity')}</span>
           </div>
           <div style={inputRowStyle}>
-            <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>NICKNAME</div>
-            <input style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} value={name} onChange={e => setName(e.target.value)} />
+            <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{t('nickname')}</div>
+            <input style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "var(--heading-font)" }} value={name} onChange={e => setName(e.target.value)} />
           </div>
         </div>
 
         <div style={cardStyle}>
           <div style={labelStyle}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
-            <span>Body Metrics</span>
+            <span>{t('bodyMetrics')}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
             {[
-              { label: 'Weight', val: weight, set: setWeight, unit: 'kg' },
-              { label: 'Height', val: height, set: setHeight, unit: 'cm' },
-              { label: 'Age', val: age, set: setAge, unit: 'yr' }
+              { label: 'bodyWeight', val: weight, set: setWeight, unit: 'kg' },
+              { label: 'height', val: height, set: setHeight, unit: 'cm' },
+              { label: 'age', val: age, set: setAge, unit: 'yr' }
             ].map(f => (
               <div key={f.label} style={{ ...inputRowStyle, padding: '14px 12px' }}>
-                <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1px', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{f.label.toUpperCase()}</div>
+                <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1px', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{t(f.label).toUpperCase()}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
-                  <input type="number" value={f.val} onChange={e => f.set(e.target.value)} style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "'Montserrat', sans-serif" }} />
-                  <span style={{ fontSize: '11px', fontWeight: '950', opacity: 0.6, color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{f.unit}</span>
+                  <input type="number" value={f.val} onChange={e => f.set(e.target.value)} style={{ background: 'none', border: 'none', fontSize: '20px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', outline: 'none', width: '100%', fontFamily: "var(--heading-font)" }} />
+                  <span style={{ fontSize: '11px', fontWeight: '950', opacity: 0.6, color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{t(f.unit)}</span>
                 </div>
               </div>
             ))}
           </div>
           <div style={{ marginTop: '8px' }}>
-            <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', marginBottom: '10px', paddingLeft: '4px', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>GENDER</div>
+            <div style={{ fontSize: '13px', fontWeight: '950', opacity: 0.9, letterSpacing: '1.5px', marginBottom: '10px', paddingLeft: '4px', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)' }}>{t('gender')}</div>
             <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.1)', borderRadius: '14px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.14)' }}>
               {(['male', 'female'] as const).map(g => (
-                <button key={g} onClick={() => setGender(g)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: gender === g ? '#E67E22' : 'transparent', color: gender === g ? '#fff' : ('rgba(var(--theme-rgb), 0.6)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+                <button key={g} onClick={() => setGender(g)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '10px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: gender === g ? '#E67E22' : 'transparent', color: gender === g ? '#fff' : ('rgba(var(--theme-rgb), 0.6)'), transition: 'all 0.3s ease' }}>{t(g).toUpperCase()}</button>
               ))}
             </div>
           </div>
@@ -191,17 +193,17 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
         <div style={cardStyle}>
           <div style={labelStyle}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
-            <span style={{ fontSize: '14px', fontWeight: '950' }}>Fitness Goal</span>
+            <span style={{ fontSize: '14px', fontWeight: '950' }}>{t('fitnessGoal')}</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.1)', borderRadius: '16px', padding: '5px', border: '1px solid rgba(var(--theme-rgb), 0.14)' }}>
             {(['lose', 'maintain', 'gain'] as const).map(g => (
-              <button key={g} onClick={() => setGoal(g)} style={{ flex: 1, padding: '14px 0', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: goal === g ? '#E67E22' : 'transparent', color: goal === g ? '#fff' : ('rgba(var(--theme-rgb), 0.6)'), transition: 'all 0.3s ease' }}>{g.toUpperCase()}</button>
+              <button key={g} onClick={() => setGoal(g)} style={{ flex: 1, padding: '14px 0', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: '950', cursor: 'pointer', background: goal === g ? '#E67E22' : 'transparent', color: goal === g ? '#fff' : ('rgba(var(--theme-rgb), 0.6)'), transition: 'all 0.3s ease' }}>{t(g === 'lose' ? 'loseWeight' : g === 'maintain' ? 'maintainWeight' : 'gainWeight')}</button>
             ))}
           </div>
           {targets && (
             <div style={{ marginTop: '12px', padding: '30px 20px', background: 'transparent', borderBottom: '4px solid #E67E22', display: 'flex', flexDirection: 'column', alignItems: 'center',  }}>
-              <div style={{ fontSize: '12px', fontWeight: '950', color: '#E67E22', letterSpacing: '4px', marginBottom: '4px', opacity: 1 }}>DAILY TARGET</div>
-              <div style={{ fontSize: '56px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-3px' }}>{targets.calories}<span style={{ fontSize: '16px', fontWeight: '900', opacity: 0.3, marginLeft: '8px', letterSpacing: '1px' }}>KCAL</span></div>
+              <div style={{ fontSize: '12px', fontWeight: '950', color: '#E67E22', letterSpacing: '4px', marginBottom: '4px', opacity: 1 }}>{t('dailyTarget')}</div>
+              <div style={{ fontSize: '56px', fontWeight: '950', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', fontFamily: "var(--heading-font)", letterSpacing: '-3px' }}>{targets.calories}<span style={{ fontSize: '16px', fontWeight: '900', opacity: 0.3, marginLeft: '8px', letterSpacing: '1px' }}>{t('kcal')}</span></div>
             </div>
           )}
         </div>
@@ -209,11 +211,11 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
         <div style={cardStyle}>
           <div style={labelStyle}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#E67E22',  }} />
-            <span style={{ fontSize: '14px', fontWeight: '950' }}>Visual Theme</span>
+            <span style={{ fontSize: '14px', fontWeight: '950' }}>{t('visualTheme')}</span>
           </div>
           <div style={{ display: 'flex', background: 'rgba(var(--theme-rgb), 0.1)', borderRadius: '18px', padding: '5px', width: '100%', border: '1px solid rgba(var(--theme-rgb), 0.14)' }}>
             {(['dark', 'light'] as const).map(mode => (
-              <button key={mode} onClick={() => setThemeMode(mode)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '14px', fontSize: '11px', fontWeight: '900', cursor: 'pointer', background: themeMode === mode ? '#E67E22' : 'transparent', color: themeMode === mode ? '#fff' : ('rgba(var(--theme-rgb), 0.4)'), transition: 'all 0.3s ease' }}>{mode.toUpperCase()}</button>
+              <button key={mode} onClick={() => setThemeMode(mode)} style={{ flex: 1, padding: '12px 0', border: 'none', borderRadius: '14px', fontSize: '11px', fontWeight: '900', cursor: 'pointer', background: themeMode === mode ? '#E67E22' : 'transparent', color: themeMode === mode ? '#fff' : ('rgba(var(--theme-rgb), 0.4)'), transition: 'all 0.3s ease' }}>{t(mode).toUpperCase()}</button>
             ))}
           </div>
         </div>
@@ -221,10 +223,9 @@ export function OnboardingModal({ tracker, onComplete }: Props) {
         <div style={{ marginTop: '160px', paddingBottom: '100px', width: '100%', display: 'flex', justifyContent: 'center', perspective: '1200px' }}>
           <div onClick={handleFinalSubmit} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ cursor: name.trim() ? 'pointer' : 'default', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', transformStyle: 'preserve-3d', textAlign: 'center', padding: '30px', width: '100%', maxWidth: '300px', opacity: name.trim() ? 1 : 0.3, transition: 'opacity 0.4s ease' }}>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', transform: 'translateZ(50px)' }}>
-              <div className="premium-title" style={{ fontSize: '24px', lineHeight: '1', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', fontWeight: '950', letterSpacing: '-1px' }}>START</div>
-              <div className="premium-title" style={{ fontSize: '24px', lineHeight: '1', color: '#E67E22', fontWeight: '950', letterSpacing: '-1px' }}>JOURNEY</div>
+              <div className="premium-title" style={{ fontSize: '24px', lineHeight: '1', color: themeMode === 'dark' ? '#fff' : 'var(--text-primary)', fontWeight: '950', letterSpacing: '-1px' }}>{t('startJourney')}</div>
             </div>
-            <div style={{ marginTop: '16px', fontSize: '10px', fontWeight: '950', color: '#E67E22', letterSpacing: '5px', textTransform: 'uppercase', opacity: 0.8, transform: 'translateZ(25px)' }}>{language === 'ar' ? 'اضغط للبدء' : 'TAP TO BEGIN'}</div>
+            <div style={{ marginTop: '16px', fontSize: '10px', fontWeight: '950', color: '#E67E22', letterSpacing: '5px', textTransform: 'uppercase', opacity: 0.8, transform: 'translateZ(25px)' }}>{t('tapToBegin')}</div>
           </div>
         </div>
       </div>

@@ -31,7 +31,7 @@ export const RestTimer: React.FC<Props> = ({
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
           cursor: 'pointer', padding: '6px 16px', borderRadius: '100px',
           letterSpacing: '0.3px', transition: 'all 0.2s', minWidth: '80px',
-          fontFamily: "'Montserrat', sans-serif"
+          fontFamily: "var(--heading-font)"
         }}>
           <Clock size={14} color="var(--accent-color)" /> {restDuration}s
         </button>
@@ -42,10 +42,10 @@ export const RestTimer: React.FC<Props> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)' }}>
               <Clock size={15} strokeWidth={2.5} />
-              <span style={{ fontSize: '14px', fontWeight: '900', fontFamily: "'Montserrat', sans-serif" }}>{restRemaining}s</span>
+              <span style={{ fontSize: '14px', fontWeight: '900', fontFamily: "var(--heading-font)" }}>{restRemaining}s</span>
             </div>
             <button onClick={onSkip}
-              style={{ background: 'none', border: 'none', fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '800', cursor: 'pointer', textTransform: 'uppercase', fontFamily: "'Montserrat', sans-serif" }}>
+              style={{ background: 'none', border: 'none', fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '800', cursor: 'pointer', textTransform: 'uppercase', fontFamily: "var(--heading-font)" }}>
               {t('skip')}
             </button>
           </div>
