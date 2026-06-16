@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
+import { useWidgetSync } from '../../hooks/useWidgetSync';
 import { translations } from '../../translations';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 
@@ -29,6 +30,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   const containerRef = useRef<HTMLDivElement>(null);
   const recentLog = tracker.logs[0];
+
+  const historyDates = React.useMemo(() => {
+    return tracker.logs.map(log => log.date.split('T')[0]);
+  }, [tracker.logs]);
+
+  useWidgetSync(false, null, 0, '', null, historyDates);
 
   // Removed unused volume memo
 

@@ -119,23 +119,87 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
     // Try restoring autosave draft if it exists and is from today
     try {
-      const draftRaw = localStorage.getItem('gymlog_active_session');
-      if (draftRaw) {
-        const draft = JSON.parse(draftRaw);
+      let draftRawAndroid = (window as any).AndroidStorage ? (window as any).AndroidStorage.getItem('gymlog_active_session') : null;
+      let draftRawLocal = localStorage.getItem('gymlog_active_session');
+      
+      let draftAndroid = null;
+      let draftLocal = null;
+      try { if (draftRawAndroid) draftAndroid = JSON.parse(draftRawAndroid); } catch {}
+      try { if (draftRawLocal) draftLocal = JSON.parse(draftRawLocal); } catch {}
+      
+      let finalDraft = null;
+      let finalRaw = null;
+      
+      if (draftAndroid && draftLocal) {
+         if ((draftLocal.sessionStartTime || 0) > (draftAndroid.sessionStartTime || 0)) {
+             finalDraft = draftLocal;
+             finalRaw = draftRawLocal;
+         } else {
+             finalDraft = draftAndroid;
+             finalRaw = draftRawAndroid;
+         }
+      } else if (draftAndroid) {
+         finalDraft = draftAndroid;
+         finalRaw = draftRawAndroid;
+      } else if (draftLocal) {
+         finalDraft = draftLocal;
+         finalRaw = draftRawLocal;
+      }
+
+      if (finalRaw) {
+        if ((window as any).AndroidStorage) {
+          (window as any).AndroidStorage.setItem('gymlog_active_session', finalRaw);
+        }
+        localStorage.setItem('gymlog_active_session', finalRaw);
+      }
+
+      if (finalDraft) {
         const todayStr = tracker.getLocalDateStr();
-        if (draft.date === todayStr) {
+        if (finalDraft.date === todayStr) {
           return {
-            initialPhase: draft.phase || 'logging',
-            initialMuscle: draft.selectedMuscle || bestMuscle,
-            initialActiveExercises: draft.activeExercises || [],
-            initialLoggedData: draft.loggedData || {},
-            initialStarted: draft.hasStartedSession || false,
-            initialBaseSeconds: draft.elapsedSeconds || 0,
-            initialStartTime: draft.sessionStartTime || Date.now()
+            initialPhase: finalDraft.phase || 'logging',
+            initialMuscle: finalDraft.selectedMuscle || bestMuscle,
+            initialActiveExercises: finalDraft.activeExercises || [],
+            initialLoggedData: finalDraft.loggedData || {},
+            initialStarted: finalDraft.hasStartedSession || false,
+            initialBaseSeconds: finalDraft.elapsedSeconds || 0,
+            initialStartTime: finalDraft.sessionStartTime || Date.now()
           };
         }
       }
     } catch { /* ignore parse errors */ }
+    
+    const today = tracker.getLocalDateStr();
+    const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
+    
+    if (todayLogs.length > 0) {
+      const latestLog = todayLogs[0];
+      const muscle = (latestLog.muscleGroup as MuscleGroup) || bestMuscle;
+      
+      const allExerciseNames: string[] = [];
+      const logged: Record<string, SetLog[]> = {};
+      
+      todayLogs.forEach(log => {
+        log.exercises.forEach(e => {
+          if (!logged[e.name]) {
+            allExerciseNames.push(e.name);
+            logged[e.name] = e.sets;
+          }
+        });
+      });
+
+      const totalSeconds = todayLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
+      
+      return {
+        initialPhase: 'logging' as const,
+        initialMuscle: muscle,
+        initialActiveExercises: allExerciseNames,
+        initialLoggedData: logged,
+        initialStarted: true,
+        initialBaseSeconds: totalSeconds,
+        initialStartTime: Date.now()
+      };
+    }
     
     return {
       initialPhase: 'exercises' as const,
@@ -169,11 +233,17 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const activeExerciseName = openExercise || (activeExercises.length > 0 ? activeExercises[activeExercises.length - 1] : null);
   const completedSetsCount = activeExerciseName && loggedData[activeExerciseName] ? loggedData[activeExerciseName].length : 0;
   
+  const historyDates = React.useMemo(() => {
+    return tracker.logs.map(log => log.date.split('T')[0]);
+  }, [tracker.logs]);
+
   useWidgetSync(
     phase === 'logging' && hasStartedSession,
     activeExerciseName,
     completedSetsCount,
-    selectedMuscle
+    selectedMuscle,
+    loggedData,
+    historyDates
   );
 
   // Autosave current session state to localStorage
@@ -189,7 +259,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         elapsedSeconds,
         sessionStartTime: sessionStartTimeRef.current
       };
-      localStorage.setItem('gymlog_active_session', JSON.stringify(draft));
+      const raw = JSON.stringify(draft);
+      localStorage.setItem('gymlog_active_session', raw);
+      if ((window as any).AndroidStorage) {
+        (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
+      }
     }
   }, [phase, selectedMuscle, activeExercises, loggedData, hasStartedSession, elapsedSeconds]);
 
@@ -341,6 +415,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       exercises: exercises as any,
     };
     localStorage.removeItem('gymlog_active_session');
+    if ((window as any).AndroidStorage) {
+      (window as any).AndroidStorage.removeItem('gymlog_active_session');
+    }
     tracker.saveWorkout(log as any, elapsedSeconds);
     setDirtyExercises({});
     onSaved();
@@ -824,6 +901,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                        baseSecondsRef.current = 0;
                        sessionStartTimeRef.current = Date.now();
                        setElapsedSeconds(0);
+                       tracker.resetSessionTimer();
                      }
                      setHasStartedSession(true);
                      setPhase('logging');

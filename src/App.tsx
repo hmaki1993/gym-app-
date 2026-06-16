@@ -16,6 +16,18 @@ import { SplashScreen } from '@capacitor/splash-screen';
 
 import { Header } from './features/common/Header';
 import { ConfirmModal } from './features/common/ConfirmModal';
+import { useWidgetSync } from './hooks/useWidgetSync';
+
+function InactiveWidgetSync({ tracker }: { tracker: ReturnType<typeof useGymTracker> }) {
+  const todayStr = tracker.getLocalDateStr();
+  const isFinished = tracker.logs.some(log => {
+    const logDate = new Date(log.date);
+    const logLocalDate = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
+    return logLocalDate === todayStr || log.date.startsWith(todayStr);
+  });
+  useWidgetSync(false, null, 0, '', null, tracker.logs.map(l => l.date), isFinished, tracker.settings.accentColor);
+  return null;
+}
 
 type Tab = 'home' | 'history' | 'progress' | 'nutrition' | 'settings';
 
@@ -27,6 +39,8 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>(tracker.settings.userName ? 'home' : 'settings');
   const [showWorkout, setShowWorkout] = useState(false);
+  
+  const isFloating = window.location.search.includes('floating=true');
 
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -295,6 +309,27 @@ export default function App() {
     },
   ];
 
+  const closeNativeWidget = () => {
+    if ((window as any).AndroidFloating) {
+      (window as any).AndroidFloating.closeFloatingWidget();
+    } else {
+      setShowWorkout(false);
+    }
+  };
+
+  if (isFloating) {
+    return (
+      <div ref={appRef} dir={isRtl ? 'rtl' : 'ltr'}
+        style={{ width: '100vw', height: '100dvh', background: 'var(--primary-bg)', overflow: 'hidden' }}>
+        <WorkoutSession
+          tracker={tracker}
+          onClose={closeNativeWidget}
+          onSaved={closeNativeWidget}
+        />
+      </div>
+    );
+  }
+
   return (
     <div ref={appRef} dir={isRtl ? 'rtl' : 'ltr'}
       style={{
@@ -314,6 +349,7 @@ export default function App() {
 
       {!showWorkout && (
         <>
+          <InactiveWidgetSync tracker={tracker} />
           <Header tab={tab} t={t} tracker={tracker} />
 
           {/* Accent divider */}

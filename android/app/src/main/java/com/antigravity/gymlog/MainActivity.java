@@ -14,6 +14,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(FloatingWidgetPlugin.class);
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
+        
+        // Inject shared storage interface immediately after Capacitor initializes WebView
+        getBridge().getWebView().addJavascriptInterface(new StorageInterface(this), "AndroidStorage");
 
         // Customize splash screen exit animation (Rocket Launch Effect)
         splashScreen.setOnExitAnimationListener(splashScreenViewProvider -> {

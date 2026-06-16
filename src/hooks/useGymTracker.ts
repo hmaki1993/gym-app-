@@ -49,7 +49,13 @@ const DEFAULT_STATE: GymState = {
 
 function loadState(): GymState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = (window as any).AndroidStorage ? (window as any).AndroidStorage.getItem(STORAGE_KEY) : null;
+    if (!raw) {
+      raw = localStorage.getItem(STORAGE_KEY);
+      if (raw && (window as any).AndroidStorage) {
+        (window as any).AndroidStorage.setItem(STORAGE_KEY, raw);
+      }
+    }
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw) as GymState;
 
@@ -88,7 +94,11 @@ function loadState(): GymState {
 
 function saveState(state: GymState) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const raw = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY, raw);
+    if ((window as any).AndroidStorage) {
+      (window as any).AndroidStorage.setItem(STORAGE_KEY, raw);
+    }
   } catch { /* quota */ }
 }
 
