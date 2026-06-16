@@ -98,5 +98,6 @@ export interface GymState {
   deletedExercises: Record<MuscleGroup, string[]>;
   exerciseOrder: Record<MuscleGroup, string[]>;
   customTranslations?: Record<string, string>;
+  exerciseAliases?: Record<string, string>;
   nutritionLogs: MealLog[];
 }

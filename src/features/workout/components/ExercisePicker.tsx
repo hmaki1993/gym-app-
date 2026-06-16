@@ -6,8 +6,26 @@ import { useGymTracker } from '../../../hooks/useGymTracker';
 import { DEFAULT_EXERCISES, EXERCISE_TRANSLATIONS, EXERCISE_DETAILS } from '../../../data/exercises';
 import { EXERCISE_YOUTUBE_VIDEOS } from '../../../data/exerciseVideos';
 import { getExerciseGifUrl } from '../../../data/premiumGifs';
-import SmoothGifPlayer from './SmoothGifPlayer';
 import type { MuscleGroup } from '../../../types';
+
+const FastGif = ({ src, alt }: { src: string; alt: string }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, { rootMargin: '300px' });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ width: '100%', height: '100%' }}>
+      {isVisible && <img src={src} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+    </div>
+  );
+};
 
 const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: number; color?: string }) => (
   <svg 
@@ -45,11 +63,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const [showSearch, setShowSearch] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [renamingExercise, setRenamingExercise] = useState<string | null>(null);
+  const [aliasSelectorOpen, setAliasSelectorOpen] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string[] | null>(null);
   const [selectedVideoExercise, setSelectedVideoExercise] = useState<string | null>(null);
   const [exercisesList, setExercisesList] = useState<any[] | null>(null);
   const [loadingVideos, setLoadingVideos] = useState(false);
-  const [gifReady, setGifReady] = useState(false);
   // True only after the modal slide-up animation finishes — prevents GIF fetch during animation
   const [modalReady, setModalReady] = useState(false);
   const modalReadyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,7 +77,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
   // Helper: resolve GIF url for an exercise name
   const getGifUrl = (name: string): string | null => {
-    return getExerciseGifUrl(name);
+    return getExerciseGifUrl(name, tracker.state.exerciseAliases);
   };
 
   // Preload GIF silently in the background (called on play button hover/touchstart)
@@ -75,7 +93,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   // Reset gif/modal state whenever exercise changes
   // Wait for modal animation (300ms) before allowing GIF to start fetching
   useEffect(() => {
-    setGifReady(false);
     setModalReady(false);
     if (modalReadyTimer.current) clearTimeout(modalReadyTimer.current);
     if (selectedVideoExercise) {
@@ -114,8 +131,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
   const hqGifUrl = React.useMemo(() => {
     if (!selectedVideoExercise) return null;
-    return getExerciseGifUrl(selectedVideoExercise);
-  }, [selectedVideoExercise]);
+    return getExerciseGifUrl(selectedVideoExercise, tracker.state.exerciseAliases);
+  }, [selectedVideoExercise, tracker.state.exerciseAliases]);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -168,7 +185,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   // Custom exercise detection for search overlay
   const searchTrimmed = search.trim();
   const isNewExercise = !!searchTrimmed && !fullList.some(e => e.toLowerCase() === searchTrimmed.toLowerCase());
-  const customGifUrl = isNewExercise ? getExerciseGifUrl(searchTrimmed) : null;
+  const customGifUrl = isNewExercise ? getExerciseGifUrl(searchTrimmed, tracker.state.exerciseAliases) : null;
 
   useEffect(() => {
     if (showSearch && overlayRef.current) {
@@ -235,9 +252,23 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           {/* GIF */}
           <div style={{ width: '100%', aspectRatio: '1', background: 'rgba(var(--theme-rgb), 0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', borderBottom: '0.5px solid rgba(var(--theme-rgb), 0.04)' }}>
             {gifUrl ? (
-              <img src={gifUrl} alt={name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <FastGif src={gifUrl} alt={name} />
             ) : (
-              <Play size={24} color="rgba(var(--theme-rgb), 0.15)" fill="rgba(var(--theme-rgb), 0.15)" strokeWidth={0} style={{ opacity: 0.4 }} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <Play size={24} color="rgba(var(--theme-rgb), 0.15)" fill="rgba(var(--theme-rgb), 0.15)" strokeWidth={0} style={{ opacity: 0.4 }} />
+                {!gifUrl && tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setAliasSelectorOpen(name); }}
+                    style={{
+                      background: 'rgba(230, 126, 34, 0.1)', border: '1px solid rgba(230, 126, 34, 0.3)', borderRadius: 6,
+                      padding: '4px 6px', color: '#D35400', fontSize: 9, fontWeight: 900, cursor: 'pointer',
+                      fontFamily: "var(--heading-font)", zIndex: 3, outline: 'none'
+                    }}
+                  >
+                    🔗 Link GIF
+                  </button>
+                )}
+              </div>
             )}
             {/* Active badge */}
             {isActive && (
@@ -390,8 +421,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 />
               ) : hqGifUrl ? (
                 <>
-                  {/* Spinner while modal animates OR blob downloads */}
-                  {(!modalReady || !gifReady) && (
+                  {(!modalReady) && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, zIndex: 2 }}>
                       <div style={{ width: 32, height: 32, border: '3px solid rgba(var(--theme-rgb), 0.1)', borderTopColor: '#E67E22', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                       <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-secondary)' }}>
@@ -399,12 +429,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                       </span>
                     </div>
                   )}
-                  {/* Only mount GIF after modal animation completes (310ms) */}
                   {modalReady && (
-                    <SmoothGifPlayer 
+                    <img 
                       src={hqGifUrl}
                       alt={selectedVideoExercise || ''}
-                      onReady={() => setGifReady(true)}
+                      onLoad={() => {}}
                       style={{ 
                         width: '100%', 
                         height: '100%', 
@@ -417,8 +446,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 </>
               ) : matchedExerciseData ? (
                 <>
-                  {/* Spinner: while modal animates, fetching JSON, or GIF loading */}
-                  {(!modalReady || loadingVideos || !gifReady) && (
+                  {(!modalReady || loadingVideos) && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, zIndex: 2 }}>
                       <div style={{ width: 32, height: 32, border: '3px solid rgba(var(--theme-rgb), 0.1)', borderTopColor: '#E67E22', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                       <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-secondary)' }}>
@@ -429,10 +457,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
                   {/* Clean ExerciseDB GIF */}
                   {modalReady && (
-                    <SmoothGifPlayer
+                    <img
                       src={`https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/${matchedExerciseData.gif_url}`}
                       alt={selectedVideoExercise || ''}
-                      onReady={() => setGifReady(true)}
+                      onLoad={() => {}}
                       style={{ 
                         width: '100%', 
                         height: '100%', 
@@ -767,6 +795,32 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 Yes, Delete
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Alias Selector Modal */}
+      {aliasSelectorOpen && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: 'var(--primary-bg)', padding: 20, borderRadius: 24, width: '100%', maxWidth: 400, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontFamily: 'var(--heading-font)', fontSize: 18, color: 'var(--text-primary)', textAlign: 'center' }}>Link "{aliasSelectorOpen}" to a standard exercise</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>Select an exercise to borrow its GIF animation.</p>
+            <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 10 }}>
+              {DEFAULT_EXERCISES[muscleGroup as MuscleGroup]?.map(stdName => (
+                <div 
+                  key={stdName} 
+                  onClick={() => { tracker.setExerciseAlias(aliasSelectorOpen, stdName); setAliasSelectorOpen(null); }}
+                  style={{ padding: '14px 16px', background: 'rgba(var(--theme-rgb), 0.04)', border: '1px solid rgba(var(--theme-rgb), 0.08)', borderRadius: 16, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--heading-font)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                >
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(var(--theme-rgb), 0.1)', overflow: 'hidden' }}>
+                    <img src={getExerciseGifUrl(stdName) || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  {stdName}
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setAliasSelectorOpen(null)} style={{ marginTop: 16, padding: '16px', background: 'rgba(var(--theme-rgb), 0.08)', color: 'var(--text-primary)', borderRadius: 16, fontWeight: 900, border: 'none', cursor: 'pointer', fontFamily: 'var(--heading-font)', fontSize: 15 }}>Cancel</button>
           </div>
         </div>,
         document.body

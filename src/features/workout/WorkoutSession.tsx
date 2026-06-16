@@ -9,6 +9,10 @@ import gsap from 'gsap';
 import { MuscleSelector } from './components/MuscleSelector';
 import { ExercisePicker } from './components/ExercisePicker';
 import { SessionLogger } from './components/SessionLogger';
+import { registerPlugin } from '@capacitor/core';
+import { useWidgetSync } from '../../hooks/useWidgetSync';
+
+const FloatingWidget = registerPlugin<any>('FloatingWidget');
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -21,8 +25,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   // const isRtl = lang === 'ar';
 
-  // Synchronously compute today's session logs on initial render to prevent UI flickering
-  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted } = React.useMemo(() => {
+  // Synchronously compute initial state or load from autosave
+  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted, initialBaseSeconds, initialStartTime } = React.useMemo(() => {
     const freq: Record<string, number> = {};
     tracker.logs.forEach(log => {
       if (log.muscleGroup) { freq[log.muscleGroup] = (freq[log.muscleGroup] || 0) + 1; }
@@ -38,44 +42,39 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     // 1. Calculate when each muscle was last trained
     const lastTrainedByMuscle: Record<string, string | null> = {};
     MUSCLE_KEYS.forEach(muscle => {
-      const lastLog = tracker.logs.find(l => l.muscleGroup === muscle);
-      lastTrainedByMuscle[muscle] = lastLog ? lastLog.date : null;
+      const logsWithMuscle = tracker.logs.filter(l => 
+        l.muscleGroup === muscle || l.exercises.some(e => ((e as any).muscleGroup || l.muscleGroup) === muscle)
+      );
+      if (logsWithMuscle.length > 0) {
+        lastTrainedByMuscle[muscle] = logsWithMuscle.reduce((latest, current) => {
+          return new Date(current.date) > new Date(latest.date) ? current : latest;
+        }).date;
+      } else {
+        lastTrainedByMuscle[muscle] = null;
+      }
     });
 
-    // Fallback sort: never trained first, then oldest date first
     const sortedByNeeded = [...MUSCLE_KEYS].sort((a, b) => {
-      const dateA = lastTrainedByMuscle[a];
-      const dateB = lastTrainedByMuscle[b];
-      if (!dateA && !dateB) return 0;
-      if (!dateA) return -1; // never trained → comes first
-      if (!dateB) return 1;
-      return dateA < dateB ? -1 : 1; // older date → comes first
+      if (!lastTrainedByMuscle[a] && !lastTrainedByMuscle[b]) return 0;
+      if (!lastTrainedByMuscle[a]) return -1;
+      if (!lastTrainedByMuscle[b]) return 1;
+      return new Date(lastTrainedByMuscle[a]!).getTime() - new Date(lastTrainedByMuscle[b]!).getTime();
     });
 
     // 2. Try sequence prediction based on historical transition patterns
     let predictedNextMuscle: MuscleGroup | null = null;
-    if (tracker.logs && tracker.logs.length > 0) {
+    if (tracker.logs.length > 1) {
       // Sort logs chronologically (oldest to newest)
       const sortedLogs = [...tracker.logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       
-      // Extract sequence of trained muscle groups, collapsing consecutive duplicates
-      const trainedSequence: MuscleGroup[] = [];
-      sortedLogs.forEach(log => {
-        if (log.muscleGroup) {
-          if (trainedSequence.length === 0 || trainedSequence[trainedSequence.length - 1] !== log.muscleGroup) {
-            trainedSequence.push(log.muscleGroup as MuscleGroup);
-          }
-        }
-      });
-
-      if (trainedSequence.length > 0) {
-        const lastMuscle = trainedSequence[trainedSequence.length - 1];
-        
-        // Build transition frequency counts
+      const lastLog = sortedLogs[sortedLogs.length - 1];
+      if (lastLog) {
+        const lastMuscle = lastLog.muscleGroup as MuscleGroup;
         const transitions: Record<string, Record<string, number>> = {};
-        for (let i = 0; i < trainedSequence.length - 1; i++) {
-          const current = trainedSequence[i];
-          const next = trainedSequence[i + 1];
+        
+        for (let i = 0; i < sortedLogs.length - 1; i++) {
+          const current = sortedLogs[i].muscleGroup as MuscleGroup;
+          const next = sortedLogs[i+1].muscleGroup as MuscleGroup;
           if (!transitions[current]) {
             transitions[current] = {};
           }
@@ -118,40 +117,34 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
     bestMuscle = predictedNextMuscle || sortedByNeeded[0];
 
-    const today = tracker.getLocalDateStr();
-    const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
-    
-    if (todayLogs.length > 0) {
-      const latestLog = todayLogs[0];
-      const muscle = (latestLog.muscleGroup as MuscleGroup) || bestMuscle;
-      
-      const allExerciseNames: string[] = [];
-      const logged: Record<string, SetLog[]> = {};
-      
-      todayLogs.forEach(log => {
-        log.exercises.forEach(e => {
-          if (!logged[e.name]) {
-            allExerciseNames.push(e.name);
-            logged[e.name] = e.sets;
-          }
-        });
-      });
-      
-      return {
-        initialPhase: 'logging' as const,
-        initialMuscle: muscle,
-        initialActiveExercises: allExerciseNames,
-        initialLoggedData: logged,
-        initialStarted: true
-      };
-    }
+    // Try restoring autosave draft if it exists and is from today
+    try {
+      const draftRaw = localStorage.getItem('gymlog_active_session');
+      if (draftRaw) {
+        const draft = JSON.parse(draftRaw);
+        const todayStr = tracker.getLocalDateStr();
+        if (draft.date === todayStr) {
+          return {
+            initialPhase: draft.phase || 'logging',
+            initialMuscle: draft.selectedMuscle || bestMuscle,
+            initialActiveExercises: draft.activeExercises || [],
+            initialLoggedData: draft.loggedData || {},
+            initialStarted: draft.hasStartedSession || false,
+            initialBaseSeconds: draft.elapsedSeconds || 0,
+            initialStartTime: draft.sessionStartTime || Date.now()
+          };
+        }
+      }
+    } catch { /* ignore parse errors */ }
     
     return {
       initialPhase: 'exercises' as const,
       initialMuscle: bestMuscle,
       initialActiveExercises: [] as string[],
       initialLoggedData: {} as Record<string, SetLog[]>,
-      initialStarted: false
+      initialStarted: false,
+      initialBaseSeconds: 0,
+      initialStartTime: Date.now()
     };
   }, [tracker.logs]);
 
@@ -167,30 +160,40 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
-
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const sessionStartTimeRef = useRef<number>(Date.now());
-  const baseSecondsRef = useRef<number>(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(initialBaseSeconds);
+  const sessionStartTimeRef = useRef<number>(initialStartTime);
+  const baseSecondsRef = useRef<number>(initialBaseSeconds);
   const savedElapsedRef = useRef<number | null>(null);
 
-  // Initialize base time
-  useEffect(() => {
-    if (phase === 'logging' && selectedMuscle) {
-      if (savedElapsedRef.current !== null) {
-        baseSecondsRef.current = savedElapsedRef.current;
-        sessionStartTimeRef.current = Date.now();
-        savedElapsedRef.current = null;
-      } else {
-        const today = tracker.getLocalDateStr();
-        // Count ALL today's workout duration, not just same muscle group
-        const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
-        const totalSeconds = todayLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
-        baseSecondsRef.current = totalSeconds;
-        sessionStartTimeRef.current = Date.now();
-      }
-    }
-  }, [phase, selectedMuscle]);
+  // Sync state to native for the widget
+  const activeExerciseName = openExercise || (activeExercises.length > 0 ? activeExercises[activeExercises.length - 1] : null);
+  const completedSetsCount = activeExerciseName && loggedData[activeExerciseName] ? loggedData[activeExerciseName].length : 0;
+  
+  useWidgetSync(
+    phase === 'logging' && hasStartedSession,
+    activeExerciseName,
+    completedSetsCount,
+    selectedMuscle
+  );
 
+  // Autosave current session state to localStorage
+  useEffect(() => {
+    if (phase === 'logging' && hasStartedSession) {
+      const draft = {
+        date: tracker.getLocalDateStr(),
+        phase,
+        selectedMuscle,
+        activeExercises,
+        loggedData,
+        hasStartedSession,
+        elapsedSeconds,
+        sessionStartTime: sessionStartTimeRef.current
+      };
+      localStorage.setItem('gymlog_active_session', JSON.stringify(draft));
+    }
+  }, [phase, selectedMuscle, activeExercises, loggedData, hasStartedSession, elapsedSeconds]);
+
+  // Handle timer updates
   useEffect(() => {
     if (phase === 'logging') {
       const updateTimer = () => {
@@ -337,6 +340,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       muscleGroup: selectedMuscle,
       exercises: exercises as any,
     };
+    localStorage.removeItem('gymlog_active_session');
     tracker.saveWorkout(log as any, elapsedSeconds);
     setDirtyExercises({});
     onSaved();
@@ -751,6 +755,27 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               >
                 <img src="/assets/arrow-custom.png" alt="Back" style={{ width: '26px', height: '26px', objectFit: 'contain', transform: 'rotate(180deg)' }} />
               </button>
+
+              <button 
+                onClick={async () => {
+                  try {
+                    await FloatingWidget.requestOverlayPermission();
+                    // Let the user know they can use the widget
+                    alert('Overlay permission requested! You can now use the home screen widget to launch the floating card.');
+                  } catch (e) {
+                    console.log('Floating widget not supported on this platform', e);
+                  }
+                }} 
+                style={{ 
+                  width: '40px', height: '40px', borderRadius: '50%', 
+                  background: 'none', border: 'none', padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#4444ff', cursor: 'pointer', flexShrink: 0,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <img src="/assets/floating-custom.png" alt="Overlay" style={{ width: '24px', height: '24px', objectFit: 'contain', filter: 'hue-rotate(180deg)' }} />
+              </button>
               
               <button 
                 onClick={onClose} 
@@ -795,6 +820,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                  alt={hasStartedSession ? "Resume Workout" : "Start Workout"}
                  onClick={() => {
                    if (activeExercises.length > 0) {
+                     if (!hasStartedSession) {
+                       baseSecondsRef.current = 0;
+                       sessionStartTimeRef.current = Date.now();
+                       setElapsedSeconds(0);
+                     }
                      setHasStartedSession(true);
                      setPhase('logging');
                    }

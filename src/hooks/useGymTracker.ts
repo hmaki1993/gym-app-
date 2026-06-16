@@ -40,6 +40,7 @@ const DEFAULT_STATE: GymState = {
     arms: [], abs: [], cardio: [],
   },
   customTranslations: {},
+  exerciseAliases: {},
   nutritionLogs: [],
 };
 
@@ -226,13 +227,19 @@ export function useGymTracker() {
   }, []);
 
   const removeCustomExercise = useCallback((muscle: MuscleGroup, name: string) => {
-    setState(prev => ({
-      ...prev,
-      customExercises: {
-        ...prev.customExercises,
-        [muscle]: prev.customExercises[muscle].filter(e => e !== name),
-      },
-    }));
+    setState(prev => {
+      const nextAliases = { ...(prev.exerciseAliases || {}) };
+      delete nextAliases[name];
+
+      return {
+        ...prev,
+        customExercises: {
+          ...prev.customExercises,
+          [muscle]: prev.customExercises[muscle].filter(e => e !== name),
+        },
+        exerciseAliases: nextAliases,
+      };
+    });
   }, []);
 
   const hideDefaultExercise = useCallback((muscle: MuscleGroup, name: string) => {
@@ -276,6 +283,11 @@ export function useGymTracker() {
       },
       customTranslations: (() => {
         const next = { ...(prev.customTranslations || {}) };
+        delete next[name];
+        return next;
+      })(),
+      exerciseAliases: (() => {
+        const next = { ...(prev.exerciseAliases || {}) };
         delete next[name];
         return next;
       })()
@@ -332,7 +344,15 @@ export function useGymTracker() {
         customTranslations: {
           ...(prev.customTranslations || {}),
           [newName]: (prev.customTranslations || {})[oldName] || ''
-        }
+        },
+        exerciseAliases: (() => {
+          const next = { ...(prev.exerciseAliases || {}) };
+          if (next[oldName]) {
+            next[newName] = next[oldName];
+            delete next[oldName];
+          }
+          return next;
+        })()
       };
     });
   }, []);
@@ -344,6 +364,16 @@ export function useGymTracker() {
         ...prev.exerciseOrder,
         [muscle]: newOrder,
       },
+    }));
+  }, []);
+
+  const setExerciseAlias = useCallback((customName: string, standardName: string) => {
+    setState(prev => ({
+      ...prev,
+      exerciseAliases: {
+        ...(prev.exerciseAliases || {}),
+        [customName]: standardName,
+      }
     }));
   }, []);
 
@@ -513,64 +543,30 @@ export function useGymTracker() {
       // not the current time (which might be past midnight).
       const sessionDate = new Date(start);
       const today = getLocalDateStr(sessionDate);
-      const existingLogIndex = prev.logs.findIndex(l => isLogFromLocalDate(l.date, today));
 
-      let updatedLogs;
-      if (existingLogIndex !== -1) {
-        // MERGE: Update the existing log for the day the session started
-        updatedLogs = [...prev.logs];
-        const oldLog = updatedLogs[existingLogIndex];
-
-        const mergedExercises = [...oldLog.exercises];
-        log.exercises.forEach(newEx => {
-          const exIdx = mergedExercises.findIndex(e => e.name === newEx.name);
-          if (exIdx !== -1) {
-            // FIX: Overwrite sets with the latest updated list to prevent duplication
-            mergedExercises[exIdx] = {
-              ...mergedExercises[exIdx],
-              sets: newEx.sets
-            };
-          } else {
-            mergedExercises.push(newEx);
-          }
-        });
-
-        // Use elapsedSeconds from component if provided, otherwise keep old duration
-        const totalDurationSeconds = elapsedSeconds ?? (oldLog.durationSeconds || oldLog.durationMinutes * 60);
-
-        updatedLogs[existingLogIndex] = {
-          ...oldLog,
-          muscleGroup: log.muscleGroup,
-          exercises: mergedExercises,
-          endTime: new Date(now).toISOString(),
-          durationMinutes: Math.round(totalDurationSeconds / 60),
-          durationSeconds: totalDurationSeconds,
-        };
-      } else {
-        // CREATE: First workout of the session date
-        const durationSeconds = elapsedSeconds ?? Math.floor((now - start) / 1000);
-        const newLog: WorkoutLog = {
-          ...log,
-          date: today, // Use local date string YYYY-MM-DD
-          id: `wl_${now}`,
-          startTime: sessionDate.toISOString(),
-          endTime: new Date(now).toISOString(),
-          durationMinutes: Math.round(durationSeconds / 60),
-          durationSeconds,
-        };
-        updatedLogs = [newLog, ...prev.logs];
-      }
+      // ALWAYS create a new workout log (no more daily merging to prevent data loss)
+      const durationSeconds = elapsedSeconds ?? Math.floor((now - start) / 1000);
+      const newLog: WorkoutLog = {
+        ...log,
+        date: today, // Use local date string YYYY-MM-DD
+        id: `wl_${now}`,
+        startTime: sessionDate.toISOString(),
+        endTime: new Date(now).toISOString(),
+        durationMinutes: Math.round(durationSeconds / 60),
+        durationSeconds,
+      };
+      
+      const updatedLogs = [newLog, ...prev.logs];
 
       const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
       const newState = { ...prev, logs: updatedLogs, prs: updatedPRs };
 
       // Trigger n8n Webhook for workout
       if (newState.settings.n8nWebhookUrl) {
-        const lastLog = updatedLogs[existingLogIndex !== -1 ? existingLogIndex : 0];
         fetch(newState.settings.n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'workout', workout: lastLog, user: newState.settings.userName })
+          body: JSON.stringify({ type: 'workout', workout: newLog, user: newState.settings.userName })
         }).catch(err => console.warn('n8n Webhook failed:', err));
       }
 
@@ -741,6 +737,7 @@ export function useGymTracker() {
     permanentlyDeleteExercise,
     renameExercise,
     reorderExercises,
+    setExerciseAlias,
     getLastSession,
     getLastUsedUnit,
     getDisplayUnit,

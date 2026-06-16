@@ -11,6 +11,7 @@ import android.view.animation.AccelerateInterpolator;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(FloatingWidgetPlugin.class);
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
 

@@ -14,7 +14,7 @@ export const DEFAULT_EXERCISES: Record<MuscleGroup, string[]> = {
   chest: [
     'Bench Press', 'Incline Bench Press', 'Decline Bench Press',
     'Dumbbell Fly', 'Cable Crossover', 'Push Up', 'Chest Dip',
-    'Butterfly Machine', 'Pec Deck', 'butter flay machine',
+    'Butterfly Machine',
   ],
   back: [
     'Deadlift', 'Pull Up', 'Lat Pulldown', 'Seated Row',
@@ -37,7 +37,7 @@ export const DEFAULT_EXERCISES: Record<MuscleGroup, string[]> = {
     'Cable Crunch', 'Ab Wheel', 'Mountain Climber',
   ],
   cardio: [
-    'Treadmill', 'Bike', 'Rowing', 'Jump Rope',
+    'Treadmill', 'Bike', 'Rowing Machine', 'Jump Rope',
     'Stair Climber', 'Elliptical',
   ],
 };
@@ -52,8 +52,6 @@ export const EXERCISE_TRANSLATIONS: Record<string, string> = {
   'Push Up': 'تمرين الضغط',
   'Chest Dip': 'متوازي صدر',
   'Butterfly Machine': 'جهاز الفراشة - تجميع صدر',
-  'Pec Deck': 'بك دك - تجميع صدر جهاز',
-  'butter flay machine': 'جهاز الفراشة',
   // Back
   'Deadlift': 'ديدليفت - الرفعة الميتة',
   'Pull Up': 'عقلة',
@@ -100,7 +98,7 @@ export const EXERCISE_TRANSLATIONS: Record<string, string> = {
   // Cardio
   'Treadmill': 'مشاية',
   'Bike': 'عجلة',
-  'Rowing': 'تجديف كاردو',
+  'Rowing Machine': 'تجديف كاردو',
   'Jump Rope': 'نط الحبل',
   'Stair Climber': 'سلم',
   'Elliptical': 'أوربتراك',

@@ -280,8 +280,13 @@ const CLEAN_EXERCISEDB_PRESS_GIFS: Record<string, string> = {
 // Priority: existing 3D GIFs > ExerciseDB > fitnessprogramer
 export const PREMIUM_GIFS: Record<string, string> = { ...FITNESS_PROGRAMER_GIFS, ...EXERCISEDB_GIFS, ...HIGH_QUALITY_GIFS };
 
-export function getExerciseGifUrl(name: string): string | null {
+export function getExerciseGifUrl(name: string, customAliases?: Record<string, string>): string | null {
   const cleanName = name.trim().toLowerCase();
+  
+  if (customAliases && customAliases[cleanName]) {
+    // If we have an alias map, we recursively call getExerciseGifUrl with the standard name
+    return getExerciseGifUrl(customAliases[cleanName]);
+  }
 
   // Resolve alias first to make sure variations like "incline bench" or "benchpress" map correctly
   const resolvedName = EXTRA_ALIASES[cleanName] || cleanName;
