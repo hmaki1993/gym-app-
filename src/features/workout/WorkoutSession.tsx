@@ -648,8 +648,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       overflowY: 'auto', 
       padding: 'calc(env(safe-area-inset-top) + 12px) 16px 0', 
       touchAction: 'auto', 
-      overscrollBehavior: 'none',
-      position: 'relative'
+      overscrollBehavior: 'none'
     }}>
       {isFloating && onClose && phase === 'logging' && (
         <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2100 }}>

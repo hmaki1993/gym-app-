@@ -215,7 +215,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, o
       
       {/* Floating Close Button */}
       {isFloating && onClose && (
-        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 100, display: 'flex', justifyContent: 'flex-end', padding: '0 10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 16px 0', zIndex: 100 }}>
           <button 
             onClick={onClose}
             style={{ 
