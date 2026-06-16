@@ -26,6 +26,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
   // const isRtl = lang === 'ar';
 
+  const isFloating = React.useMemo(() => {
+    return typeof window !== 'undefined' && (window.location.search.includes('floating=true') || !!(window as any).AndroidFloating);
+  }, []);
+
   // Synchronously compute initial state or load from autosave
   const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted, initialBaseSeconds, initialStartTime } = React.useMemo(() => {
     const freq: Record<string, number> = {};
@@ -644,8 +648,24 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       overflowY: 'auto', 
       padding: 'calc(env(safe-area-inset-top) + 12px) 16px 0', 
       touchAction: 'auto', 
-      overscrollBehavior: 'none' 
+      overscrollBehavior: 'none',
+      position: 'relative'
     }}>
+      {isFloating && onClose && phase === 'logging' && (
+        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2100 }}>
+          <button 
+            onClick={onClose}
+            style={{ 
+              width: '42px', height: '42px', borderRadius: '50%',
+              background: 'none', border: 'none', padding: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', flexShrink: 0
+            }}
+          >
+            <img src="/assets/close-custom.png" alt="Close" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
+          </button>
+        </div>
+      )}
       {openExercise && (
         <div 
           id="exercise-overlay"

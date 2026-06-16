@@ -40,9 +40,24 @@ public class GymWidgetProvider extends AppWidgetProvider {
         SharedPreferences prefs = context.getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE);
         String widgetStateJson = prefs.getString("widget_state", "{}");
 
+        // Read language from main settings
+        String lang = "en";
+        SharedPreferences appPrefs = context.getSharedPreferences("GymLogPrefs", Context.MODE_PRIVATE);
+        String stateJsonStr = appPrefs.getString("gymlog_state_v1", null);
+        if (stateJsonStr != null) {
+            try {
+                JSONObject gymState = new JSONObject(stateJsonStr);
+                JSONObject settings = gymState.optJSONObject("settings");
+                if (settings != null) {
+                    lang = settings.optString("language", "en");
+                }
+            } catch (Exception e) {}
+        }
+        boolean isAr = "ar".equals(lang);
+
         String title = "GymLog";
-        String subtitle = "No active workout";
-        String actionText = "Tap to open";
+        String subtitle = isAr ? "لا توجد تمرينة نشطة" : "No active workout";
+        String actionText = isAr ? "اضغط للفتح" : "Tap to open";
 
         Bitmap heatmapBitmap = null;
         boolean hasActiveSession = false;
@@ -51,19 +66,27 @@ public class GymWidgetProvider extends AppWidgetProvider {
             JSONObject state = new JSONObject(widgetStateJson);
             if (state.has("isActive") && state.getBoolean("isActive")) {
                 hasActiveSession = true;
-                title = state.optString("activeExercise", "Workout Active");
+                
+                String muscleKey = state.optString("muscleGroup", "");
+                title = translateMuscle(muscleKey, lang);
+                
                 int sets = state.optInt("completedSets", 0);
-                subtitle = "Completed Sets: " + sets;
-                actionText = "Tap to open overlay";
+                if (isAr) {
+                    subtitle = "عدد المجموعات: " + sets;
+                    actionText = "اضغط لفتح الأوفرلاي";
+                } else {
+                    subtitle = "Completed Sets: " + sets;
+                    actionText = "Tap to open overlay";
+                }
             } else {
                 if (state.has("isFinished") && state.getBoolean("isFinished")) {
-                    title = "Workout Finished";
-                    subtitle = "Check your history";
+                    title = isAr ? "انتهى التمرين" : "Workout Finished";
+                    subtitle = isAr ? "تفقد السجل الخاص بك" : "Check your history";
                 } else {
                     title = "GymLog";
-                    subtitle = "Ready to train?";
+                    subtitle = isAr ? "جاهز للتمرين؟" : "Ready to train?";
                 }
-                actionText = "Tap to open history";
+                actionText = isAr ? "اضغط لفتح السجل" : "Tap to open history";
                 
                 JSONArray datesArray = state.optJSONArray("historyDates");
                 if (datesArray == null) datesArray = new JSONArray();
@@ -589,5 +612,17 @@ public class GymWidgetProvider extends AppWidgetProvider {
             }
         }
         array.put(value);
+    }
+
+    private String translateMuscle(String key, String lang) {
+        boolean isAr = "ar".equals(lang);
+        if ("chest".equals(key)) return isAr ? "صدر" : "Chest";
+        if ("back".equals(key)) return isAr ? "ظهر" : "Back";
+        if ("legs".equals(key)) return isAr ? "رجلين" : "Legs";
+        if ("shoulders".equals(key)) return isAr ? "أكتاف" : "Shoulders";
+        if ("arms".equals(key)) return isAr ? "دراعات" : "Arms";
+        if ("abs".equals(key)) return isAr ? "بطن" : "Abs";
+        if ("cardio".equals(key)) return isAr ? "كارديو" : "Cardio";
+        return key;
     }
 }

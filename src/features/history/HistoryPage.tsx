@@ -194,6 +194,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, o
       flexDirection: 'column', 
       gap: '5px', 
       paddingBottom: '120px',
+      position: 'relative',
       ...(isFloating ? { overflowY: 'auto', height: '100dvh' } : {})
     }}>
       <style>{`
@@ -214,7 +215,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, o
       
       {/* Floating Close Button */}
       {isFloating && onClose && (
-        <div style={{ position: 'sticky', top: '10px', right: '10px', zIndex: 100, display: 'flex', justifyContent: 'flex-end', padding: '0 10px' }}>
+        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 100, display: 'flex', justifyContent: 'flex-end', padding: '0 10px' }}>
           <button 
             onClick={onClose}
             style={{ 
