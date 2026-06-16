@@ -407,7 +407,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         };
       });
 
-    if (exercises.length === 0) { onClose(); return; }
+    if (exercises.length === 0) {
+      localStorage.removeItem('gymlog_active_session');
+      if ((window as any).AndroidStorage) {
+        (window as any).AndroidStorage.removeItem('gymlog_active_session');
+      }
+      setDirtyExercises({});
+      onSaved(); 
+      return; 
+    }
 
     const log: Omit<WorkoutLog, 'id' | 'durationMinutes' | 'startTime' | 'endTime'> = {
       date: new Date(tracker.sessionStartTime).toISOString(),

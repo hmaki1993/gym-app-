@@ -556,8 +556,16 @@ export function useGymTracker() {
 
       // ALWAYS create a new workout log (no more daily merging to prevent data loss)
       const durationSeconds = elapsedSeconds ?? Math.floor((now - start) / 1000);
+      
+      const filteredExercises = log.exercises.filter(ex => ex.sets && ex.sets.length > 0);
+      
+      if (filteredExercises.length === 0) {
+        return prev; // Do not save if there are no exercises with sets
+      }
+      
       const newLog: WorkoutLog = {
         ...log,
+        exercises: filteredExercises,
         date: today, // Use local date string YYYY-MM-DD
         id: `wl_${now}`,
         startTime: sessionDate.toISOString(),
