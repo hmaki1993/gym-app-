@@ -16,7 +16,10 @@ import { SplashScreen } from '@capacitor/splash-screen';
 
 import { Header } from './features/common/Header';
 import { ConfirmModal } from './features/common/ConfirmModal';
-import { useWidgetSync } from './hooks/useWidgetSync';
+import { useWidgetSync, syncWidgetState } from './hooks/useWidgetSync';
+import { Crown } from 'lucide-react';
+import { registerPlugin } from '@capacitor/core';
+const FloatingWidget = registerPlugin<any>('FloatingWidget');
 
 function InactiveWidgetSync({ tracker }: { tracker: ReturnType<typeof useGymTracker> }) {
   const todayStr = tracker.getLocalDateStr();
@@ -25,7 +28,7 @@ function InactiveWidgetSync({ tracker }: { tracker: ReturnType<typeof useGymTrac
     const logLocalDate = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
     return logLocalDate === todayStr || log.date.startsWith(todayStr);
   });
-  useWidgetSync(false, null, 0, '', null, tracker.logs.map(l => l.date), isFinished, tracker.settings.accentColor);
+  useWidgetSync(false, null, 0, '', null, tracker.logs.map(l => l.date.split('T')[0]), isFinished, tracker.settings.accentColor);
   return null;
 }
 
@@ -39,9 +42,73 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>(tracker.settings.userName ? 'home' : 'settings');
   const [showWorkout, setShowWorkout] = useState(false);
+  const [showPremiumOverlayModal, setShowPremiumOverlayModal] = useState(false);
+
+  // Ask for overlay permission once for new users after they set their name
+  useEffect(() => {
+    if (tracker.settings.userName) {
+      const hasAsked = localStorage.getItem('gymlog_overlay_requested');
+      const isAndroid = window.Capacitor?.getPlatform() === 'android' || !!(window as any).AndroidStorage;
+      if (isAndroid && !hasAsked) {
+        // Wait a few seconds before popping the premium card
+        const timer = setTimeout(async () => {
+          try {
+            const { granted } = await FloatingWidget.checkOverlayPermission();
+            if (!granted) {
+              setShowPremiumOverlayModal(true);
+            }
+          } catch (e) {
+            console.log('Floating widget not supported', e);
+          }
+          localStorage.setItem('gymlog_overlay_requested', 'true');
+        }, 4000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [tracker.settings.userName]);
   
+  // Synchronize workout active state from storage when app is resumed or synced
+  useEffect(() => {
+    const checkActiveSession = () => {
+      let draftRaw = localStorage.getItem('gymlog_active_session');
+      if (!draftRaw && (window as any).AndroidStorage) {
+        draftRaw = (window as any).AndroidStorage.getItem('gymlog_active_session');
+      }
+      
+      if (!draftRaw && showWorkout) {
+        setShowWorkout(false);
+        setTab('home');
+      }
+    };
+
+    window.addEventListener('gymlog_sync', checkActiveSession);
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkActiveSession();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('gymlog_sync', checkActiveSession);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [showWorkout]);
+
   const isFloating = window.location.search.includes('floating=true');
-  const floatingMode = new URLSearchParams(window.location.search).get('mode');
+  const [floatingMode, setFloatingMode] = useState(() => new URLSearchParams(window.location.search).get('mode'));
+
+  useEffect(() => {
+    const handleRoute = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setFloatingMode(customEvent.detail);
+      }
+    };
+    window.addEventListener('gymlog_route', handleRoute);
+    return () => window.removeEventListener('gymlog_route', handleRoute);
+  }, []);
 
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -328,7 +395,25 @@ export default function App() {
           <WorkoutSession
             tracker={tracker}
             onClose={closeNativeWidget}
-            onSaved={closeNativeWidget}
+            onSaved={async () => {
+              const sessionDate = new Date(tracker.sessionStartTime);
+              const todayStr = tracker.getLocalDateStr(sessionDate);
+              const historyDates = tracker.logs.map(log => log.date.split('T')[0]);
+              if (!historyDates.includes(todayStr)) {
+                historyDates.push(todayStr);
+              }
+              await syncWidgetState({
+                isActive: false,
+                activeExercise: null,
+                completedSets: 0,
+                muscleGroup: '',
+                loggedData: null,
+                historyDates: historyDates,
+                isFinished: true,
+                accentColor: tracker.settings.accentColor
+              });
+              closeNativeWidget();
+            }}
           />
         )}
       </div>
@@ -419,6 +504,51 @@ export default function App() {
           onCancel={() => tracker.setLogToDelete(null)}
         />
       )}
+      {/* ── Premium Overlay Modal ── */}
+      {showPremiumOverlayModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 99999, padding: '20px'
+        }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '24px', padding: '24px',
+            maxWidth: '340px', width: '100%',
+            textAlign: 'center', position: 'relative'
+          }}>
+            <button onClick={() => setShowPremiumOverlayModal(false)}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#fff', fontSize: '20px' }}>
+              ✕
+            </button>
+            <Crown size={48} color="#FFD700" style={{ margin: '0 auto 16px' }} />
+            <h3 style={{ color: '#FFD700', margin: '0 0 8px', fontSize: '22px' }}>GymLog Premium</h3>
+            <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px' }}>
+              عشان تفعل ميزة الكارت الطاير (Floating Widget) وتقدر تتابع تمرينك وانت برة الأبلكيشن، محتاجين صلاحية الـ Overlay. الميزة دي حصرية في النسخة الـ Premium!
+            </p>
+            <button onClick={async () => {
+              setShowPremiumOverlayModal(false);
+              try {
+                await FloatingWidget.requestOverlayPermission();
+              } catch (e) {
+                console.log(e);
+              }
+            }}
+              style={{
+                background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                color: '#000', border: 'none', borderRadius: '12px',
+                padding: '14px 24px', fontSize: '16px', fontWeight: 'bold',
+                width: '100%', cursor: 'pointer'
+              }}>
+              تفعيل الان
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

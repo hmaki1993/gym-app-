@@ -9,11 +9,7 @@ import gsap from 'gsap';
 import { MuscleSelector } from './components/MuscleSelector';
 import { ExercisePicker } from './components/ExercisePicker';
 import { SessionLogger } from './components/SessionLogger';
-import { registerPlugin } from '@capacitor/core';
-import { useWidgetSync } from '../../hooks/useWidgetSync';
-import { PictureInPicture2, Crown } from 'lucide-react';
-
-const FloatingWidget = registerPlugin<any>('FloatingWidget');
+import { useWidgetSync, syncWidgetState } from '../../hooks/useWidgetSync';
 
 interface Props {
   tracker: ReturnType<typeof useGymTracker>;
@@ -229,7 +225,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [showPremiumOverlayModal, setShowPremiumOverlayModal] = useState(false);
+
+  const [isSaved, setIsSaved] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
@@ -246,12 +243,15 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   }, [tracker.logs]);
 
   useWidgetSync(
-    phase === 'logging' && hasStartedSession,
+    !isSaved && phase === 'logging' && hasStartedSession,
     activeExerciseName,
     completedSetsCount,
     selectedMuscle,
     loggedData,
-    historyDates
+    historyDates,
+    false,
+    tracker.settings.accentColor,
+    activeExercises
   );
 
   // Autosave current session state to localStorage
@@ -332,17 +332,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   const prevOpenExRef = useRef<string | null>(null);
   useEffect(() => {
-    if (openExercise && !prevOpenExRef.current) {
-      // Initial open animation
-      gsap.fromTo('#exercise-overlay', { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' });
-      gsap.fromTo('#exercise-modal-content', { y: '100%' }, { y: 0, duration: 0.3, ease: 'power3.out' });
-    }
     prevOpenExRef.current = openExercise;
   }, [openExercise]);
 
   const closeExercise = () => {
-    gsap.to('#exercise-modal-content', { y: '100%', duration: 0.22, ease: 'power2.in' });
-    gsap.to('#exercise-overlay', { opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => setOpenExercise(null) });
+    setOpenExercise(null);
   };
 
   useEffect(() => {
@@ -418,9 +412,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     Object.entries(draftData).forEach(([name, sets]) => {
       const validSets = (sets as SetLog[]).filter(s => s.reps > 0);
       if (validSets.length > 0) {
-        if (!mergedData[name] || mergedData[name].length === 0) {
-          mergedData[name] = validSets;
-        }
+        // Always overwrite with the latest valid sets from draft!
+        mergedData[name] = validSets;
       }
     });
 
@@ -445,10 +438,24 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       });
 
     if (exercises.length === 0) {
+      setIsSaved(true);
       localStorage.removeItem('gymlog_active_session');
       if ((window as any).AndroidStorage) {
         (window as any).AndroidStorage.removeItem('gymlog_active_session');
       }
+      
+      const historyDates = tracker.logs.map(log => log.date.split('T')[0]);
+      syncWidgetState({
+        isActive: false,
+        activeExercise: null,
+        completedSets: 0,
+        muscleGroup: '',
+        loggedData: null,
+        historyDates: historyDates,
+        isFinished: false,
+        accentColor: tracker.settings.accentColor
+      });
+
       setDirtyExercises({});
       onSaved(); 
       return; 
@@ -459,10 +466,29 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       muscleGroup: selectedMuscle,
       exercises: exercises as any,
     };
+    setIsSaved(true);
     localStorage.removeItem('gymlog_active_session');
     if ((window as any).AndroidStorage) {
       (window as any).AndroidStorage.removeItem('gymlog_active_session');
     }
+
+    // Explicitly sync widget state to inactive/finished to prevent delay or mismatch
+    const todayStr = tracker.getLocalDateStr();
+    const historyDates = tracker.logs.map(log => log.date.split('T')[0]);
+    if (!historyDates.includes(todayStr)) {
+      historyDates.push(todayStr);
+    }
+    syncWidgetState({
+      isActive: false,
+      activeExercise: null,
+      completedSets: 0,
+      muscleGroup: '',
+      loggedData: null,
+      historyDates: historyDates,
+      isFinished: true,
+      accentColor: tracker.settings.accentColor
+    });
+
     tracker.saveWorkout(log as any, elapsedSeconds);
     setDirtyExercises({});
     onSaved();
@@ -675,7 +701,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             touchAction: 'none',
             overscrollBehavior: 'none',
             boxSizing: 'border-box',
-            opacity: 0,
+            opacity: 1,
             willChange: 'opacity'
           }}
         >
@@ -691,7 +717,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               overscrollBehavior: 'none',
               boxSizing: 'border-box',
               border: 'none',
-              transform: 'translateY(100%)',
+              transform: 'none',
               willChange: 'transform'
             }}
           >
@@ -913,29 +939,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 <img src="/assets/arrow-custom.png" alt="Back" style={{ width: '26px', height: '26px', objectFit: 'contain', transform: 'rotate(180deg)' }} />
               </button>
 
-              <button 
-                onClick={async () => {
-                  try {
-                    const { granted } = await FloatingWidget.checkOverlayPermission();
-                    if (granted) {
-                      alert('الكارت الطاير شغال! تقدر تفتحه من الـ Widget اللي على الشاشة الرئيسية.');
-                    } else {
-                      setShowPremiumOverlayModal(true);
-                    }
-                  } catch (e) {
-                    console.log('Floating widget not supported on this platform', e);
-                  }
-                }} 
-                style={{ 
-                  width: '40px', height: '40px', borderRadius: '50%', 
-                  background: 'none', border: 'none', padding: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#4444ff', cursor: 'pointer', flexShrink: 0,
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <PictureInPicture2 size={24} color="var(--accent-color)" />
-              </button>
+
               
               <button 
                 onClick={() => {
@@ -1074,45 +1078,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           />
         )}
 
-        {showPremiumOverlayModal && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999, padding: '20px'
-          }}>
-            <div style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '24px', padding: '24px',
-              maxWidth: '340px', width: '100%',
-              textAlign: 'center', position: 'relative'
-            }}>
-              <button onClick={() => setShowPremiumOverlayModal(false)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#fff', fontSize: '20px' }}>
-                ✕
-              </button>
-              <Crown size={48} color="#FFD700" style={{ margin: '0 auto 16px' }} />
-              <h3 style={{ color: '#FFD700', margin: '0 0 8px', fontSize: '22px' }}>GymLog Premium</h3>
-              <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px' }}>
-                عشان تفعل ميزة الكارت الطاير (Floating Widget) وتقدر تتابع تمرينك وانت برة الأبلكيشن، محتاجين صلاحية الـ Overlay. الميزة دي حصرية في النسخة الـ Premium!
-              </p>
-              <button onClick={async () => {
-                setShowPremiumOverlayModal(false);
-                await FloatingWidget.requestOverlayPermission();
-              }}
-                style={{
-                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                  color: '#000', border: 'none', borderRadius: '12px',
-                  padding: '14px 24px', fontSize: '16px', fontWeight: 'bold',
-                  width: '100%', cursor: 'pointer'
-                }}>
-                تفعيل الان
-              </button>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

@@ -27,6 +27,17 @@ public class StorageInterface {
     }
 
     @JavascriptInterface
+    public void setWidgetState(String value) {
+        try {
+            SharedPreferences capacitorPrefs = context.getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE);
+            capacitorPrefs.edit().putString("widget_state", value).apply();
+            triggerWidgetUpdate(false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @JavascriptInterface
     public void removeItem(String key) {
         prefs.edit().remove(key).apply();
         triggerWidgetUpdate(!"gymlog_active_session".equals(key));
@@ -34,10 +45,15 @@ public class StorageInterface {
 
     private void triggerWidgetUpdate(boolean sendSync) {
         try {
+            android.appwidget.AppWidgetManager appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context);
+            int[] ids = appWidgetManager.getAppWidgetIds(new android.content.ComponentName(context, GymWidgetProvider.class));
+
+            // Call onUpdate directly to ensure instant updates (bypassing OS delay/throttling)
+            GymWidgetProvider provider = new GymWidgetProvider();
+            provider.onUpdate(context, appWidgetManager, ids);
+
             android.content.Intent intent = new android.content.Intent(context, GymWidgetProvider.class);
             intent.setAction(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-            int[] ids = android.appwidget.AppWidgetManager.getInstance(context)
-                    .getAppWidgetIds(new android.content.ComponentName(context, GymWidgetProvider.class));
             intent.putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
             context.sendBroadcast(intent);
 

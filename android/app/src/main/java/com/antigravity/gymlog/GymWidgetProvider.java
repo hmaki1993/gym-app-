@@ -27,6 +27,9 @@ import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
@@ -58,26 +61,152 @@ public class GymWidgetProvider extends AppWidgetProvider {
         String title = "GymLog";
         String subtitle = isAr ? "لا توجد تمرينة نشطة" : "No active workout";
         String actionText = isAr ? "اضغط للفتح" : "Tap to open";
+        String setsText = "";
+        boolean isActive = false;
+        String accentColor = "#E67E22"; // default orange
+        Bitmap muscleIconBitmap = null;
+        Bitmap dumbbellBmp = loadAssetBitmap(context, "assets/dumbbell-custom.png");
 
         Bitmap heatmapBitmap = null;
         boolean hasActiveSession = false;
 
         try {
             JSONObject state = new JSONObject(widgetStateJson);
+            accentColor = state.optString("accentColor", "#E67E22");
+            
             if (state.has("isActive") && state.getBoolean("isActive")) {
                 hasActiveSession = true;
+                isActive = true;
                 
                 String muscleKey = state.optString("muscleGroup", "");
                 title = translateMuscle(muscleKey, lang);
-                
-                int sets = state.optInt("completedSets", 0);
-                if (isAr) {
-                    subtitle = "عدد المجموعات: " + sets;
-                    actionText = "اضغط لفتح الأوفرلاي";
-                } else {
-                    subtitle = "Completed Sets: " + sets;
-                    actionText = "Tap to open overlay";
+                if (!isAr) {
+                    title = title.toUpperCase();
                 }
+                
+                // Load muscle icon bitmap
+                String muscleIconName = muscleKey.toLowerCase(Locale.US);
+                if ("arms".equals(muscleIconName)) {
+                    muscleIconName = "biceps";
+                }
+                String assetPath = "assets/muscles/" + muscleIconName + ".png";
+                muscleIconBitmap = loadAssetBitmap(context, assetPath);
+                
+                String activeExercise = state.optString("activeExercise", "");
+                JSONObject loggedData = state.optJSONObject("loggedData");
+                JSONArray activeExercises = state.optJSONArray("activeExercises");
+                
+                List<String> exerciseList = new ArrayList<>();
+                if (activeExercises != null) {
+                    for (int i = 0; i < activeExercises.length(); i++) {
+                        String ex = activeExercises.optString(i, "");
+                        if (!ex.isEmpty() && !exerciseList.contains(ex)) {
+                            exerciseList.add(ex);
+                        }
+                    }
+                }
+                
+                if (!activeExercise.isEmpty() && !exerciseList.contains(activeExercise)) {
+                    exerciseList.add(activeExercise);
+                }
+                
+                if (exerciseList.isEmpty() && loggedData != null) {
+                    Iterator<String> keys = loggedData.keys();
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+                        if (!exerciseList.contains(key)) {
+                            exerciseList.add(key);
+                        }
+                    }
+                }
+                
+                StringBuilder htmlBuilder = new StringBuilder();
+                String currentSuffix = isAr ? " (نشط)" : " (Current)";
+                for (int i = 0; i < exerciseList.size(); i++) {
+                    String exName = exerciseList.get(i);
+                    boolean isCurrent = exName.equals(activeExercise);
+                    int num = i + 1;
+                    
+                    if (isCurrent) {
+                        htmlBuilder.append("<font color='").append(accentColor).append("'><b>").append(num).append(".</b></font> <b><font color='#FFFFFF'>").append(exName).append("</font></b> <font color='").append(accentColor).append("'><i>").append(currentSuffix).append("</i></font><br/>");
+                    } else {
+                        htmlBuilder.append("<font color='#888888'><b>").append(num).append(".</b></font> <b><font color='#AAAAAA'>").append(exName).append("</font></b><br/>");
+                    }
+                    
+                    JSONArray setsArray = null;
+                    if (loggedData != null) {
+                        setsArray = loggedData.optJSONArray(exName);
+                    }
+                    
+                    if (setsArray != null && setsArray.length() > 0) {
+                        StringBuilder setsBuilder = new StringBuilder();
+                        for (int j = 0; j < setsArray.length(); j++) {
+                            JSONObject setObj = setsArray.optJSONObject(j);
+                            if (setObj != null) {
+                                double weight = setObj.optDouble("weight", 0);
+                                int reps = setObj.optInt("reps", 0);
+                                String unit = setObj.optString("unit", "kg");
+                                
+                                String weightStr;
+                                if (weight == (long) weight) {
+                                    weightStr = String.format(Locale.US, "%d", (long) weight);
+                                } else {
+                                    weightStr = String.format(Locale.US, "%.1f", weight);
+                                }
+                                
+                                String displayUnit = unit;
+                                if (isAr) {
+                                    if ("kg".equalsIgnoreCase(unit)) displayUnit = "كجم";
+                                    else if ("lbs".equalsIgnoreCase(unit)) displayUnit = "رطل";
+                                }
+                                
+                                if (setsBuilder.length() > 0) {
+                                    setsBuilder.append(" &nbsp; &nbsp; ");
+                                }
+                                
+                                String badgeColor;
+                                String weightColor;
+                                String unitColor;
+                                String xColor;
+                                String repsColor;
+                                
+                                if (isCurrent) {
+                                    badgeColor = accentColor;
+                                    weightColor = "#FFFFFF";
+                                    unitColor = "#B0B0B0";
+                                    xColor = accentColor;
+                                    repsColor = "#FFFFFF";
+                                } else {
+                                    badgeColor = "#666666";
+                                    weightColor = "#AAAAAA";
+                                    unitColor = "#777777";
+                                    xColor = "#555555";
+                                    repsColor = "#AAAAAA";
+                                }
+                                
+                                String setNumPrefix = getCircledNumber(j + 1);
+                                setsBuilder.append("<font color='").append(badgeColor).append("'>").append(setNumPrefix).append("</font>&nbsp;")
+                                    .append("<font color='").append(weightColor).append("'><b>").append(weightStr).append("</b></font>")
+                                    .append(" ")
+                                    .append("<font color='").append(unitColor).append("'>").append(displayUnit).append("</font>")
+                                    .append(" ")
+                                    .append("<font color='").append(xColor).append("'>×</font>")
+                                    .append(" ")
+                                    .append("<font color='").append(repsColor).append("'><b>").append(reps).append("</b></font>");
+                            }
+                        }
+                        htmlBuilder.append("&nbsp;&nbsp;").append(setsBuilder.toString());
+                    } else {
+                        String waitingText = isAr ? "في انتظار أول مجموعة..." : "Waiting for first set...";
+                        htmlBuilder.append("&nbsp;&nbsp;<font color='#666666'><i>").append(waitingText).append("</i></font>");
+                    }
+                    
+                    if (i < exerciseList.size() - 1) {
+                        htmlBuilder.append("<br/>");
+                    }
+                }
+                setsText = htmlBuilder.toString();
+                actionText = isAr ? "اضغط لفتح الأوفرلاي" : "Tap to open overlay";
             } else {
                 if (state.has("isFinished") && state.getBoolean("isFinished")) {
                     title = isAr ? "انتهى التمرين" : "Workout Finished";
@@ -90,31 +219,73 @@ public class GymWidgetProvider extends AppWidgetProvider {
                 
                 JSONArray datesArray = state.optJSONArray("historyDates");
                 if (datesArray == null) datesArray = new JSONArray();
-                heatmapBitmap = createHeatmapBitmap(context, datesArray, state.optString("accentColor", "#00E676"));
+                heatmapBitmap = createHeatmapBitmap(context, datesArray, accentColor);
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+        int accentColorVal = 0xFFE67E22;
+        try {
+            accentColorVal = Color.parseColor(accentColor);
+        } catch (Exception e) {
+            // fallback
+        }
+
         for (int appWidgetId : appWidgetIds) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_gym);
-            views.setTextViewText(R.id.widget_title, title);
-            views.setTextViewText(R.id.widget_subtitle, subtitle);
-            views.setTextViewText(R.id.widget_action, actionText);
+            
+            if (dumbbellBmp != null) {
+                views.setImageViewBitmap(R.id.btn_open_app, dumbbellBmp);
+            }
+            
+            if (isActive) {
+                // Active layout updates
+                views.setViewVisibility(R.id.widget_active_layout, android.view.View.VISIBLE);
+                views.setViewVisibility(R.id.widget_inactive_layout, android.view.View.GONE);
+                
+                views.setTextViewText(R.id.widget_active_title, title);
+                views.setTextColor(R.id.widget_active_title, accentColorVal);
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    views.setTextViewText(R.id.widget_sets, android.text.Html.fromHtml(setsText, android.text.Html.FROM_HTML_MODE_LEGACY));
+                } else {
+                    views.setTextViewText(R.id.widget_sets, android.text.Html.fromHtml(setsText));
+                }
+                
+                if (muscleIconBitmap != null) {
+                    views.setImageViewBitmap(R.id.widget_muscle_icon, muscleIconBitmap);
+                    views.setViewVisibility(R.id.widget_muscle_icon, android.view.View.VISIBLE);
+                } else {
+                    views.setViewVisibility(R.id.widget_muscle_icon, android.view.View.GONE);
+                }
+                
+                views.setTextViewText(R.id.widget_active_action, actionText);
+            } else {
+                // Inactive layout updates
+                views.setViewVisibility(R.id.widget_active_layout, android.view.View.GONE);
+                views.setViewVisibility(R.id.widget_inactive_layout, android.view.View.VISIBLE);
+                
+                views.setTextViewText(R.id.widget_title, title);
+                views.setTextColor(R.id.widget_title, accentColorVal);
+                views.setTextViewText(R.id.widget_subtitle, subtitle);
+                views.setTextViewText(R.id.widget_action, actionText);
+            }
 
             if (heatmapBitmap != null) {
                 views.setImageViewBitmap(R.id.widget_heatmap, heatmapBitmap);
                 views.setViewVisibility(R.id.widget_heatmap, android.view.View.VISIBLE);
-                views.setViewVisibility(R.id.widget_title, android.view.View.GONE);
-                views.setViewVisibility(R.id.widget_subtitle, android.view.View.GONE);
-                views.setViewVisibility(R.id.widget_action, android.view.View.GONE);
-                views.setViewVisibility(R.id.btn_open_app, android.view.View.GONE);
+                views.setViewVisibility(R.id.widget_active_layout, android.view.View.GONE);
+                views.setViewVisibility(R.id.widget_inactive_layout, android.view.View.GONE);
+                views.setViewVisibility(R.id.btn_open_app, android.view.View.VISIBLE);
+                views.setViewPadding(R.id.widget_inner_container, 0, 0, 0, 0);
+                views.setInt(R.id.widget_inner_container, "setBackgroundResource", 0);
             } else {
                 views.setViewVisibility(R.id.widget_heatmap, android.view.View.GONE);
-                views.setViewVisibility(R.id.widget_title, android.view.View.VISIBLE);
-                views.setViewVisibility(R.id.widget_subtitle, android.view.View.VISIBLE);
-                views.setViewVisibility(R.id.widget_action, android.view.View.VISIBLE);
                 views.setViewVisibility(R.id.btn_open_app, android.view.View.VISIBLE);
+                int paddingPx = (int) (12 * context.getResources().getDisplayMetrics().density);
+                views.setViewPadding(R.id.widget_inner_container, paddingPx, paddingPx, paddingPx, paddingPx);
+                views.setInt(R.id.widget_inner_container, "setBackgroundResource", R.drawable.widget_background);
             }
 
             PendingIntent pendingIntent;
@@ -127,13 +298,21 @@ public class GymWidgetProvider extends AppWidgetProvider {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );
             } else {
-                Intent launcherIntent = new Intent(context, TransparentLauncherActivity.class);
-                launcherIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                launcherIntent.putExtra("mode", hasActiveSession ? "workout" : "history");
-                pendingIntent = PendingIntent.getActivity(
-                        context, 0, launcherIntent, 
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-                );
+                Intent serviceIntent = new Intent(context, GymFloatingService.class);
+                serviceIntent.putExtra("mode", hasActiveSession ? "workout" : "history");
+                serviceIntent.setAction(ACTION_WIDGET_CLICK);
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    pendingIntent = PendingIntent.getForegroundService(
+                            context, 0, serviceIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                    );
+                } else {
+                    pendingIntent = PendingIntent.getService(
+                            context, 0, serviceIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                    );
+                }
             }
             
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent);
@@ -152,8 +331,20 @@ public class GymWidgetProvider extends AppWidgetProvider {
     }
 
     private Bitmap createHeatmapBitmap(Context context, JSONArray datesArray, String accentColorHex) {
+        Calendar heightCal = Calendar.getInstance();
+        heightCal.set(Calendar.DAY_OF_MONTH, 1);
+        int heightFirstDayOfWeek = heightCal.get(Calendar.DAY_OF_WEEK);
+        int heightStartOffset = getDayOffset(heightFirstDayOfWeek);
+        int heightDaysInMonth = heightCal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        int heightTotalCells = heightStartOffset + heightDaysInMonth;
+        int heightNumRows = (int) Math.ceil(heightTotalCells / 7.0);
+        
+        float heightCellWidth = (800f - 40f) / 7f; // innerPadding = 20f, width = 800
+        float heightGridHeight = heightNumRows * heightCellWidth + 10f;
+        float heightGridStartY = 280f; // startY (250f) + 30f
+        int height = (int) (heightGridStartY + heightGridHeight + 40f); // 40f padding at bottom
+
         int width = 800;
-        int height = 1020;
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
@@ -576,8 +767,10 @@ public class GymWidgetProvider extends AppWidgetProvider {
             textPaint.setTextAlign(Paint.Align.LEFT);
             canvas.drawText(String.valueOf(i), x + 16f, y + 30f, textPaint);
         }
-
-        return bitmap;
+        // Scale down the bitmap to fit within the 1MB IPC limit for RemoteViews
+        // A factor of 2 reduction reduces size by 4x.
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width / 2, height / 2, true);
+        return scaledBitmap;
     }
 
     private Bitmap loadAssetBitmap(Context context, String path) {
@@ -624,5 +817,21 @@ public class GymWidgetProvider extends AppWidgetProvider {
         if ("abs".equals(key)) return isAr ? "بطن" : "Abs";
         if ("cardio".equals(key)) return isAr ? "كارديو" : "Cardio";
         return key;
+    }
+
+    private String getCircledNumber(int num) {
+        switch (num) {
+            case 1: return "①";
+            case 2: return "②";
+            case 3: return "③";
+            case 4: return "④";
+            case 5: return "⑤";
+            case 6: return "⑥";
+            case 7: return "⑦";
+            case 8: return "⑧";
+            case 9: return "⑨";
+            case 10: return "⑩";
+            default: return "[" + num + "]";
+        }
     }
 }
