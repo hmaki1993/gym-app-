@@ -15,10 +15,15 @@ import org.json.JSONArray;
 import android.provider.Settings;
 import android.os.Build;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Color;
 import android.graphics.RectF;
+import android.graphics.DashPathEffect;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Set;
 import java.util.HashSet;
@@ -125,7 +130,7 @@ public class GymWidgetProvider extends AppWidgetProvider {
 
     private Bitmap createHeatmapBitmap(Context context, JSONArray datesArray, String accentColorHex) {
         int width = 800;
-        int height = 880;
+        int height = 1020;
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
@@ -134,16 +139,18 @@ public class GymWidgetProvider extends AppWidgetProvider {
         Set<String> activeDates = new HashSet<>();
         JSONObject activeMusclesObj = new JSONObject();
         String accentColor = accentColorHex;
+        String themeMode = "system";
 
         String stateJsonStr = prefs.getString("gymlog_state_v1", null);
         if (stateJsonStr != null) {
             try {
                 JSONObject gymState = new JSONObject(stateJsonStr);
                 
-                // Extract accent color from settings
+                // Extract settings
                 JSONObject settings = gymState.optJSONObject("settings");
                 if (settings != null) {
                     accentColor = settings.optString("accentColor", accentColor);
+                    themeMode = settings.optString("themeMode", "system");
                 }
 
                 // Extract dates and muscles directly from logs
@@ -198,9 +205,34 @@ public class GymWidgetProvider extends AppWidgetProvider {
             } catch (Exception e) {}
         }
 
+        // Determine Theme Mode (Dark/Light)
+        boolean isDarkMode = false;
+        if ("dark".equals(themeMode)) {
+            isDarkMode = true;
+        } else if ("light".equals(themeMode)) {
+            isDarkMode = false;
+        } else {
+            int currentNightMode = context.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            isDarkMode = (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+        }
+
+        // Color Palette definitions
+        int bgColor = isDarkMode ? 0xFF111114 : 0xFFFFFFFF;
+        int textPrimaryColor = isDarkMode ? 0xFFFFFFFF : 0xFF121212;
+        int textSecondaryColor = isDarkMode ? 0xB3FFFFFF : 0xBF121212; // ~70% vs ~75% opacity
+        int borderColor = isDarkMode ? 0x26FFFFFF : 0x1A000000;       // 15% white vs 10% black
+        int gridBgColor = isDarkMode ? 0x0DFFFFFF : 0x0F000000;       // 5% white vs 6% black
+        int cellBgColor = isDarkMode ? 0x14FFFFFF : 0x0A000000;       // 8% white vs 4% black
+        int cellBorderColor = isDarkMode ? 0x26FFFFFF : 0x14000000;   // 15% white vs 8% black
+        int todayBorderColor = 0xFFE67E22;                            // Orange
+
+        // Paint definitions
+        Paint bgPaint = new Paint();
+        bgPaint.setAntiAlias(true);
+        bgPaint.setColor(bgColor);
+
         Paint textPaint = new Paint();
         textPaint.setAntiAlias(true);
-        textPaint.setTextAlign(Paint.Align.CENTER);
         
         Paint accentPaint = new Paint();
         accentPaint.setAntiAlias(true);
@@ -209,136 +241,345 @@ public class GymWidgetProvider extends AppWidgetProvider {
         } catch (Exception e) {
             accentPaint.setColor(Color.parseColor("#00E676"));
         }
-        
-        // Background container like HistoryPage (#f8f9fa)
-        Paint containerPaint = new Paint();
-        containerPaint.setAntiAlias(true);
-        containerPaint.setColor(Color.parseColor("#f8f9fa")); 
-        
+
+        Paint normalPaint = new Paint();
+        normalPaint.setAntiAlias(true);
+        normalPaint.setFilterBitmap(true);
+
+        Paint tintPaint = new Paint();
+        tintPaint.setAntiAlias(true);
+        tintPaint.setFilterBitmap(true);
+        tintPaint.setColorFilter(new PorterDuffColorFilter(textSecondaryColor, PorterDuff.Mode.SRC_IN));
+
+        // Load general assets
+        Bitmap calendarBmp = loadAssetBitmap(context, "assets/calendar-custom-v3.png");
+        Bitmap dumbbellBmp = loadAssetBitmap(context, "assets/dumbbell-custom.png");
+        Bitmap sofaBmp = loadAssetBitmap(context, "assets/sofa-custom.png");
+        Bitmap arrowBmp = loadAssetBitmap(context, "assets/arrow-custom.png");
+
+        // 1. Draw overall widget background card
+        canvas.drawRoundRect(new RectF(0, 0, width, height), 48f, 48f, bgPaint);
+
+        // Get Month Details
         Calendar cal = Calendar.getInstance();
         int currentMonth = cal.get(Calendar.MONTH);
         int currentYear = cal.get(Calendar.YEAR);
+        int todayDay = cal.get(Calendar.DAY_OF_MONTH);
         
         SimpleDateFormat monthSdf = new SimpleDateFormat("MMMM yyyy", Locale.US);
         String monthName = monthSdf.format(cal.getTime()).toUpperCase();
-        
-        // Draw Main Container
-        float padding = 0f;
-        float innerPadding = 20f;
-        RectF containerRect = new RectF(padding, padding, width - padding, height - padding);
-        canvas.drawRoundRect(containerRect, 60f, 60f, containerPaint);
-
-        // Draw Month Title
-        textPaint.setColor(Color.parseColor("#333333"));
-        textPaint.setTextSize(48f);
-        textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
-        textPaint.setLetterSpacing(0.1f);
-        canvas.drawText(monthName, width / 2f, 80f, textPaint);
-
-        // Draw Weekday Headers
-        String[] weekdays = {"SAT", "SUN", "MON", "TUE", "WED", "THU", "FRI"};
-        textPaint.setTextSize(26f);
-        textPaint.setColor(Color.parseColor("#888888"));
-        textPaint.setLetterSpacing(0f);
-        
-        float startY = 160f;
-        float cols = 7f;
-        float availableWidth = width - (innerPadding * 2);
-        float cellWidth = availableWidth / cols;
-        float cellHeight = cellWidth;
-        
-        for (int i = 0; i < 7; i++) {
-            float x = innerPadding + (i * cellWidth) + (cellWidth / 2f);
-            canvas.drawText(weekdays[i], x, startY, textPaint);
-        }
-
-        // Draw Calendar Grid
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        int firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
-        int startOffset = (firstDayOfWeek == Calendar.SATURDAY) ? 0 : firstDayOfWeek;
-        int daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-        
-        float gridStartY = startY + 40f;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         String todayStr = sdf.format(new java.util.Date());
+
+        // 2. Draw Month Title row (Month Name + Calendar Icon + Hand-drawn arrows)
+        textPaint.setTextSize(36f);
+        textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+        textPaint.setLetterSpacing(0.08f);
+        float textWidth = textPaint.measureText(monthName);
+        float calendarSize = 36f;
+        float gap = 12f;
+        float totalHeaderWidth = calendarSize + gap + textWidth;
+        float headerStartX = (width - totalHeaderWidth) / 2f;
+
+        // Draw Calendar Icon
+        if (calendarBmp != null) {
+            RectF dest = new RectF(headerStartX, 90f - calendarSize / 2f, headerStartX + calendarSize, 90f + calendarSize / 2f);
+            canvas.drawBitmap(calendarBmp, null, dest, normalPaint);
+        }
+        // Draw Month Title
+        textPaint.setColor(textPrimaryColor);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        canvas.drawText(monthName, headerStartX + calendarSize + gap, 90f + 13f, textPaint);
+
+        // Draw Left Hand-drawn Arrow (rotated 180)
+        if (arrowBmp != null) {
+            canvas.save();
+            canvas.rotate(180, 60f, 90f);
+            RectF leftDest = new RectF(60f - 16f, 90f - 16f, 60f + 16f, 90f + 16f);
+            canvas.drawBitmap(arrowBmp, null, leftDest, normalPaint);
+            canvas.restore();
+            
+            // Draw Right Hand-drawn Arrow
+            RectF rightDest = new RectF(width - 60f - 16f, 90f - 16f, width - 60f + 16f, 90f + 16f);
+            canvas.drawBitmap(arrowBmp, null, rightDest, normalPaint);
+        }
+
+        // Compute Workout and Rest Counts
+        int monthWorkouts = 0;
+        int monthRest = 0;
+        int daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        for (int day = 1; day <= daysInMonth; day++) {
+            cal.set(Calendar.DAY_OF_MONTH, day);
+            String dateStr = sdf.format(cal.getTime());
+            if (activeDates.contains(dateStr)) {
+                monthWorkouts++;
+            } else {
+                if (day < todayDay) {
+                    monthRest++;
+                }
+            }
+        }
+
+        // 3. Draw Monthly Summary Pill (Dashed border box)
+        float boxWidth = 320f;
+        float boxHeight = 64f;
+        float boxStartX = (width - boxWidth) / 2f;
+        RectF dashedRect = new RectF(boxStartX, 180f - boxHeight / 2f, boxStartX + boxWidth, 180f + boxHeight / 2f);
         
+        Paint dashedPaint = new Paint();
+        dashedPaint.setAntiAlias(true);
+        dashedPaint.setStyle(Paint.Style.STROKE);
+        dashedPaint.setStrokeWidth(2f);
+        dashedPaint.setColor(isDarkMode ? Color.argb(60, 255, 255, 255) : Color.argb(40, 0, 0, 0));
+        dashedPaint.setPathEffect(new DashPathEffect(new float[]{10f, 10f}, 0));
+        canvas.drawRoundRect(dashedRect, 16f, 16f, dashedPaint);
+
+        // Draw Dumbbell Count (left side of pill)
+        float leftIconStartX = width / 2f - 110f;
+        if (dumbbellBmp != null) {
+            RectF dest = new RectF(leftIconStartX, 180f - 16f, leftIconStartX + 32f, 180f + 16f);
+            canvas.drawBitmap(dumbbellBmp, null, dest, tintPaint);
+        }
+        textPaint.setTextSize(26f);
+        textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+        textPaint.setColor(textPrimaryColor);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        canvas.drawText(String.valueOf(monthWorkouts), width / 2f - 68f, 180f + 9f, textPaint);
+
+        // Draw Vertical Divider Line
+        Paint linePaint = new Paint();
+        linePaint.setAntiAlias(true);
+        linePaint.setColor(borderColor);
+        linePaint.setStrokeWidth(2f);
+        canvas.drawLine(width / 2f, 180f - 16f, width / 2f, 180f + 16f, linePaint);
+
+        // Draw Sofa Count (right side of pill)
+        float rightIconStartX = width / 2f + 30f;
+        if (sofaBmp != null) {
+            RectF dest = new RectF(rightIconStartX, 180f - 16f, rightIconStartX + 32f, 180f + 16f);
+            canvas.drawBitmap(sofaBmp, null, dest, tintPaint);
+        }
+        canvas.drawText(String.valueOf(monthRest), width / 2f + 78f, 180f + 9f, textPaint);
+
+        // 4. Draw Weekday Headers
+        String[] weekdays = {"SAT", "SUN", "MON", "TUE", "WED", "THU", "FRI"};
+        float innerPadding = 20f;
+        float availableWidth = width - (innerPadding * 2);
+        float cellWidth = availableWidth / 7f;
+        float cellHeight = cellWidth;
+        float startY = 250f;
+
+        textPaint.setTextSize(18f);
+        textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+        textPaint.setColor(textSecondaryColor);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setLetterSpacing(0f);
+
+        Paint headerBgPaint = new Paint();
+        headerBgPaint.setAntiAlias(true);
+        headerBgPaint.setColor(gridBgColor);
+
+        for (int i = 0; i < 7; i++) {
+            float x = innerPadding + (i * cellWidth);
+            RectF headerRect = new RectF(x + 4, startY - 20f, x + cellWidth - 4, startY + 20f);
+            canvas.drawRoundRect(headerRect, 8f, 8f, headerBgPaint);
+            canvas.drawText(weekdays[i], x + cellWidth / 2f, startY + 7f, textPaint);
+        }
+
+        // Calendar calculations for start offset and grid height
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        int firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
+        int startOffset = getDayOffset(firstDayOfWeek);
+        int totalCells = startOffset + daysInMonth;
+        int numRows = (int) Math.ceil(totalCells / 7.0);
+        float gridStartY = startY + 30f;
+        float gridHeight = numRows * cellHeight + 10f;
+
+        // 5. Draw the Calendar Grid Card background and border
+        Paint gridPaint = new Paint();
+        gridPaint.setAntiAlias(true);
+        gridPaint.setColor(gridBgColor);
+
+        Paint gridBorderPaint = new Paint();
+        gridBorderPaint.setAntiAlias(true);
+        gridBorderPaint.setStyle(Paint.Style.STROKE);
+        gridBorderPaint.setColor(borderColor);
+        gridBorderPaint.setStrokeWidth(2f);
+
+        RectF gridRect = new RectF(innerPadding - 4, gridStartY, width - innerPadding + 4, gridStartY + gridHeight);
+        canvas.drawRoundRect(gridRect, 24f, 24f, gridPaint);
+        canvas.drawRoundRect(gridRect, 24f, 24f, gridBorderPaint);
+
+        // Day Draw paints
         Paint dayBgPaint = new Paint();
         dayBgPaint.setAntiAlias(true);
+
         Paint dayBorderPaint = new Paint();
         dayBorderPaint.setAntiAlias(true);
         dayBorderPaint.setStyle(Paint.Style.STROKE);
-        
+
+        java.util.Map<String, Bitmap> muscleCache = new java.util.HashMap<>();
+
+        // Trailing previous month padding cells
+        cal.add(Calendar.MONTH, -1);
+        int prevMonthTotalDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        cal.add(Calendar.MONTH, 1); // restore current month
+
+        for (int i = 0; i < startOffset; i++) {
+            int prevDay = prevMonthTotalDays - startOffset + 1 + i;
+            float x = innerPadding + (i * cellWidth);
+            float y = gridStartY + 5f; // first row
+
+            RectF rect = new RectF(x + 4, y + 4, x + cellWidth - 4, y + cellHeight - 4);
+            dayBgPaint.setColor(isDarkMode ? 0x0AFFFFFF : 0x05000000);
+            canvas.drawRoundRect(rect, 12f, 12f, dayBgPaint);
+
+            textPaint.setColor(isDarkMode ? 0x26FFFFFF : 0x26000000); // 15% opacity
+            textPaint.setTextSize(18f);
+            textPaint.setTextAlign(Paint.Align.LEFT);
+            canvas.drawText(String.valueOf(prevDay), x + 16f, y + 30f, textPaint);
+        }
+
+        // Draw active month days
         for (int day = 1; day <= daysInMonth; day++) {
             cal.set(Calendar.DAY_OF_MONTH, day);
             String dateStr = sdf.format(cal.getTime());
             boolean worked = activeDates.contains(dateStr);
             boolean isToday = dateStr.equals(todayStr);
-            
-            JSONArray musclesArray = activeMusclesObj.optJSONArray(dateStr);
-            int musclesCount = (musclesArray != null) ? musclesArray.length() : 0;
-            
+            boolean isPast = cal.getTime().before(new java.util.Date()) && !isToday;
+
             int position = startOffset + day - 1;
             int col = position % 7;
             int row = position / 7;
-            
+
             float x = innerPadding + (col * cellWidth);
-            float y = gridStartY + (row * cellHeight);
-            
-            RectF rect = new RectF(x + 6, y + 6, x + cellWidth - 6, y + cellHeight - 6);
-            
-            // Draw box
+            float y = gridStartY + 5f + (row * cellHeight);
+
+            RectF rect = new RectF(x + 4, y + 4, x + cellWidth - 4, y + cellHeight - 4);
+
+            // Draw Day Background and Border
             if (worked) {
-                dayBgPaint.setColor(Color.parseColor("#e9ecef"));
-                dayBorderPaint.setColor(Color.parseColor("#d0d0d0"));
+                dayBgPaint.setColor(cellBgColor);
+                dayBorderPaint.setColor(cellBorderColor);
                 dayBorderPaint.setStrokeWidth(2f);
             } else {
-                dayBgPaint.setColor(Color.parseColor("#ffffff"));
-                dayBorderPaint.setColor(Color.parseColor("#f0f0f0"));
-                dayBorderPaint.setStrokeWidth(2f);
+                dayBgPaint.setColor(bgColor);
+                dayBorderPaint.setColor(Color.TRANSPARENT);
             }
+
+            canvas.drawRoundRect(rect, 12f, 12f, dayBgPaint);
             
-            canvas.drawRoundRect(rect, 30f, 30f, dayBgPaint);
             if (isToday) {
-                dayBorderPaint.setColor(Color.parseColor("#FF9800")); // orange for today
-                dayBorderPaint.setStrokeWidth(4f);
+                dayBorderPaint.setColor(todayBorderColor);
+                dayBorderPaint.setStrokeWidth(3.5f);
             }
-            canvas.drawRoundRect(rect, 30f, 30f, dayBorderPaint);
-            
+            if (worked || isToday) {
+                canvas.drawRoundRect(rect, 12f, 12f, dayBorderPaint);
+            }
+
             // Draw Day Number
-            if (worked) {
-                textPaint.setColor(Color.parseColor("#555555"));
-                textPaint.setTextSize(26f);
-                canvas.drawText(String.valueOf(day), x + 24f, y + 36f, textPaint);
+            textPaint.setTextSize(18f);
+            textPaint.setTextAlign(Paint.Align.LEFT);
+            if (isToday) {
+                textPaint.setColor(todayBorderColor);
+                textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+            } else if (worked) {
+                textPaint.setColor(textPrimaryColor);
+                textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
             } else {
-                textPaint.setColor(Color.parseColor("#aaaaaa"));
-                textPaint.setTextSize(36f);
-                canvas.drawText(String.valueOf(day), x + (cellWidth / 2f), y + (cellHeight / 2f) + 12f, textPaint);
+                textPaint.setColor(isPast ? textSecondaryColor : textPrimaryColor);
+                textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.NORMAL));
             }
-            
-            // Draw Muscle Dots if worked (exactly like HistoryPage)
-            if (worked && musclesCount > 0) {
-                float dotRadius = 5f;
-                float dotPadding = 4f;
-                int dotMaxCols = 3;
-                
-                int dotCols = Math.min(musclesCount, dotMaxCols);
-                float dotsTotalWidth = dotCols * (dotRadius * 2 + dotPadding) - dotPadding;
-                float dotStartX = x + (cellWidth / 2f) - (dotsTotalWidth / 2f) + dotRadius;
-                float dotStartY = y + (cellHeight / 2f) + 16f;
-                
-                for (int m = 0; m < musclesCount; m++) {
-                    int dotRow = m / dotMaxCols;
-                    int dotCol = m % dotMaxCols;
+            canvas.drawText(String.valueOf(day), x + 16f, y + 30f, textPaint);
+
+            // Draw Inside Cell (Icons)
+            float centerX = x + cellWidth / 2f;
+            float centerY = y + cellHeight / 2f + 10f;
+            float iconSize = 44f;
+
+            if (worked) {
+                JSONArray muscles = activeMusclesObj.optJSONArray(dateStr);
+                int musclesCount = (muscles != null) ? muscles.length() : 0;
+                if (musclesCount > 0) {
+                    String firstMuscle = muscles.optString(0);
+                    String assetPath = "assets/muscles/" + ("arms".equals(firstMuscle) ? "biceps" : firstMuscle) + ".png";
                     
-                    float dotX = dotStartX + (dotCol * (dotRadius * 2 + dotPadding));
-                    float dotY = dotStartY + (dotRow * (dotRadius * 2 + dotPadding));
+                    Bitmap muscleBmp = muscleCache.get(assetPath);
+                    if (muscleBmp == null) {
+                        muscleBmp = loadAssetBitmap(context, assetPath);
+                        if (muscleBmp != null) {
+                            muscleCache.put(assetPath, muscleBmp);
+                        }
+                    }
                     
-                    canvas.drawCircle(dotX, dotY, dotRadius, accentPaint);
+                    if (muscleBmp != null) {
+                        RectF dest = new RectF(centerX - iconSize / 2f, centerY - iconSize / 2f, centerX + iconSize / 2f, centerY + iconSize / 2f);
+                        canvas.drawBitmap(muscleBmp, null, dest, normalPaint);
+                    }
+
+                    // Multiplier text if more than 1 muscle
+                    if (musclesCount > 1) {
+                        textPaint.setTextSize(16f);
+                        textPaint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+                        textPaint.setColor(accentPaint.getColor());
+                        textPaint.setTextAlign(Paint.Align.LEFT);
+                        canvas.drawText("x" + musclesCount, centerX + iconSize / 2f + 2f, centerY + 6f, textPaint);
+                    }
+                }
+            } else if (isPast) {
+                // Sofa icon for rest days
+                if (sofaBmp != null) {
+                    RectF dest = new RectF(centerX - iconSize / 2f, centerY - iconSize / 2f, centerX + iconSize / 2f, centerY + iconSize / 2f);
+                    canvas.drawBitmap(sofaBmp, null, dest, tintPaint);
                 }
             }
         }
 
+        // Draw next month leading cells
+        int remainingCells = (7 - (totalCells % 7)) % 7;
+        for (int i = 1; i <= remainingCells; i++) {
+            int col = (startOffset + daysInMonth + i - 1) % 7;
+            int row = (startOffset + daysInMonth + i - 1) / 7;
+
+            float x = innerPadding + (col * cellWidth);
+            float y = gridStartY + 5f + (row * cellHeight);
+
+            RectF rect = new RectF(x + 4, y + 4, x + cellWidth - 4, y + cellHeight - 4);
+            dayBgPaint.setColor(isDarkMode ? 0x0AFFFFFF : 0x05000000);
+            canvas.drawRoundRect(rect, 12f, 12f, dayBgPaint);
+
+            textPaint.setColor(isDarkMode ? 0x26FFFFFF : 0x26000000);
+            textPaint.setTextSize(18f);
+            textPaint.setTextAlign(Paint.Align.LEFT);
+            canvas.drawText(String.valueOf(i), x + 16f, y + 30f, textPaint);
+        }
+
         return bitmap;
+    }
+
+    private Bitmap loadAssetBitmap(Context context, String path) {
+        try {
+            InputStream is = context.getAssets().open("public/" + path);
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            is.close();
+            return bitmap;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private int getDayOffset(int dayOfWeek) {
+        switch (dayOfWeek) {
+            case Calendar.SATURDAY: return 0;
+            case Calendar.SUNDAY: return 1;
+            case Calendar.MONDAY: return 2;
+            case Calendar.TUESDAY: return 3;
+            case Calendar.WEDNESDAY: return 4;
+            case Calendar.THURSDAY: return 5;
+            case Calendar.FRIDAY: return 6;
+            default: return 0;
+        }
     }
 
     private void addUniqueString(JSONArray array, String value) {

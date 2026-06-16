@@ -709,7 +709,19 @@ export function useGymTracker() {
   const deleteWorkout = useCallback((id: string) => {
     setState(prev => {
       const logToDelete = prev.logs.find(l => l.id === id);
-      if (logToDelete) setLastDeletedLog(logToDelete);
+      if (logToDelete) {
+        setLastDeletedLog(logToDelete);
+        
+        // Reset session and delete draft if today's workout is deleted
+        const today = getLocalDateStr();
+        if (isLogFromLocalDate(logToDelete.date, today)) {
+          setSessionStartTimeState(Date.now());
+          localStorage.removeItem('gymlog_active_session');
+          if ((window as any).AndroidStorage) {
+            (window as any).AndroidStorage.removeItem('gymlog_active_session');
+          }
+        }
+      }
       
       const newLogs = prev.logs.filter(l => l.id !== id);
       const newPRs = syncPRsFromLogs(newLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
