@@ -273,7 +273,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
       }
     }
-  }, [phase, selectedMuscle, activeExercises, loggedData, hasStartedSession, elapsedSeconds]);
+  }, [phase, selectedMuscle, activeExercises, loggedData, hasStartedSession]);
 
   // Handle timer updates
   useEffect(() => {

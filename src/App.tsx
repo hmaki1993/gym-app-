@@ -48,7 +48,7 @@ export default function App() {
   useEffect(() => {
     if (tracker.settings.userName) {
       const hasAsked = localStorage.getItem('gymlog_overlay_requested');
-      const isAndroid = window.Capacitor?.getPlatform() === 'android' || !!(window as any).AndroidStorage;
+      const isAndroid = (window as any).Capacitor?.getPlatform() === 'android' || !!(window as any).AndroidStorage;
       if (isAndroid && !hasAsked) {
         // Wait a few seconds before popping the premium card
         const timer = setTimeout(async () => {
