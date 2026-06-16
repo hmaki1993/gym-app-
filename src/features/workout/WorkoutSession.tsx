@@ -155,7 +155,10 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
       if (finalDraft) {
         const todayStr = tracker.getLocalDateStr();
-        if (finalDraft.date === todayStr) {
+        const draftAgeMs = Date.now() - (finalDraft.sessionStartTime || Date.now());
+        const isDraftValid = finalDraft.date === todayStr && draftAgeMs < 16 * 60 * 60 * 1000;
+        
+        if (isDraftValid) {
           return {
             initialPhase: finalDraft.phase || 'logging',
             initialMuscle: finalDraft.selectedMuscle || bestMuscle,
