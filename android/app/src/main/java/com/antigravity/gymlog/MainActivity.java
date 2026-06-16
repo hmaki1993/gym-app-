@@ -18,31 +18,9 @@ public class MainActivity extends BridgeActivity {
         // Inject shared storage interface immediately after Capacitor initializes WebView
         getBridge().getWebView().addJavascriptInterface(new StorageInterface(this), "AndroidStorage");
 
-        // Customize splash screen exit animation (Rocket Launch Effect)
+        // Remove exit animation to show app instantly (Rocket Launch Speed)
         splashScreen.setOnExitAnimationListener(splashScreenViewProvider -> {
-            final android.view.View splashScreenView = splashScreenViewProvider.getView();
-            final android.view.View iconView = splashScreenViewProvider.getIconView();
-
-            // Background slide up & fade out (Instant Majestic Rocket Launch)
-            splashScreenView.animate()
-                .alpha(0f)
-                .translationY(-splashScreenView.getHeight() * 0.25f)
-                .setDuration(400)
-                .setInterpolator(new AnticipateInterpolator(1.2f))
-                .withEndAction(splashScreenViewProvider::remove)
-                .start();
-
-            // Icon shoots up like a rocket, scales up, and fades out
-            if (iconView != null) {
-                iconView.animate()
-                    .scaleX(2.2f)
-                    .scaleY(2.2f)
-                    .alpha(0f)
-                    .translationY(-splashScreenView.getHeight() * 0.7f)
-                    .setDuration(400)
-                    .setInterpolator(new AccelerateInterpolator())
-                    .start();
-            }
+            splashScreenViewProvider.remove();
         });
 
         android.content.IntentFilter filter = new android.content.IntentFilter("com.antigravity.gymlog.SYNC_STATE");
