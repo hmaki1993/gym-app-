@@ -92,13 +92,60 @@ function loadState(): GymState {
   }
 }
 
+function syncActiveMusclesToNative(logs: any[], exerciseToMuscle: any) {
+  try {
+    const activeMuscles: Record<string, string[]> = {};
+    logs.forEach(log => {
+      const day = log.date.split('T')[0];
+      if (!activeMuscles[day]) activeMuscles[day] = [];
+      const involvedGroups = new Set<string>();
+      if (log.exercises) {
+        log.exercises.forEach((ex: any) => {
+          const group = ex.muscleGroup || exerciseToMuscle[ex.name] || log.muscleGroup;
+          if (group) involvedGroups.add(group);
+        });
+      } else {
+        if (log.muscleGroup) involvedGroups.add(log.muscleGroup);
+      }
+      involvedGroups.forEach(g => {
+        if (!activeMuscles[day].includes(g)) {
+          activeMuscles[day].push(g);
+        }
+      });
+    });
+
+    if ((window as any).AndroidStorage) {
+      (window as any).AndroidStorage.setItem('gymlog_active_muscles', JSON.stringify(activeMuscles));
+    }
+  } catch {}
+}
+
+let lastSavedStr = "";
+
 function saveState(state: GymState) {
   try {
     const raw = JSON.stringify(state);
+    if (raw === lastSavedStr) return; // Prevent infinite sync loops
+    lastSavedStr = raw;
     localStorage.setItem(STORAGE_KEY, raw);
+    
+    // Save to AndroidStorage FIRST before any sync calls
     if ((window as any).AndroidStorage) {
       (window as any).AndroidStorage.setItem(STORAGE_KEY, raw);
     }
+
+    // Compute active muscles per day for the Android Widget
+    const exerciseToMuscle: Record<string, string> = {};
+    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+    });
+    if (state.customExercises) {
+      Object.entries(state.customExercises).forEach(([group, exercises]) => {
+        exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+      });
+    }
+
+    syncActiveMusclesToNative(state.logs, exerciseToMuscle);
   } catch { /* quota */ }
 }
 
@@ -202,6 +249,22 @@ export function useGymTracker() {
     root.style.setProperty('--accent-color-alpha', `${displayAccent}25`);
     root.style.setProperty('--accent-color-alpha-heavy', `${displayAccent}50`);
   }, [state]);
+
+  useEffect(() => {
+    const handleSync = () => {
+      // Only reload from storage if the data actually changed externally
+      // (e.g., from floating widget or another webview).
+      // Skip if we just saved - our local state is already the truth.
+      const raw = (window as any).AndroidStorage ? (window as any).AndroidStorage.getItem(STORAGE_KEY) : localStorage.getItem(STORAGE_KEY);
+      if (raw && raw !== lastSavedStr) {
+        const newState = loadState();
+        lastSavedStr = raw; // Update to prevent re-save loop
+        setState(newState);
+      }
+    };
+    window.addEventListener('gymlog_sync', handleSync);
+    return () => window.removeEventListener('gymlog_sync', handleSync);
+  }, []);
 
 
 
@@ -554,28 +617,58 @@ export function useGymTracker() {
       const sessionDate = new Date(start);
       const today = getLocalDateStr(sessionDate);
 
-      // ALWAYS create a new workout log (no more daily merging to prevent data loss)
-      const durationSeconds = elapsedSeconds ?? Math.floor((now - start) / 1000);
-      
       const filteredExercises = log.exercises.filter(ex => ex.sets && ex.sets.length > 0);
       
       if (filteredExercises.length === 0) {
         return prev; // Do not save if there are no exercises with sets
       }
-      
-      const newLog: WorkoutLog = {
-        ...log,
-        exercises: filteredExercises,
-        date: today, // Use local date string YYYY-MM-DD
-        id: `wl_${now}`,
-        startTime: sessionDate.toISOString(),
-        endTime: new Date(now).toISOString(),
-        durationMinutes: Math.round(durationSeconds / 60),
-        durationSeconds,
-      };
-      
-      const updatedLogs = [newLog, ...prev.logs];
 
+      const existingLogIndex = prev.logs.findIndex(l => isLogFromLocalDate(l.date, today));
+      let updatedLogs;
+      let targetLog: WorkoutLog;
+
+      if (existingLogIndex !== -1) {
+        // MERGE: Update the existing log for the day the session started
+        updatedLogs = [...prev.logs];
+        const oldLog = updatedLogs[existingLogIndex];
+
+        const mergedExercises = [...oldLog.exercises];
+        filteredExercises.forEach(newEx => {
+          const exIdx = mergedExercises.findIndex(e => e.name === newEx.name);
+          if (exIdx !== -1) {
+            // Overwrite sets with the new list of sets
+            mergedExercises[exIdx] = newEx;
+          } else {
+            mergedExercises.push(newEx);
+          }
+        });
+
+        const finalDurationSeconds = elapsedSeconds ?? ((oldLog.durationSeconds || (oldLog.durationMinutes * 60)) + Math.floor((now - start) / 1000));
+
+        targetLog = {
+          ...oldLog,
+          exercises: mergedExercises,
+          endTime: new Date(now).toISOString(),
+          durationMinutes: Math.round(finalDurationSeconds / 60),
+          durationSeconds: finalDurationSeconds,
+        };
+        updatedLogs[existingLogIndex] = targetLog;
+      } else {
+        // CREATE: First workout of the session date
+        const durationSeconds = elapsedSeconds ?? Math.floor((now - start) / 1000);
+        targetLog = {
+          ...log,
+          exercises: filteredExercises,
+          date: today, // Use local date string YYYY-MM-DD
+          id: `wl_${now}`,
+          startTime: sessionDate.toISOString(),
+          endTime: new Date(now).toISOString(),
+          durationMinutes: Math.round(durationSeconds / 60),
+          durationSeconds,
+        };
+        updatedLogs = [targetLog, ...prev.logs];
+      }
+      
       const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
       const newState = { ...prev, logs: updatedLogs, prs: updatedPRs };
 
@@ -584,7 +677,7 @@ export function useGymTracker() {
         fetch(newState.settings.n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'workout', workout: newLog, user: newState.settings.userName })
+          body: JSON.stringify({ type: 'workout', workout: targetLog, user: newState.settings.userName })
         }).catch(err => console.warn('n8n Webhook failed:', err));
       }
 

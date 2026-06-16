@@ -41,6 +41,7 @@ export default function App() {
   const [showWorkout, setShowWorkout] = useState(false);
   
   const isFloating = window.location.search.includes('floating=true');
+  const floatingMode = new URLSearchParams(window.location.search).get('mode');
 
   const appRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -321,11 +322,15 @@ export default function App() {
     return (
       <div ref={appRef} dir={isRtl ? 'rtl' : 'ltr'}
         style={{ width: '100vw', height: '100dvh', background: 'var(--primary-bg)', overflow: 'hidden' }}>
-        <WorkoutSession
-          tracker={tracker}
-          onClose={closeNativeWidget}
-          onSaved={closeNativeWidget}
-        />
+        {floatingMode === 'history' ? (
+          <HistoryPage tracker={tracker} isFloating={true} onClose={closeNativeWidget} />
+        ) : (
+          <WorkoutSession
+            tracker={tracker}
+            onClose={closeNativeWidget}
+            onSaved={closeNativeWidget}
+          />
+        )}
       </div>
     );
   }
@@ -370,7 +375,7 @@ export default function App() {
             {tab === 'home' && (
               <Dashboard
                 tracker={tracker}
-                onStartWorkout={() => { setShowWorkout(true); tracker.resetSessionTimer(); }}
+                onStartWorkout={() => { setShowWorkout(true); }}
                 onTabSwitch={switchTab}
               />
             )}

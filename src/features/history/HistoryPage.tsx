@@ -9,6 +9,8 @@ import { TransparentImage } from '../workout/components/TransparentImage';
 
 interface HistoryPageProps {
   tracker: ReturnType<typeof useGymTracker>;
+  isFloating?: boolean;
+  onClose?: () => void;
 }
 
 function formatDate(iso: string, lang: 'ar' | 'en') {
@@ -27,7 +29,7 @@ function formatDuration(mins: number, t: (k: any) => string) {
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
-export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
+export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, onClose }) => {
   const lang = tracker.settings.language;
   const isLight = tracker.settings.themeMode === 'light';
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
@@ -187,7 +189,13 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingBottom: '120px' }}>
+    <div ref={containerRef} style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '5px', 
+      paddingBottom: '120px',
+      ...(isFloating ? { overflowY: 'auto', height: '100dvh' } : {})
+    }}>
       <style>{`
         @keyframes premiumPopIn {
           0% {
@@ -203,6 +211,24 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
           animation: premiumPopIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
       `}</style>
+      
+      {/* Floating Close Button */}
+      {isFloating && onClose && (
+        <div style={{ position: 'sticky', top: '10px', right: '10px', zIndex: 100, display: 'flex', justifyContent: 'flex-end', padding: '0 10px' }}>
+          <button 
+            onClick={onClose}
+            style={{ 
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: 'none', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', flexShrink: 0
+            }}
+          >
+            <img src="/assets/close-custom.png" alt="Close" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
+          </button>
+        </div>
+      )}
+
       {/* Weightless Elite Calendar - Compact */}
       <div style={{ 
         padding: '5px 0 15px', 
@@ -315,10 +341,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
             <div key={`${d}-${_idx}`} style={{ 
               fontSize: '11px', 
               fontWeight: '950', 
-              color: 'var(--text-secondary)', 
-              opacity: 0.9, 
+              color: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'var(--text-secondary)', 
               letterSpacing: '1px',
-              background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#f8f9fa',
+              background: tracker.settings.themeMode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : '#f8f9fa',
               padding: '12px 0',
               width: '100%',
               display: 'flex',
@@ -416,7 +441,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker }) => {
                     justifyContent: 'center',
                     fontSize: 'clamp(14px, 3.8vw, 16px)', 
                     fontWeight: active ? '950' : (isToday ? '950' : '800'),
-                    color: active ? 'var(--accent-color)' : (isToday ? '#E67E22' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.45)' : 'rgba(var(--theme-rgb), 0.7)'))),
+                    color: active ? 'var(--accent-color)' : (isToday ? '#E67E22' : (worked ? 'var(--text-primary)' : (isPast ? 'rgba(var(--theme-rgb), 0.6)' : 'rgba(var(--theme-rgb), 0.85)'))),
                     cursor: 'pointer', 
                     position: 'relative',
                     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',

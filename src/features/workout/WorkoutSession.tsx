@@ -11,6 +11,7 @@ import { ExercisePicker } from './components/ExercisePicker';
 import { SessionLogger } from './components/SessionLogger';
 import { registerPlugin } from '@capacitor/core';
 import { useWidgetSync } from '../../hooks/useWidgetSync';
+import { PictureInPicture2, Crown } from 'lucide-react';
 
 const FloatingWidget = registerPlugin<any>('FloatingWidget');
 
@@ -165,7 +166,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             initialActiveExercises: finalDraft.activeExercises || [],
             initialLoggedData: finalDraft.loggedData || {},
             initialStarted: finalDraft.hasStartedSession || false,
-            initialBaseSeconds: finalDraft.elapsedSeconds || 0,
+            initialBaseSeconds: finalDraft.baseSeconds || finalDraft.elapsedSeconds || 0,
             initialStartTime: finalDraft.sessionStartTime || Date.now()
           };
         }
@@ -224,13 +225,13 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [showPremiumOverlayModal, setShowPremiumOverlayModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(initialBaseSeconds);
   const sessionStartTimeRef = useRef<number>(initialStartTime);
   const baseSecondsRef = useRef<number>(initialBaseSeconds);
-  const savedElapsedRef = useRef<number | null>(null);
 
   // Sync state to native for the widget
   const activeExerciseName = openExercise || (activeExercises.length > 0 ? activeExercises[activeExercises.length - 1] : null);
@@ -251,7 +252,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   // Autosave current session state to localStorage
   useEffect(() => {
-    if (phase === 'logging' && hasStartedSession) {
+    if (hasStartedSession) {
       const draft = {
         date: tracker.getLocalDateStr(),
         phase,
@@ -259,7 +260,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         activeExercises,
         loggedData,
         hasStartedSession,
-        elapsedSeconds,
+        baseSeconds: baseSecondsRef.current,
         sessionStartTime: sessionStartTimeRef.current
       };
       const raw = JSON.stringify(draft);
@@ -295,6 +296,35 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     ].filter(p => p !== null);
     return parts.join(':');
   };
+  // Handle cross-webview sync
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        let draftRaw = localStorage.getItem('gymlog_active_session');
+        if (!draftRaw && (window as any).AndroidStorage) {
+          draftRaw = (window as any).AndroidStorage.getItem('gymlog_active_session');
+        }
+        if (!draftRaw) return;
+        const finalDraft = JSON.parse(draftRaw);
+        if (!finalDraft) return;
+
+        if (finalDraft.phase && finalDraft.phase !== phase) setPhase(finalDraft.phase as 'exercises' | 'logging');
+        if (finalDraft.hasStartedSession !== undefined && finalDraft.hasStartedSession !== hasStartedSession) {
+          setHasStartedSession(finalDraft.hasStartedSession);
+        }
+        
+        if (finalDraft.sessionStartTime) sessionStartTimeRef.current = finalDraft.sessionStartTime;
+        if (typeof finalDraft.baseSeconds === 'number') baseSecondsRef.current = finalDraft.baseSeconds;
+
+        if (finalDraft.activeExercises) setActiveExercises(finalDraft.activeExercises);
+        if (finalDraft.loggedData) setLoggedData(finalDraft.loggedData);
+        if (finalDraft.selectedMuscle) setSelectedMuscle(finalDraft.selectedMuscle as MuscleGroup);
+      } catch {}
+    };
+
+    window.addEventListener('gymlog_sync', handleSync);
+    return () => window.removeEventListener('gymlog_sync', handleSync);
+  }, [phase, hasStartedSession]);
 
   const prevOpenExRef = useRef<string | null>(null);
   useEffect(() => {
@@ -736,7 +766,27 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           </div>
 
           <button 
-            onClick={onClose} 
+            onClick={() => {
+              // Save draft before closing if there's an active session
+              if (hasStartedSession) {
+                const draft = {
+                  date: tracker.getLocalDateStr(),
+                  phase: phase,
+                  selectedMuscle,
+                  activeExercises,
+                  loggedData,
+                  hasStartedSession: true,
+                  baseSeconds: baseSecondsRef.current,
+                  sessionStartTime: sessionStartTimeRef.current
+                };
+                const raw = JSON.stringify(draft);
+                localStorage.setItem('gymlog_active_session', raw);
+                if ((window as any).AndroidStorage) {
+                  (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
+                }
+              }
+              onClose();
+            }} 
             style={{ 
               position: 'absolute',
               top: '50%',
@@ -830,7 +880,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                 onClick={() => {
                   const now = Date.now();
                   const currentSessionSeconds = Math.floor((now - sessionStartTimeRef.current) / 1000);
-                  savedElapsedRef.current = baseSecondsRef.current + currentSessionSeconds;
+                  baseSecondsRef.current += currentSessionSeconds;
                   setPhase('exercises');
                 }} 
                  style={{ 
@@ -847,9 +897,12 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               <button 
                 onClick={async () => {
                   try {
-                    await FloatingWidget.requestOverlayPermission();
-                    // Let the user know they can use the widget
-                    alert('Overlay permission requested! You can now use the home screen widget to launch the floating card.');
+                    const { granted } = await FloatingWidget.checkOverlayPermission();
+                    if (granted) {
+                      alert('الكارت الطاير شغال! تقدر تفتحه من الـ Widget اللي على الشاشة الرئيسية.');
+                    } else {
+                      setShowPremiumOverlayModal(true);
+                    }
                   } catch (e) {
                     console.log('Floating widget not supported on this platform', e);
                   }
@@ -862,11 +915,36 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   transition: 'all 0.2s ease'
                 }}
               >
-                <img src="/assets/floating-custom.png" alt="Overlay" style={{ width: '24px', height: '24px', objectFit: 'contain', filter: 'hue-rotate(180deg)' }} />
+                <PictureInPicture2 size={24} color="var(--accent-color)" />
               </button>
               
               <button 
-                onClick={onClose} 
+                onClick={() => {
+                  // Save elapsed time before closing so draft has correct baseSeconds
+                  if (phase === 'logging' && hasStartedSession) {
+                    const now = Date.now();
+                    const currentSessionSeconds = Math.floor((now - sessionStartTimeRef.current) / 1000);
+                    baseSecondsRef.current += currentSessionSeconds;
+                    sessionStartTimeRef.current = now;
+                    // Force autosave with updated baseSeconds
+                    const draft = {
+                      date: tracker.getLocalDateStr(),
+                      phase: 'exercises',
+                      selectedMuscle,
+                      activeExercises,
+                      loggedData,
+                      hasStartedSession: true,
+                      baseSeconds: baseSecondsRef.current,
+                      sessionStartTime: sessionStartTimeRef.current
+                    };
+                    const raw = JSON.stringify(draft);
+                    localStorage.setItem('gymlog_active_session', raw);
+                    if ((window as any).AndroidStorage) {
+                      (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
+                    }
+                  }
+                  onClose();
+                }} 
                 style={{ 
                   width: '40px', height: '40px', borderRadius: '50%', 
                   background: 'none', border: 'none', padding: 0,
@@ -902,7 +980,30 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               tracker={tracker}
               t={t as any}
             />
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'max(12px, env(safe-area-inset-bottom))', marginTop: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 'max(12px, env(safe-area-inset-bottom))', marginTop: '8px', gap: '8px' }}>
+                {/* Show frozen timer when paused */}
+                {hasStartedSession && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px',
+                    padding: '6px 16px',
+                    border: '1.5px dashed rgba(var(--theme-rgb), 0.2)',
+                    borderRadius: '10px',
+                    opacity: 0.7
+                  }}>
+                    <img src="/assets/clock-custom.png" alt="timer" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+                    <span style={{ 
+                      fontFamily: "var(--heading-font)", 
+                      fontSize: '16px', 
+                      fontWeight: '900', 
+                      color: 'var(--text-primary)',
+                      fontVariantNumeric: 'tabular-nums'
+                    }}>
+                      {formatElapsed(baseSecondsRef.current)} ⏸
+                    </span>
+                  </div>
+                )}
                <img
                  src={hasStartedSession ? "/assets/button-resume-rect.png" : "/assets/button-start-rect.png"}
                  alt={hasStartedSession ? "Resume Workout" : "Start Workout"}
@@ -913,6 +1014,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                        sessionStartTimeRef.current = Date.now();
                        setElapsedSeconds(0);
                        tracker.resetSessionTimer();
+                     } else {
+                       sessionStartTimeRef.current = Date.now();
                      }
                      setHasStartedSession(true);
                      setPhase('logging');
@@ -950,6 +1053,46 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
             draggingIndex={draggingIndex}
             customExercises={tracker.customExercises}
           />
+        )}
+
+        {showPremiumOverlayModal && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: '20px'
+          }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '24px', padding: '24px',
+              maxWidth: '340px', width: '100%',
+              textAlign: 'center', position: 'relative'
+            }}>
+              <button onClick={() => setShowPremiumOverlayModal(false)}
+                style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#fff', fontSize: '20px' }}>
+                ✕
+              </button>
+              <Crown size={48} color="#FFD700" style={{ margin: '0 auto 16px' }} />
+              <h3 style={{ color: '#FFD700', margin: '0 0 8px', fontSize: '22px' }}>GymLog Premium</h3>
+              <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px' }}>
+                عشان تفعل ميزة الكارت الطاير (Floating Widget) وتقدر تتابع تمرينك وانت برة الأبلكيشن، محتاجين صلاحية الـ Overlay. الميزة دي حصرية في النسخة الـ Premium!
+              </p>
+              <button onClick={async () => {
+                setShowPremiumOverlayModal(false);
+                await FloatingWidget.requestOverlayPermission();
+              }}
+                style={{
+                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                  color: '#000', border: 'none', borderRadius: '12px',
+                  padding: '14px 24px', fontSize: '16px', fontWeight: 'bold',
+                  width: '100%', cursor: 'pointer'
+                }}>
+                تفعيل الان
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
