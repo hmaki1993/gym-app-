@@ -195,20 +195,21 @@ function isLogFromLocalDate(logDate: string, localDateStr: string): boolean {
 const KG_TO_LBS = 2.20462;
 const LBS_TO_KG = 0.453592;
 
-export function convertWeight(weight: number, from: WeightUnit | undefined, to: WeightUnit): number {
-  if (!from || from === to) return weight;
+export function convertWeight(weight: number | string, from: WeightUnit | undefined, to: WeightUnit): number {
+  const numWeight = Number(weight) || 0;
+  if (!from || from === to) return numWeight;
   
   // Convert from whatever to kg first
-  let inKg = weight;
-  if (from === 'lbs') inKg = weight * LBS_TO_KG;
-  else if (from === 'balata') inKg = weight * 20; // assuming 20kg per plate
+  let inKg = numWeight;
+  if (from === 'lbs') inKg = numWeight * LBS_TO_KG;
+  else if (from === 'balata') inKg = numWeight * 20; // assuming 20kg per plate
 
   // Convert from kg to target
   if (to === 'kg') return inKg;
   if (to === 'lbs') return inKg * KG_TO_LBS;
   if (to === 'balata') return inKg / 20;
   
-  return weight;
+  return numWeight;
 }
 
 export function useGymTracker() {
@@ -447,13 +448,18 @@ export function useGymTracker() {
   }, []);
 
   const setExerciseAlias = useCallback((customName: string, standardName: string) => {
-    setState(prev => ({
-      ...prev,
-      exerciseAliases: {
-        ...(prev.exerciseAliases || {}),
-        [customName]: standardName,
+    setState(prev => {
+      const nextAliases = { ...(prev.exerciseAliases || {}) };
+      if (!standardName) {
+        delete nextAliases[customName];
+      } else {
+        nextAliases[customName] = standardName;
       }
-    }));
+      return {
+        ...prev,
+        exerciseAliases: nextAliases
+      };
+    });
   }, []);
 
   const getLastSession = useCallback((exerciseName: string): { sets: SetLog[]; date: string; bestSet: SetLog } | null => {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import { registerPlugin } from '@capacitor/core';
 
@@ -54,9 +54,14 @@ export function useWidgetSync(
   accentColor: string = '#00E676',
   activeExercises: string[] = []
 ) {
-  const stateStr = JSON.stringify({ isActive, activeExercise, completedSets, muscleGroup, loggedData, historyDates, isFinished, accentColor, activeExercises });
+  const lastStateStrRef = useRef<string>('');
 
   useEffect(() => {
-    syncWidgetState(JSON.parse(stateStr));
-  }, [stateStr]);
+    const stateStr = JSON.stringify({ isActive, activeExercise, completedSets, muscleGroup, loggedData, historyDates, isFinished, accentColor, activeExercises });
+    
+    if (stateStr !== lastStateStrRef.current) {
+      lastStateStrRef.current = stateStr;
+      syncWidgetState(JSON.parse(stateStr));
+    }
+  }, [isActive, activeExercise, completedSets, muscleGroup, loggedData, historyDates, isFinished, accentColor, activeExercises]);
 }

@@ -83,11 +83,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
     };
   }, []);
 
-  const hasWorkoutToday = tracker.logs.some(log => {
-    const logDate = new Date(log.date);
-    const logLocalDate = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
-    return logLocalDate === todayStr || log.date.startsWith(todayStr);
-  });
+  const hasWorkoutToday = React.useMemo(() => {
+    return tracker.logs.some(log => log.date.startsWith(todayStr));
+  }, [tracker.logs, todayStr]);
 
   return (
     <div ref={containerRef} style={{
@@ -260,9 +258,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                   {recentGroupKeys.map(g => {
                     const mg = MUSCLE_GROUPS.find(m => m.key === g);
                     return mg?.icon ? (
-                      <TransparentImage 
-                        key={g} src={mg.icon} alt="" width={48} height={48} threshold={45}
-                        style={{ filter: 'none' }}
+                      <img 
+                        key={g} src={mg.icon} alt="" 
+                        style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'none' }}
                       />
                     ) : <span key={g} style={{ fontSize: '24px' }}>💪</span>;
                   })}

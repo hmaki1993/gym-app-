@@ -479,11 +479,11 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
       <div style={{ flexShrink: 0, marginTop: 'auto', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', paddingTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%', background: 'var(--primary-bg)', borderTop: 'none' }}>
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px 0 0 0' }}>
           <img
-            src="/assets/button-done-rect.png"
+            src="/assets/custom-btn-done.png"
             alt="Save Sets"
             onClick={() => !saving && isDirtyRef && !sets.every(s => !Number(s.reps)) && handleDone()}
             style={{
-              height: '55px',
+              height: '48px',
               width: 'auto',
               objectFit: 'contain',
               cursor: saving || !isDirtyRef || sets.every(s => !Number(s.reps)) ? 'default' : 'pointer',

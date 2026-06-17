@@ -1040,7 +1040,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   </div>
                 )}
                <img
-                 src={hasStartedSession ? "/assets/button-resume-rect.png" : "/assets/button-start-rect.png"}
+                 src={hasStartedSession ? "/assets/custom-btn-resume.png" : "/assets/custom-btn-start.png"}
                  alt={hasStartedSession ? "Resume Workout" : "Start Workout"}
                  onClick={() => {
                    if (activeExercises.length > 0) {
@@ -1057,7 +1057,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                    }
                  }}
                  style={{
-                   height: hasStartedSession ? '55px' : '47px',
+                   height: '48px',
                    width: 'auto',
                    objectFit: 'contain',
                    cursor: activeExercises.length > 0 ? 'pointer' : 'default',

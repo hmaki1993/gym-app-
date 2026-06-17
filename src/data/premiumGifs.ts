@@ -283,9 +283,11 @@ export const PREMIUM_GIFS: Record<string, string> = { ...FITNESS_PROGRAMER_GIFS,
 export function getExerciseGifUrl(name: string, customAliases?: Record<string, string>): string | null {
   const cleanName = name.trim().toLowerCase();
   
-  if (customAliases && customAliases[cleanName]) {
-    // If we have an alias map, we recursively call getExerciseGifUrl with the standard name
-    return getExerciseGifUrl(customAliases[cleanName]);
+  if (customAliases) {
+    const aliasKey = Object.keys(customAliases).find(k => k.trim().toLowerCase() === cleanName);
+    if (aliasKey && customAliases[aliasKey]) {
+      return getExerciseGifUrl(customAliases[aliasKey]);
+    }
   }
 
   // Resolve alias first to make sure variations like "incline bench" or "benchpress" map correctly

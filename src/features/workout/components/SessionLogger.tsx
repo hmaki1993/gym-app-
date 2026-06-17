@@ -139,11 +139,11 @@ export function SessionLogger({
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 max(24px, env(safe-area-inset-bottom)) 0', marginTop: '16px' }}>
         <img
-          src="/assets/button-stop-rect.png"
+          src="/assets/custom-btn-finish.png"
           alt="Finish Session"
           onClick={onSave}
           style={{
-            height: '47px',
+            height: '48px',
             width: 'auto',
             objectFit: 'contain',
             cursor: 'pointer',
