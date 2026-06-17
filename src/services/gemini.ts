@@ -18,7 +18,6 @@ const rotateKey = () => {
   const keys = getKeys();
   if (keys.length > 1) {
     currentKeyIndex = (currentKeyIndex + 1) % keys.length;
-    console.log(`🔄 Rotating to API Key #${currentKeyIndex + 1}`);
   }
 };
 
@@ -27,7 +26,7 @@ const getActiveKey = () => {
   return keys[currentKeyIndex] || keys[0] || '';
 };
 
-console.log('Gemini API Keys found:', getKeys().length);
+// API Keys loaded quietly
 
 /**
  * Extract and parse JSON from AI response text.
@@ -69,7 +68,6 @@ async function geminiRequest(
     if (!key) throw new Error('API Key missing. Add a key in the .env file (VITE_GEMINI_KEY).');
 
     const fullModelName = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
-    console.log(`📡 Trying Model: ${fullModelName} with Key: ${key.substring(0, 6)}...`);
 
     try {
       const response = await fetch(

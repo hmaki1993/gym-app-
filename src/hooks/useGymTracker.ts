@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog, WeightUnit } from '../types';
 import { THEME_COLORS, DEFAULT_EXERCISES } from '../data/exercises';
 
@@ -229,8 +229,14 @@ export function useGymTracker() {
     return Date.now();
   });
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
-    saveState(state);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+    } else {
+      saveState(state);
+    }
     // Apply theme & color
     const root = document.documentElement;
     const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;

@@ -272,6 +272,18 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       if ((window as any).AndroidStorage) {
         (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
       }
+
+      const handleBeforeUnload = () => {
+        localStorage.setItem('gymlog_active_session', raw);
+        if ((window as any).AndroidStorage) {
+          (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
+        }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
     }
   }, [phase, selectedMuscle, activeExercises, loggedData, hasStartedSession]);
 

@@ -15,6 +15,7 @@ export function SettingsPage({ tracker }: Props) {
   const [localEmail, setLocalEmail] = useState(tracker.settings.userEmail || '');
   const [localPassword, setLocalPassword] = useState(tracker.settings.userPassword || '');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetText, setResetText] = useState('');
 
   React.useEffect(() => {
     const parent = containerRef.current?.parentElement;
@@ -103,7 +104,19 @@ export function SettingsPage({ tracker }: Props) {
               {t('resetWarning')}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <button onClick={() => tracker.resetAllData()} style={{ background: '#FF3B30', color: '#ffffff', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '950', fontSize: '13px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
+              <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '0' }}>Type "RESET" to confirm</p>
+              <input 
+                type="text" 
+                value={resetText} 
+                onChange={e => setResetText(e.target.value)} 
+                placeholder="RESET"
+                style={{ background: 'rgba(var(--theme-rgb), 0.1)', border: '1px solid rgba(var(--theme-rgb), 0.2)', padding: '12px', borderRadius: '12px', color: 'var(--text-primary)', fontSize: '14px', textAlign: 'center', fontWeight: '900', outline: 'none' }}
+              />
+              <button 
+                onClick={() => { if (resetText === 'RESET') tracker.resetAllData(); }} 
+                disabled={resetText !== 'RESET'}
+                style={{ background: resetText === 'RESET' ? '#FF3B30' : 'rgba(var(--theme-rgb), 0.2)', color: resetText === 'RESET' ? '#ffffff' : 'rgba(var(--theme-rgb), 0.5)', border: 'none', padding: '16px', borderRadius: '18px', fontWeight: '950', fontSize: '13px', letterSpacing: '2px', cursor: resetText === 'RESET' ? 'pointer' : 'not-allowed', transition: 'all 0.3s ease' }}
+              >
                 {t('confirmReset')}
               </button>
               <button onClick={() => setShowResetConfirm(false)} style={{ background: 'rgba(var(--theme-rgb), 0.18)', color: 'var(--text-primary)', border: 'none', padding: '14px', borderRadius: '18px', fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s ease' }}>
@@ -283,7 +296,7 @@ export function SettingsPage({ tracker }: Props) {
           <img
             src="/assets/button-reset.png"
             alt="Factory Reset"
-            onClick={() => setShowResetConfirm(true)}
+            onClick={() => { setShowResetConfirm(true); setResetText(''); }}
             style={{
               width: '52px',
               height: '52px',
