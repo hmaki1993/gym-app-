@@ -709,21 +709,24 @@ export function useGymTracker() {
   const deleteWorkout = useCallback((id: string) => {
     setState(prev => {
       const logToDelete = prev.logs.find(l => l.id === id);
-      if (logToDelete) {
-        setLastDeletedLog(logToDelete);
-        
-        // Reset session and delete draft if today's workout is deleted
-        const today = getLocalDateStr();
-        if (isLogFromLocalDate(logToDelete.date, today)) {
-          setSessionStartTimeState(Date.now());
-          localStorage.removeItem('gymlog_active_session');
-          if ((window as any).AndroidStorage) {
-            (window as any).AndroidStorage.removeItem('gymlog_active_session');
-          }
+      if (!logToDelete) return prev;
+
+      const targetDate = logToDelete.date.split('T')[0];
+      setLastDeletedLog(logToDelete);
+      
+      // Reset session and delete draft if today's workout is deleted
+      const today = getLocalDateStr();
+      const hasTodayLog = prev.logs.some(l => l.date.split('T')[0] === targetDate && isLogFromLocalDate(l.date, today));
+      if (hasTodayLog) {
+        setSessionStartTimeState(Date.now());
+        localStorage.removeItem('gymlog_active_session');
+        if ((window as any).AndroidStorage) {
+          (window as any).AndroidStorage.removeItem('gymlog_active_session');
         }
       }
       
-      const newLogs = prev.logs.filter(l => l.id !== id);
+      // Delete all logs sharing the same date
+      const newLogs = prev.logs.filter(l => l.date.split('T')[0] !== targetDate);
       const newPRs = syncPRsFromLogs(newLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
       return { 
         ...prev, 
