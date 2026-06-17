@@ -4,7 +4,7 @@ import { useWidgetSync } from '../../hooks/useWidgetSync';
 import { translations } from '../../translations';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 
-import { TransparentImage } from '../workout/components/TransparentImage';
+import { FloatingExercises } from './components/FloatingExercises';
 
 interface DashboardProps {
   tracker: ReturnType<typeof useGymTracker>;
@@ -165,7 +165,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
         );
       })()}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '12vh 16px 0 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '12vh 16px 0 16px', position: 'relative' }}>
+        <FloatingExercises themeMode={tracker.settings.themeMode} />
         <div
           onClick={onStartWorkout}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
