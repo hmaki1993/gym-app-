@@ -298,7 +298,7 @@ const ExerciseCard: React.FC<Props> = memo(({ exerciseName, muscleGroup, tracker
               maskPosition: 'center', WebkitMaskPosition: 'center',
               flexShrink: 0
             }} />
-            <h2 ref={titleRef} className="heading-font" style={{ margin: 0, fontSize: 'clamp(20px, 6vw, 30px)', fontWeight: 950, color: 'var(--text-primary)', letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+            <h2 ref={titleRef} className="heading-font" style={{ margin: 0, fontSize: 'clamp(20px, 6vw, 30px)', fontWeight: 950, color: 'var(--text-primary)', letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.1, wordBreak: 'break-word', width: '100%' }}>
               {exerciseName}
             </h2>
           </div>

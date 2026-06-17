@@ -272,6 +272,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       if ((window as any).AndroidStorage) {
         (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
       }
+      (window as any).gymlog_workout_active = true;
 
       const handleBeforeUnload = () => {
         localStorage.setItem('gymlog_active_session', raw);
@@ -284,6 +285,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
       };
+    } else {
+      (window as any).gymlog_workout_active = false;
     }
   }, [phase, selectedMuscle, activeExercises, loggedData, hasStartedSession]);
 

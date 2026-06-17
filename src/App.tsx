@@ -75,7 +75,7 @@ export default function App() {
         draftRaw = (window as any).AndroidStorage.getItem('gymlog_active_session');
       }
       
-      if (!draftRaw && showWorkout) {
+      if (!draftRaw && showWorkout && (window as any).gymlog_workout_active) {
         setShowWorkout(false);
         setTab('home');
       }

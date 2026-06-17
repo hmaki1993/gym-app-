@@ -72,7 +72,8 @@ export function SessionLogger({
                   color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', 
                   opacity: isDragging ? 1 : 0.85,
                   padding: '10px',
-                  cursor: 'grab'
+                  cursor: 'grab',
+                  touchAction: 'none'
                 }}
               >
                 <GripVertical size={20} strokeWidth={isDragging ? 3 : 2.5} />
