@@ -553,12 +553,22 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           100% { transform: translateY(0); opacity: 1; }
         }
         .exercise-select-btn,
-        .exercise-select-btn:hover,
-        .exercise-select-btn:active,
         .exercise-select-btn:focus {
           -webkit-tap-highlight-color: transparent !important;
-          background-color: transparent !important;
           outline: none !important;
+        }
+        .exercise-select-btn:hover {
+          background: ${isLight ? 'rgba(52, 152, 219, 0.05)' : 'rgba(52, 152, 219, 0.08)'} !important;
+          border-color: rgba(52, 152, 219, 0.3) !important;
+          transform: none !important;
+        }
+        .exercise-select-btn:hover::before {
+          display: none !important;
+        }
+        .exercise-select-btn:active {
+          background: ${isLight ? 'rgba(52, 152, 219, 0.1)' : 'rgba(52, 152, 219, 0.15)'} !important;
+          border-color: rgba(52, 152, 219, 0.45) !important;
+          transform: none !important;
         }
       `}</style>
 
