@@ -243,8 +243,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     const cardBg = isActive
       ? (isLight 
-          ? 'linear-gradient(145deg, #f5f9ff 0%, #eaf2ff 100%)' 
-          : 'linear-gradient(145deg, #1a2030 0%, #111825 100%)')
+          ? 'rgba(255, 255, 255, 0.55)' 
+          : 'rgba(255, 255, 255, 0.04)')
       : (isLight 
           ? 'linear-gradient(145deg, #ffffff 0%, #f5f5f7 100%)' 
           : 'linear-gradient(145deg, #222228 0%, #141418 100%)');
@@ -255,12 +255,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     const cardShadow = draggingIndex === index
       ? (isLight 
-          ? '0 32px 60px -10px rgba(0,0,0,0.28), 0 0 0 3px #3498db, 0 0 20px rgba(52,152,219,0.3)'
-          : '0 32px 60px -10px rgba(0,0,0,0.7), 0 0 0 3px #3498db, 0 0 24px rgba(52,152,219,0.4)')
+          ? '0 24px 48px -8px rgba(0,0,0,0.22), 0 0 0 3px #3498db'
+          : '0 24px 48px -8px rgba(0,0,0,0.65), 0 0 0 3px #3498db')
       : (isActive
           ? (isLight
-              ? '0 12px 40px -8px rgba(52,152,219,0.28), 0 6px 16px -6px rgba(52,152,219,0.18), inset 0 1px 0 rgba(255,255,255,0.95)'
-              : '0 16px 48px -10px rgba(52,152,219,0.35), 0 8px 24px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)')
+              ? '0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 6px -2px rgba(0,0,0,0.06)'
+              : '0 8px 24px -8px rgba(0,0,0,0.5), 0 4px 10px -4px rgba(0,0,0,0.35)')
           : (isLight
               ? '0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 6px -2px rgba(0,0,0,0.06), inset 0 1px 0 #ffffff'
               : '0 8px 28px -8px rgba(0,0,0,0.55), 0 4px 10px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'));
