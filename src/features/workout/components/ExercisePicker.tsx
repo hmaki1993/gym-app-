@@ -8,24 +8,13 @@ import { EXERCISE_YOUTUBE_VIDEOS } from '../../../data/exerciseVideos';
 import { getExerciseGifUrl } from '../../../data/premiumGifs';
 import type { MuscleGroup } from '../../../types';
 
-const FastGif = ({ src, alt }: { src: string; alt: string }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsVisible(entry.isIntersecting);
-    }, { rootMargin: '300px' });
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
+const FastGif = React.memo(({ src, alt }: { src: string; alt: string }) => {
   return (
-    <div ref={ref} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px' }}>
-      {isVisible && <img src={src} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px' }}>
+      <img src={src} alt={alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
     </div>
   );
-};
+});
 
 const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: number; color?: string }) => (
   <svg 
@@ -290,23 +279,31 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             )}
           </div>
           {/* Info */}
-          <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {isRecent && <RotateCcw size={14} style={{ opacity: 0.5, flexShrink: 0 }} color="var(--text-secondary)" />}
-              <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-primary)', fontFamily: "var(--heading-font)", lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              {isRecent && <RotateCcw size={14} style={{ opacity: 0.5, flexShrink: 0, marginTop: 2 }} color="var(--text-secondary)" />}
+              <div style={{ 
+                fontSize: name.length > 15 ? 13 : 15, 
+                fontWeight: 900, 
+                color: 'var(--text-primary)', 
+                fontFamily: "var(--heading-font)", 
+                lineHeight: 1.15, 
+                wordBreak: 'break-word',
+                marginTop: name.length > 15 ? 1 : 0
+              }}>
                 {name}
               </div>
               <div style={{ flex: 1 }} />
               <div
                 onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
                 onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                style={{ touchAction: 'none', cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, background: 'rgba(var(--theme-rgb), 0.04)', color: 'var(--text-primary)', marginLeft: 8, flexShrink: 0, border: '1px solid rgba(var(--theme-rgb), 0.04)' }}
+                style={{ touchAction: 'none', cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 10, background: 'rgba(var(--theme-rgb), 0.04)', color: 'var(--text-primary)', marginLeft: 4, flexShrink: 0, border: '1px solid rgba(var(--theme-rgb), 0.04)' }}
               >
-                <Grip size={18} strokeWidth={2.5} style={{ opacity: 0.6 }} />
+                <Grip size={16} strokeWidth={2.5} style={{ opacity: 0.6 }} />
               </div>
             </div>
             {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
-              <div style={{ fontSize: 11, color: isActive ? '#D35400' : 'rgba(var(--text-secondary), 0.7)', fontWeight: 800, fontFamily: "var(--heading-font)", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11, color: isActive ? '#D35400' : 'rgba(var(--text-secondary), 0.7)', fontWeight: 800, fontFamily: "var(--heading-font)", wordBreak: 'break-word', marginTop: -2 }}>
                 {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
               </div>
             )}
