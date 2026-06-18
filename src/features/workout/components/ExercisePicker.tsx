@@ -371,7 +371,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             padding: isExpanded ? '12px 14px' : '6px 8px', 
             display: 'flex', 
             flexDirection: 'column', 
-            justifyContent: 'space-between',
+            justifyContent: isExpanded ? 'space-between' : 'center',
             flex: 1, 
             minWidth: 0,
             alignSelf: 'stretch',
@@ -389,7 +389,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   wordBreak: 'break-word',
                   flex: 1,
                   letterSpacing: '-0.3px',
-                  transition: 'font-size 0.3s'
+                  transition: 'font-size 0.3s',
+                  textAlign: 'center'
                 }}>
                   {name}
                 </div>
@@ -443,16 +444,19 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   </div>
                 </div>
               </div>
-              {isExpanded && (EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
+              {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
                 <div style={{ 
-                  fontSize: 11, 
+                  fontSize: isExpanded ? 11 : 9.5, 
                   color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
                   fontWeight: 800, 
                   fontFamily: "var(--heading-font)", 
                   whiteSpace: 'normal', 
                   wordBreak: 'break-word',
                   maxWidth: '100%',
-                  marginTop: 2
+                  marginTop: 2,
+                  transition: 'font-size 0.3s',
+                  textAlign: 'center',
+                  width: '100%'
                 }}>
                   {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
                 </div>
