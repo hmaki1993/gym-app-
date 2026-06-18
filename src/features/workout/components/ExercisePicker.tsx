@@ -197,11 +197,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
   const toggleWithAnim = (name: string, el: HTMLElement | null) => {
     if (el) {
-      if (activeExercises.includes(name)) {
-        gsap.timeline().to(el, { scale: 0.96, duration: 0.08 }).to(el, { scale: 1, duration: 0.15 });
-      } else {
-        gsap.timeline().to(el, { scale: 0.94, duration: 0.06 }).to(el, { scale: 1.04, duration: 0.12 }).to(el, { scale: 1, duration: 0.2, ease: 'elastic.out(1.2, 0.5)' });
-      }
+      gsap.timeline()
+        .to(el, { scale: 0.97, duration: 0.08, ease: 'power1.out' })
+        .to(el, { scale: 1, duration: 0.12, ease: 'power1.inOut' });
     }
 
     // If selecting from search and it was hidden/deleted, restore it to main list
