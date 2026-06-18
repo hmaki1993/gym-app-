@@ -215,7 +215,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
             background: 'rgba(var(--theme-rgb), 0.03)',
             backdropFilter: 'var(--glass-blur)',
             WebkitBackdropFilter: 'var(--glass-blur)',
-            border: '1px solid var(--glass-border)',
+            borderLeft: 'none',
+            borderRight: 'none',
+            borderBottom: '1px solid var(--glass-border)',
             borderTop: tracker.settings.themeMode === 'dark' 
               ? '1px solid rgba(230, 126, 34, 0.2)' 
               : '1px solid rgba(0,0,0,0.08)',
