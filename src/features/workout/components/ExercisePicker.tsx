@@ -228,7 +228,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     }
   };
 
-  const renderExerciseItem = (name: string, isRecent: boolean, index: number) => {
+  const renderExerciseItem = (name: string, _isRecent: boolean, index: number) => {
     const isActive = activeExercises.includes(name);
     const lastSession = tracker.getLastSession(name);
     const gifUrl = getGifUrl(name);
@@ -262,7 +262,20 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               : '0 8px 28px -8px rgba(0,0,0,0.55), 0 4px 10px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'));
 
     return (
-      <div key={name} data-index={index} ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} style={{ width: '100%', display: 'flex', flexDirection: 'column', zIndex: draggingIndex === index ? 100 : 1, position: draggingIndex === index ? 'relative' : 'static' }}>
+      <div 
+        key={name} 
+        data-index={index} 
+        ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} 
+        style={{ 
+          width: '100%', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          zIndex: draggingIndex === index ? 100 : (isActive ? 12 : index + 2), 
+          position: 'relative', 
+          marginTop: index === 0 ? '0px' : (isActive ? '-2px' : '-22px'),
+          transition: 'margin-top 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0.3s'
+        }}
+      >
         <div 
           onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} 
           className="exercise-select-btn" 
@@ -273,7 +286,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             alignItems: 'stretch', 
             background: cardBg, 
             border: cardBorder, 
-            borderRadius: 20, 
+            borderRadius: isActive ? 20 : 12, 
             cursor: 'pointer', 
             touchAction: 'manipulation', 
             outline: 'none', 
@@ -285,13 +298,14 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             opacity: draggingIndex === index ? 0.9 : 1,
             transition: draggingIndex === index 
               ? 'transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease' 
-              : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease', 
-            overflow: 'hidden' 
+              : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, border-radius 0.3s', 
+            overflow: 'hidden',
+            padding: isActive ? '10px 12px' : '4px 6px'
           }}
         >
-          {/* GIF container (Left 40%) */}
+          {/* GIF container (Left dynamic width) */}
           <div style={{ 
-            width: '40%', 
+            width: isActive ? '38%' : '20%', 
             aspectRatio: '1', 
             flexShrink: 0, 
             background: gifUrl ? '#ffffff' : 'transparent', 
@@ -301,7 +315,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             position: 'relative', 
             borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
             alignSelf: 'stretch',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
           }}>
             {gifUrl ? (
               <FastGif src={gifUrl} alt={name} />
@@ -349,20 +364,21 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             )}
           </div>
 
-          {/* Info & Actions container (Right 50%) */}
+          {/* Info & Actions container (Right dynamic width) */}
           <div style={{ 
-            padding: '12px 14px', 
+            padding: isActive ? '12px 14px' : '6px 8px', 
             display: 'flex', 
             flexDirection: 'column', 
             justifyContent: 'space-between',
             flex: 1, 
             minWidth: 0,
-            alignSelf: 'stretch'
+            alignSelf: 'stretch',
+            transition: 'padding 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, width: '100%' }}>
                 <div style={{ 
-                  fontSize: getFontSize(name), 
+                  fontSize: isActive ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
                   fontWeight: 800, 
                   color: 'var(--text-primary)', 
                   fontFamily: "var(--heading-font)", 
@@ -370,7 +386,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   whiteSpace: 'normal',
                   wordBreak: 'break-word',
                   flex: 1,
-                  letterSpacing: '-0.3px'
+                  letterSpacing: '-0.3px',
+                  transition: 'font-size 0.3s'
                 }}>
                   {name}
                 </div>
@@ -383,21 +400,22 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    width: 34, 
-                    height: 34, 
-                    borderRadius: 10, 
+                    width: isActive ? 34 : 24, 
+                    height: isActive ? 34 : 24, 
+                    borderRadius: isActive ? 10 : 6, 
                     background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
                     color: 'var(--text-primary)', 
                     flexShrink: 0, 
                     border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
                     marginTop: 0,
-                    boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)'
+                    boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+                    transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
                   }}
                 >
-                  <Grip size={18} strokeWidth={2} style={{ opacity: 0.7 }} />
+                  <Grip size={isActive ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
                 </div>
               </div>
-              {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
+              {isActive && (EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
                 <div style={{ 
                   fontSize: 11, 
                   color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
@@ -413,7 +431,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               )}
             </div>
 
-            {lastSession ? (() => {
+            {isActive && lastSession ? (() => {
               const displayUnit = tracker.getDisplayUnit(name, muscleGroup as MuscleGroup);
               const convertedWeight = tracker.convertWeight(lastSession.bestSet?.weight || 0, lastSession.bestSet?.unit || 'kg', displayUnit);
               const roundedWeight = Number(convertedWeight.toFixed(1));
@@ -430,9 +448,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   {t('lastSession').toUpperCase()}: {roundedWeight} {t(displayUnit as any)} × {lastSession.bestSet?.reps}
                 </div>
               );
-            })() : (
-              <div style={{ height: 4 }} />
-            )}
+            })() : null}
 
             {isActive && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 'auto' }}>
