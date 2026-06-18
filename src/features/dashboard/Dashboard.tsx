@@ -165,7 +165,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
         );
       })()}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '12vh 16px 0 16px', position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '0 16px', position: 'relative' }}>
         <FloatingExercises themeMode={tracker.settings.themeMode} />
         <div
           onClick={onStartWorkout}
