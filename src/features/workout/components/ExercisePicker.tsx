@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Search, RotateCcw, Trash2, Pen, Play, Grip, PlusCircle, ImageIcon, MoreVertical } from 'lucide-react';
+import { Search, RotateCcw, Trash2, Pen, Play, PlusCircle, ImageIcon } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../../hooks/useGymTracker';
 import { DEFAULT_EXERCISES, EXERCISE_TRANSLATIONS, EXERCISE_DETAILS } from '../../../data/exercises';
@@ -287,7 +287,7 @@ const ExerciseItemCard = React.memo(({
               boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
               outline: 'none', WebkitTapHighlightColor: 'transparent'
             }}>
-            <MoreVertical size={isExpanded ? 19 : 15} strokeWidth={2.5} />
+            <img src="/assets/maximize.png" alt="More" style={{ width: isExpanded ? 20 : 16, height: isExpanded ? 20 : 16, objectFit: 'contain' }} />
           </button>
           <div
             onTouchStart={e => { e.stopPropagation(); onDragStart(name); }}
@@ -305,7 +305,7 @@ const ExerciseItemCard = React.memo(({
               border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
               boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)'
             }}>
-            <Grip size={isExpanded ? 19 : 15} strokeWidth={2} style={{ opacity: 0.7 }} />
+            <img src="/assets/dotted-line.png" alt="Drag" style={{ width: isExpanded ? 20 : 16, height: isExpanded ? 20 : 16, objectFit: 'contain', opacity: 0.7 }} />
           </div>
         </div>
       </div>
