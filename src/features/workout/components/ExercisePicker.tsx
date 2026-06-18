@@ -457,11 +457,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     onClick={e => { e.stopPropagation(); setAliasSelectorOpen(name); }} 
                     style={{ 
                       width: '100%', 
-                      background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
-                      border: 'none',
+                      background: 'rgba(52, 152, 219, 0.1)',
+                      border: '1.5px solid #3498db',
                       borderRadius: 12, 
                       padding: '9px 12px', 
-                      color: '#ffffff', 
+                      color: '#3498db', 
                       cursor: 'pointer', 
                       fontSize: 12, 
                       fontWeight: 900, 
@@ -470,8 +470,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                       justifyContent: 'center', 
                       gap: 7, 
                       fontFamily: "var(--heading-font)",
-                      boxShadow: '0 4px 14px rgba(52,152,219,0.45)',
-                      transition: 'transform 0.1s, box-shadow 0.1s',
+                      transition: 'transform 0.1s',
                       letterSpacing: '0.2px'
                     }}
                   >
@@ -482,13 +481,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} 
                   style={{ 
                     width: '100%', 
-                    background: isLight
-                      ? 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'
-                      : 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%)',
-                    border: isLight ? '1.5px solid rgba(0,0,0,0.12)' : '1.5px solid rgba(255,255,255,0.14)',
+                    background: 'rgba(230, 126, 34, 0.1)',
+                    border: '1.5px solid #E67E22',
                     borderRadius: 12, 
                     padding: '9px 12px', 
-                    color: 'var(--text-primary)', 
+                    color: '#E67E22', 
                     cursor: 'pointer', 
                     fontSize: 12, 
                     fontWeight: 900, 
@@ -497,8 +494,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     justifyContent: 'center', 
                     gap: 7, 
                     fontFamily: "var(--heading-font)",
-                    boxShadow: isLight ? '0 3px 10px rgba(0,0,0,0.1)' : '0 3px 10px rgba(0,0,0,0.35)',
-                    transition: 'transform 0.1s, box-shadow 0.1s',
+                    transition: 'transform 0.1s',
                     letterSpacing: '0.2px'
                   }}
                 >
@@ -508,11 +504,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} 
                   style={{ 
                     width: '100%', 
-                    background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
-                    border: 'none',
+                    background: 'rgba(231, 76, 60, 0.1)',
+                    border: '1.5px solid #e74c3c',
                     borderRadius: 12, 
                     padding: '9px 12px', 
-                    color: '#ffffff', 
+                    color: '#e74c3c', 
                     cursor: 'pointer', 
                     fontSize: 12, 
                     fontWeight: 900, 
@@ -521,8 +517,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     justifyContent: 'center', 
                     gap: 7, 
                     fontFamily: "var(--heading-font)",
-                    boxShadow: '0 4px 14px rgba(231,76,60,0.45)',
-                    transition: 'transform 0.1s, box-shadow 0.1s',
+                    transition: 'transform 0.1s',
                     letterSpacing: '0.2px'
                   }}
                 >
