@@ -242,8 +242,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     };
 
     const cardBg = isLight
-      ? (isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.45)')
-      : (isActive ? 'rgba(52,152,219,0.04)' : 'linear-gradient(145deg, #222228 0%, #141418 100%)');
+      ? (isActive ? 'rgba(52, 152, 219, 0.08)' : 'rgba(255,255,255,0.45)')
+      : (isActive ? 'rgba(52, 152, 219, 0.12)' : 'linear-gradient(145deg, #222228 0%, #141418 100%)');
 
     const cardBorder = isActive
       ? '2px solid #3498db'
