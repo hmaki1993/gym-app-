@@ -64,6 +64,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
   // Cache of already-preloaded GIF URLs so we never double-fetch
   const preloadedGifs = useRef<Set<string>>(new Set());
+  const dragTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper: resolve GIF url for an exercise name
   const getGifUrl = (name: string): string | null => {
@@ -90,6 +91,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     }
     return () => { if (modalReadyTimer.current) clearTimeout(modalReadyTimer.current); };
   }, [selectedVideoExercise]);
+
+  useEffect(() => {
+    return () => {
+      if (dragTimer.current) clearTimeout(dragTimer.current);
+    };
+  }, []);
 
   const handlePlayClick = async (name: string) => {
     setSelectedVideoExercise(name);
@@ -197,12 +204,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   };
 
   const toggleWithAnim = (name: string, el: HTMLElement | null) => {
-    if (el) {
-      gsap.timeline()
-        .to(el, { scale: 0.97, duration: 0.08, ease: 'power1.out' })
-        .to(el, { scale: 1, duration: 0.12, ease: 'power1.inOut' });
-    }
-
     // If selecting from search and it was hidden/deleted, restore it to main list
     const isHidden = hiddenExercises.includes(name);
     const isDeleted = deletedExercises.includes(name);
@@ -236,19 +237,19 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     // Dynamic font size to fit long exercise names nicely without awkward multi-line stacks
     const getFontSize = (text: string) => {
-      if (text.length <= 12) return 17;
-      if (text.length <= 18) return 15;
-      if (text.length <= 25) return 13;
-      return 12;
+      if (text.length <= 12) return 21;
+      if (text.length <= 18) return 19;
+      if (text.length <= 25) return 17;
+      return 15;
     };
 
     const cardBg = isLight
-      ? (isActive ? 'rgba(52, 152, 219, 0.08)' : 'rgba(255,255,255,0.45)')
-      : (isActive ? 'rgba(52, 152, 219, 0.12)' : 'linear-gradient(145deg, #222228 0%, #141418 100%)');
+      ? (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.12) 0%, rgba(255, 255, 255, 0.8) 100%)' : 'rgba(255,255,255,0.6)')
+      : (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.18) 0%, rgba(30, 30, 38, 0.85) 100%)' : 'rgba(28, 28, 36, 0.75)');
 
     const cardBorder = isActive
       ? '2px solid #3498db'
-      : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.05)');
+      : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.08)');
 
     const cardShadow = draggingIndex === index
       ? (isLight 
@@ -274,7 +275,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           zIndex: draggingIndex === index ? 100 : (isExpanded ? 12 : (isActive ? 11 : index + 2)), 
           position: 'relative', 
           marginTop: isFirst ? '0px' : ((isPrevActive || isPrevExpanded) ? '6px' : ((isActive || isExpanded) ? '-2px' : '-22px')),
-          transition: 'margin-top 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0.3s'
+          transition: 'margin-top 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0.3s',
+          willChange: 'margin-top'
         }}
       >
         <div 
@@ -299,24 +301,28 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               ? 'transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease' 
               : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, border-radius 0.3s', 
             overflow: 'hidden',
-            padding: isExpanded ? '8px 8px' : '4px 6px'
+            padding: 0,
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            willChange: 'transform, border-radius'
           }}
         >
           {/* GIF container (Left dynamic width) */}
           <div style={{ 
-            width: isExpanded ? '38%' : '20%', 
-            aspectRatio: '1', 
+            width: isExpanded ? '40%' : '22%', 
+            aspectRatio: isExpanded ? undefined : '1', 
             flexShrink: 0, 
             background: gifUrl ? '#ffffff' : 'transparent', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
             position: 'relative', 
-            border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
-            alignSelf: 'center',
+            borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
+            alignSelf: 'stretch',
             overflow: 'hidden',
-            borderRadius: isExpanded ? 14 : 8,
-            transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.3s'
+            borderTopLeftRadius: isExpanded ? 18 : 10,
+            borderBottomLeftRadius: isExpanded ? 18 : 10,
+            transition: 'border-radius 0.3s'
           }}>
             {gifUrl ? (
               <FastGif src={gifUrl} alt={name} />
@@ -372,8 +378,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             justifyContent: isExpanded ? 'space-between' : 'center',
             flex: 1, 
             minWidth: 0,
-            alignSelf: 'stretch',
-            transition: 'padding 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
+            alignSelf: 'stretch'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
               {/* Centering column container for names */}
@@ -386,7 +391,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 textAlign: 'center',
-                paddingRight: isExpanded ? 64 : 44
+                paddingRight: isExpanded ? 82 : 62
               }}>
                 <div style={{ 
                   fontSize: isExpanded ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
@@ -398,14 +403,13 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   wordBreak: 'break-word',
                   width: '100%',
                   letterSpacing: '-0.3px',
-                  transition: 'font-size 0.3s',
                   textAlign: 'center'
                 }}>
                   {name}
                 </div>
                 {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
                   <div style={{ 
-                    fontSize: isExpanded ? 11 : 9.5, 
+                    fontSize: isExpanded ? 13.5 : 11.5, 
                     color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
                     fontWeight: 800, 
                     fontFamily: "var(--heading-font)", 
@@ -413,7 +417,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     wordBreak: 'break-word',
                     width: '100%',
                     marginTop: 2,
-                    transition: 'font-size 0.3s',
                     textAlign: 'center'
                   }}>
                     {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
@@ -508,7 +511,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               right: isExpanded ? 8 : 4, 
               display: 'flex', 
               alignItems: 'center', 
-              gap: 4, 
+              gap: 6, 
               zIndex: 15
             }}
           >
@@ -518,36 +521,95 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 e.stopPropagation(); 
                 setExpandedExercise(expandedExercise === name ? null : name); 
               }}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.85)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.85)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
               style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 4,
+                background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
+                border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+                padding: 0,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: isExpanded ? '#3498db' : 'var(--text-primary)',
-                opacity: isExpanded ? 1 : 0.45,
-                transition: 'all 0.2s',
-                borderRadius: 6
+                opacity: isExpanded ? 1 : 0.7,
+                width: isExpanded ? 36 : 28,
+                height: isExpanded ? 36 : 28,
+                borderRadius: isExpanded ? 10 : 8,
+                boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+                transition: 'width 0.3s, height 0.3s, border-radius 0.3s, transform 0.1s, opacity 0.2s',
+                outline: 'none',
+                WebkitTapHighlightColor: 'transparent'
               }}
             >
-              <MoreVertical size={isExpanded ? 18 : 15} strokeWidth={2.5} />
+              <MoreVertical size={isExpanded ? 19 : 15} strokeWidth={2.5} />
             </button>
 
             {/* Grip Handle */}
             <div
-              onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-              onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+              onTouchStart={e => { 
+                e.stopPropagation(); 
+                const idx = filteredExercises.indexOf(name); 
+                if (idx !== -1) {
+                  if (dragTimer.current) clearTimeout(dragTimer.current);
+                  dragTimer.current = setTimeout(() => {
+                    setDraggingIndex(idx);
+                  }, 180);
+                }
+              }}
+              onMouseDown={e => { 
+                e.stopPropagation(); 
+                const idx = filteredExercises.indexOf(name); 
+                if (idx !== -1) {
+                  if (dragTimer.current) clearTimeout(dragTimer.current);
+                  dragTimer.current = setTimeout(() => {
+                    setDraggingIndex(idx);
+                  }, 180);
+                }
+              }}
+              onTouchEnd={e => {
+                e.stopPropagation();
+                if (dragTimer.current) {
+                  clearTimeout(dragTimer.current);
+                  dragTimer.current = null;
+                }
+                setDraggingIndex(null);
+              }}
+              onTouchMove={e => {
+                if (draggingIndex === null) {
+                  if (dragTimer.current) {
+                    clearTimeout(dragTimer.current);
+                    dragTimer.current = null;
+                  }
+                }
+              }}
+              onMouseUp={e => {
+                e.stopPropagation();
+                if (dragTimer.current) {
+                  clearTimeout(dragTimer.current);
+                  dragTimer.current = null;
+                }
+                setDraggingIndex(null);
+              }}
+              onMouseLeave={e => {
+                e.stopPropagation();
+                if (dragTimer.current) {
+                  clearTimeout(dragTimer.current);
+                  dragTimer.current = null;
+                }
+                setDraggingIndex(null);
+              }}
               style={{ 
                 touchAction: 'none', 
                 cursor: 'grab', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                width: isExpanded ? 34 : 24, 
-                height: isExpanded ? 34 : 24, 
-                borderRadius: isExpanded ? 10 : 6, 
+                 width: isExpanded ? 36 : 28, 
+                height: isExpanded ? 36 : 28, 
+                borderRadius: isExpanded ? 10 : 8, 
                 background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
                 color: 'var(--text-primary)', 
                 flexShrink: 0, 
@@ -557,7 +619,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
               }}
             >
-              <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
+              <Grip size={isExpanded ? 19 : 15} strokeWidth={2} style={{ opacity: 0.7 }} />
             </div>
           </div>
         </div>
