@@ -8,10 +8,55 @@ import { EXERCISE_YOUTUBE_VIDEOS } from '../../../data/exerciseVideos';
 import { getExerciseGifUrl } from '../../../data/premiumGifs';
 import type { MuscleGroup } from '../../../types';
 
-const FastGif = React.memo(({ src, alt }: { src: string; alt: string }) => {
+const FastGif = React.memo(({ src, alt, play = false }: { src: string; alt: string; play?: boolean }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    const canvas = canvasRef.current;
+    if (!play && img && canvas) {
+      const draw = () => {
+        if (!canvas || !img.complete || img.naturalWidth === 0) return;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+           canvas.width = img.naturalWidth;
+           canvas.height = img.naturalHeight;
+           ctx.drawImage(img, 0, 0);
+        }
+      };
+      
+      if (img.complete && img.naturalWidth > 0) {
+        draw();
+      } else {
+        img.addEventListener('load', draw);
+        return () => img.removeEventListener('load', draw);
+      }
+    }
+  }, [src, play]);
+
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px' }}>
-      <img src={src} alt={alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px', position: 'relative' }}>
+      <img 
+        ref={imgRef}
+        src={src} 
+        alt={alt} 
+        loading="lazy" 
+        style={{ 
+          width: play ? '100%' : 1, 
+          height: play ? '100%' : 1, 
+          objectFit: 'contain', 
+          visibility: play ? 'visible' : 'hidden',
+          position: play ? 'relative' : 'absolute',
+          opacity: play ? 1 : 0
+        }} 
+      />
+      {!play && (
+        <canvas 
+          ref={canvasRef} 
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+        />
+      )}
     </div>
   );
 });
@@ -31,6 +76,245 @@ const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: numbe
     <line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth="4.2" strokeLinecap="round" />
   </svg>
 );
+
+// ── Memoized Exercise Card ──
+// Only re-renders when THIS card's props change (not when sibling cards change)
+const getFontSize = (text: string) => {
+  if (text.length <= 12) return 21;
+  if (text.length <= 18) return 19;
+  if (text.length <= 25) return 17;
+  return 15;
+};
+
+interface ExerciseItemCardProps {
+  name: string;
+  isFirst: boolean;
+  isPrevActive: boolean;
+  isPrevExpanded: boolean;
+  index: number;
+  isActive: boolean;
+  isExpanded: boolean;
+  isDragging: boolean;
+  isLight: boolean;
+  gifUrl: string | null;
+  muscleGroup: string;
+  isCustom: boolean;
+  customTranslation: string | undefined;
+  onToggle: (name: string) => void;
+  onExpand: (name: string) => void;
+  onRename: (name: string) => void;
+  onAliasSelect: (name: string) => void;
+  onHide: (name: string) => void;
+  onDragStart: (name: string) => void;
+  onDragEnd: () => void;
+  onDragCancel: () => void;
+  itemRefs: React.MutableRefObject<Map<string, HTMLElement>>;
+}
+
+const ExerciseItemCard = React.memo(({ 
+  name, isFirst, isPrevActive, isPrevExpanded, index, 
+  isActive, isExpanded, isDragging, isLight, gifUrl,
+  muscleGroup, isCustom, customTranslation, 
+  onToggle, onExpand, onRename, onAliasSelect, onHide,
+  onDragStart, onDragEnd, onDragCancel, itemRefs
+}: ExerciseItemCardProps) => {
+
+  const cardBg = isLight
+    ? (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(245, 245, 250, 1) 100%)' : 'rgba(255, 255, 255, 1)')
+    : (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.18) 0%, rgba(32, 32, 40, 1) 100%)' : 'rgba(30, 30, 38, 1)');
+
+  const cardBorder = isActive
+    ? '2px solid #3498db'
+    : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.04)');
+
+  const cardShadow = isDragging
+    ? (isLight 
+        ? '0 24px 48px -8px rgba(0,0,0,0.22), 0 0 0 3px #3498db'
+        : '0 24px 48px -8px rgba(0,0,0,0.65), 0 0 0 3px #3498db')
+    : (isLight
+        ? '0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 6px -2px rgba(0,0,0,0.06), inset 0 1px 0 #ffffff'
+        : '0 8px 28px -8px rgba(0,0,0,0.55), 0 4px 10px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)');
+
+  return (
+    <div 
+      data-index={index} 
+      ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} 
+      style={{ 
+        width: '100%', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        zIndex: isDragging ? 100 : (isExpanded ? 12 : (isActive ? 11 : index + 2)), 
+        position: 'relative', 
+        marginTop: isFirst ? '0px' : '8px',
+      }}
+    >
+      <div 
+        onClick={() => onToggle(name)} 
+        className="exercise-select-btn" 
+        role="button" 
+        style={{ 
+          display: 'flex', 
+          flexDirection: 'row', 
+          alignItems: 'stretch', 
+          background: cardBg, 
+          border: cardBorder, 
+          borderRadius: isExpanded ? 20 : 12, 
+          cursor: 'pointer', 
+          touchAction: 'manipulation', 
+          outline: 'none', 
+          WebkitTapHighlightColor: 'transparent', 
+          boxShadow: cardShadow, 
+          transition: 'background 0.15s, border 0.15s, transform 0.15s',
+          transform: isDragging ? 'scale(1.04) rotate(-1.5deg)' : 'none', 
+          opacity: isDragging ? 0.9 : 1,
+          overflow: 'hidden',
+          padding: 0
+        }}
+      >
+        {/* GIF container */}
+        <div style={{ 
+          width: isExpanded ? 130 : 85, 
+          minHeight: isExpanded ? 130 : 85,
+          flexShrink: 0, 
+          background: gifUrl ? '#ffffff' : 'transparent', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          position: 'relative', 
+          borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
+          alignSelf: 'stretch',
+          overflow: 'hidden',
+          borderTopLeftRadius: isExpanded ? 18 : 10,
+          borderBottomLeftRadius: isExpanded ? 18 : 10
+        }}>
+          {gifUrl ? (
+            <FastGif src={gifUrl} alt={name} play={isExpanded} />
+          ) : isCustom ? (
+            <div 
+              onClick={(e) => { e.stopPropagation(); onAliasSelect(name); }}
+              style={{
+                width: 'calc(100% - 24px)', height: 'calc(100% - 24px)',
+                borderRadius: 12, background: 'rgba(var(--theme-rgb), 0.04)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', border: '1px solid rgba(var(--theme-rgb), 0.02)'
+              }}
+            >
+              <PlusCircle size={24} color="var(--text-primary)" strokeWidth={2.5} style={{ opacity: 0.7 }} />
+            </div>
+          ) : (
+            <Play size={32} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
+          )}
+          {isActive && (
+            <div style={{ 
+              position: 'absolute', top: 8, right: 8, width: 22, height: 22, 
+              borderRadius: '50%', background: '#3498db', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              zIndex: 2, border: '2px solid #ffffff',
+              boxShadow: '0 2px 6px rgba(52,152,219,0.35)'
+            }}>
+              <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
+                <path d="M1.5 5l2.5 2.5L10.5 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          )}
+        </div>
+
+        {/* Info & Actions */}
+        <div style={{ 
+          padding: isExpanded ? '8px 8px' : '6px 8px', 
+          display: 'flex', flexDirection: 'column', 
+          justifyContent: isExpanded ? 'space-between' : 'center',
+          flex: 1, minWidth: 0, alignSelf: 'stretch'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <div style={{ 
+              display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0, 
+              alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+              paddingRight: isExpanded ? 82 : 62
+            }}>
+              <div style={{ 
+                fontSize: isExpanded ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
+                fontWeight: 800, color: 'var(--text-primary)', 
+                fontFamily: "var(--heading-font)", lineHeight: 1.2, 
+                whiteSpace: 'normal', wordBreak: 'break-word', width: '100%',
+                letterSpacing: '-0.3px', textAlign: 'center'
+              }}>
+                {name}
+              </div>
+              {(EXERCISE_TRANSLATIONS[name] || customTranslation) && (
+                <div style={{ 
+                  fontSize: isExpanded ? 13.5 : 11.5, 
+                  color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
+                  fontWeight: 800, fontFamily: "var(--heading-font)", 
+                  whiteSpace: 'normal', wordBreak: 'break-word', width: '100%',
+                  marginTop: 2, textAlign: 'center'
+                }}>
+                  {EXERCISE_TRANSLATIONS[name] || customTranslation}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {isExpanded && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 12, alignItems: 'flex-end' }}>
+              {gifUrl && isCustom && (
+                <button onClick={e => { e.stopPropagation(); onAliasSelect(name); }} 
+                  style={{ width: 'fit-content', background: 'rgba(52, 152, 219, 0.1)', border: '1.5px solid #3498db', borderRadius: 12, padding: '8px 16px', color: '#3498db', cursor: 'pointer', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: "var(--heading-font)", letterSpacing: '0.2px' }}>
+                  <ImageIcon size={13} strokeWidth={2.5} /> Edit GIF
+                </button>
+              )}
+              <button onClick={e => { e.stopPropagation(); onRename(name); }} 
+                style={{ width: 'fit-content', background: 'rgba(230, 126, 34, 0.1)', border: '1.5px solid #E67E22', borderRadius: 12, padding: '8px 16px', color: '#E67E22', cursor: 'pointer', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: "var(--heading-font)", letterSpacing: '0.2px' }}>
+                <Pen size={13} strokeWidth={2.5} /> Rename
+              </button>
+              <button onClick={e => { e.stopPropagation(); onHide(name); }} 
+                style={{ width: 'fit-content', background: 'rgba(231, 76, 60, 0.1)', border: '1.5px solid #e74c3c', borderRadius: 12, padding: '8px 16px', color: '#e74c3c', cursor: 'pointer', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: "var(--heading-font)", letterSpacing: '0.2px' }}>
+                <Trash2 size={13} strokeWidth={2.5} /> Remove
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Control buttons */}
+        <div onClick={e => e.stopPropagation()} 
+          style={{ position: 'absolute', top: isExpanded ? 8 : 4, right: isExpanded ? 8 : 4, display: 'flex', alignItems: 'center', gap: 6, zIndex: 15 }}>
+          <button onClick={(e) => { e.stopPropagation(); onExpand(name); }}
+            style={{
+              background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
+              border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+              padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: isExpanded ? '#3498db' : 'var(--text-primary)',
+              opacity: isExpanded ? 1 : 0.7,
+              width: isExpanded ? 36 : 28, height: isExpanded ? 36 : 28,
+              borderRadius: isExpanded ? 10 : 8,
+              boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+              outline: 'none', WebkitTapHighlightColor: 'transparent'
+            }}>
+            <MoreVertical size={isExpanded ? 19 : 15} strokeWidth={2.5} />
+          </button>
+          <div
+            onTouchStart={e => { e.stopPropagation(); onDragStart(name); }}
+            onMouseDown={e => { e.stopPropagation(); onDragStart(name); }}
+            onTouchEnd={e => { e.stopPropagation(); onDragEnd(); }}
+            onTouchMove={() => onDragCancel()}
+            onMouseUp={e => { e.stopPropagation(); onDragEnd(); }}
+            onMouseLeave={e => { e.stopPropagation(); onDragEnd(); }}
+            style={{ 
+              touchAction: 'none', cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              width: isExpanded ? 36 : 28, height: isExpanded ? 36 : 28,
+              borderRadius: isExpanded ? 10 : 8, 
+              background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
+              color: 'var(--text-primary)', flexShrink: 0, 
+              border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+              boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)'
+            }}>
+            <Grip size={isExpanded ? 19 : 15} strokeWidth={2} style={{ opacity: 0.7 }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 interface Props {
   search: string;
@@ -163,7 +447,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     .sort((a, b) => a.length - b.length);
 
   // Archived exercises
-  const archivedExercises = (() => {
+  const archivedExercises = React.useMemo(() => {
     const exerciseMap: Record<string, string> = {};
     Object.entries(b).forEach(([mg, exs]) => (exs as string[]).forEach(ex => { exerciseMap[ex] = mg; }));
     Object.entries(tracker.customExercises).forEach(([mg, exs]) => exs.forEach(ex => { exerciseMap[ex] = mg; }));
@@ -178,7 +462,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     deletedExercises.forEach((e: string) => { if (!hiddenExercises.includes(e)) archived.delete(e); });
     visible.forEach((e: string) => archived.delete(e));
     return Array.from(archived).sort();
-  })();
+  }, [muscleGroup, tracker.logs, hiddenExercises, deletedExercises, customExercises]);
 
   // Custom exercise detection for search overlay
   const searchTrimmed = search.trim();
@@ -192,12 +476,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     }
   }, [showSearch]);
 
-  useEffect(() => {
-    if (showSearch && searchResultsRef.current) {
-      const items = searchResultsRef.current.querySelectorAll('.search-result-item');
-      if (items.length > 0) gsap.fromTo(items, { y: 8, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.02, duration: 0.15, ease: 'power2.out' });
-    }
-  }, [search, showSearch]);
+  // Removed gsap stagger animation on search results for performance
 
   const closeSearch = () => {
     if (overlayRef.current) gsap.to(overlayRef.current, { opacity: 0, scale: 0.97, duration: 0.2, ease: 'power2.in', onComplete: () => { setShowSearch(false); onSearchChange(''); } });
@@ -233,410 +512,75 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     }
   };
 
+  // Keep latest refs of props without triggering useCallback recreations
+  const callbacksRef = React.useRef({ onToggle, onRename, tracker });
+  callbacksRef.current = { onToggle, onRename, tracker };
+
+  // Stable callbacks for ExerciseItemCard (so React.memo works)
+  const stableOnToggle = React.useCallback((name: string) => {
+    const { tracker: t, onToggle: toggle } = callbacksRef.current;
+    const isHidden = (t.state as any).hiddenExercises?.[muscleGroup]?.includes(name);
+    const isDeleted = (t.state as any).deletedExercises?.[muscleGroup]?.includes(name);
+    if (isHidden || isDeleted) t.restoreExercise(muscleGroup as MuscleGroup, name);
+    toggle(name);
+  }, [muscleGroup]);
+
+  const stableOnExpand = React.useCallback((name: string) => {
+    setExpandedExercise(prev => prev === name ? null : name);
+  }, []);
+
+  const stableOnRename = React.useCallback((name: string) => {
+    setRenamingExercise(name);
+  }, []);
+
+  const stableOnAliasSelect = React.useCallback((name: string) => {
+    setAliasSelectorOpen(name);
+  }, []);
+
+  const stableOnHide = React.useCallback((name: string) => {
+    callbacksRef.current.tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name);
+  }, [muscleGroup]);
+
+  const stableOnDragStart = React.useCallback((name: string) => {
+    // drag start handled externally
+  }, []);
+
+  const stableOnDragEnd = React.useCallback(() => {
+    if (dragTimer.current) { clearTimeout(dragTimer.current); dragTimer.current = null; }
+    setDraggingIndex(null);
+  }, []);
+
+  const stableOnDragCancel = React.useCallback(() => {
+    if (dragTimer.current) { clearTimeout(dragTimer.current); dragTimer.current = null; }
+  }, []);
+
   const renderExerciseItem = (name: string, isFirst: boolean, isPrevActive: boolean, isPrevExpanded: boolean, index: number) => {
-    const isActive = activeExercises.includes(name);
-    const isExpanded = expandedExercise === name;
-    const gifUrl = getGifUrl(name);
-
-    // Dynamic font size to fit long exercise names nicely without awkward multi-line stacks
-    const getFontSize = (text: string) => {
-      if (text.length <= 12) return 21;
-      if (text.length <= 18) return 19;
-      if (text.length <= 25) return 17;
-      return 15;
-    };
-
-    const cardBg = isLight
-      ? (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(245, 245, 250, 1) 100%)' : 'rgba(255, 255, 255, 1)')
-      : (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.18) 0%, rgba(32, 32, 40, 1) 100%)' : 'rgba(30, 30, 38, 1)');
-
-    const cardBorder = isActive
-      ? '2px solid #3498db'
-      : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.04)');
-
-    const cardShadow = draggingIndex === index
-      ? (isLight 
-          ? '0 24px 48px -8px rgba(0,0,0,0.22), 0 0 0 3px #3498db'
-          : '0 24px 48px -8px rgba(0,0,0,0.65), 0 0 0 3px #3498db')
-      : (isExpanded
-          ? (isLight
-              ? '0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 6px -2px rgba(0,0,0,0.06)'
-              : '0 8px 24px -8px rgba(0,0,0,0.5), 0 4px 10px -4px rgba(0,0,0,0.35)')
-          : (isLight
-              ? '0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 6px -2px rgba(0,0,0,0.06), inset 0 1px 0 #ffffff'
-              : '0 8px 28px -8px rgba(0,0,0,0.55), 0 4px 10px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'));
-
     return (
-      <div 
-        key={name} 
-        data-index={index} 
-        ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} 
-        style={{ 
-          width: '100%', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          zIndex: draggingIndex === index ? 100 : (isExpanded ? 12 : (isActive ? 11 : index + 2)), 
-          position: 'relative', 
-          marginTop: isFirst ? '0px' : ((isPrevActive || isPrevExpanded) ? '6px' : ((isActive || isExpanded) ? '-2px' : '-22px')),
-          transition: 'margin-top 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0.3s',
-          willChange: 'margin-top'
-        }}
-      >
-        <div 
-          onClick={() => toggleWithAnim(name)} 
-          className="exercise-select-btn" 
-          role="button" 
-          style={{ 
-            display: 'flex', 
-            flexDirection: 'row', 
-            alignItems: 'stretch', 
-            background: cardBg, 
-            border: cardBorder, 
-            borderRadius: isExpanded ? 20 : 12, 
-            cursor: 'pointer', 
-            touchAction: 'manipulation', 
-            outline: 'none', 
-            WebkitTapHighlightColor: 'transparent', 
-            boxShadow: cardShadow, 
-            transform: draggingIndex === index ? 'scale(1.04) rotate(-1.5deg)' : 'scale(1) rotate(0deg)', 
-            opacity: draggingIndex === index ? 0.9 : 1,
-            transition: draggingIndex === index 
-              ? 'transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease' 
-              : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, border-radius 0.3s', 
-            overflow: 'hidden',
-            padding: 0,
-            willChange: 'transform, border-radius'
-          }}
-        >
-          {/* GIF container (Left dynamic width) */}
-          <div style={{ 
-            width: isExpanded ? '40%' : '22%', 
-            aspectRatio: isExpanded ? undefined : '1', 
-            flexShrink: 0, 
-            background: gifUrl ? '#ffffff' : 'transparent', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            position: 'relative', 
-            borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
-            alignSelf: 'stretch',
-            overflow: 'hidden',
-            borderTopLeftRadius: isExpanded ? 18 : 10,
-            borderBottomLeftRadius: isExpanded ? 18 : 10,
-            transition: 'border-radius 0.3s'
-          }}>
-            {gifUrl ? (
-              <FastGif src={gifUrl} alt={name} />
-            ) : tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) ? (
-              <div 
-                onClick={(e) => { e.stopPropagation(); setAliasSelectorOpen(name); }}
-                style={{
-                  width: 'calc(100% - 24px)',
-                  height: 'calc(100% - 24px)',
-                  borderRadius: 12,
-                  background: 'rgba(var(--theme-rgb), 0.04)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  border: '1px solid rgba(var(--theme-rgb), 0.02)'
-                }}
-              >
-                <PlusCircle size={24} color="var(--text-primary)" strokeWidth={2.5} style={{ opacity: 0.7 }} />
-              </div>
-            ) : (
-              <Play size={32} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
-            )}
-            {/* Active badge */}
-            {isActive && (
-              <div style={{ 
-                position: 'absolute', 
-                top: 8, 
-                right: 8, 
-                width: 22, 
-                height: 22, 
-                borderRadius: '50%', 
-                background: '#3498db', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                zIndex: 2, 
-                border: '2px solid #ffffff',
-                boxShadow: '0 2px 6px rgba(52,152,219,0.35)'
-              }}>
-                <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
-                  <path d="M1.5 5l2.5 2.5L10.5 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            )}
-          </div>
-
-          {/* Info & Actions container (Right dynamic width) */}
-          <div style={{ 
-            padding: isExpanded ? '8px 8px' : '6px 8px', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: isExpanded ? 'space-between' : 'center',
-            flex: 1, 
-            minWidth: 0,
-            alignSelf: 'stretch'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-              {/* Centering column container for names */}
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: 2, 
-                flex: 1, 
-                minWidth: 0, 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                textAlign: 'center',
-                paddingRight: isExpanded ? 82 : 62
-              }}>
-                <div style={{ 
-                  fontSize: isExpanded ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
-                  fontWeight: 800, 
-                  color: 'var(--text-primary)', 
-                  fontFamily: "var(--heading-font)", 
-                  lineHeight: 1.2, 
-                  whiteSpace: 'normal',
-                  wordBreak: 'break-word',
-                  width: '100%',
-                  letterSpacing: '-0.3px',
-                  textAlign: 'center'
-                }}>
-                  {name}
-                </div>
-                {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
-                  <div style={{ 
-                    fontSize: isExpanded ? 13.5 : 11.5, 
-                    color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
-                    fontWeight: 800, 
-                    fontFamily: "var(--heading-font)", 
-                    whiteSpace: 'normal', 
-                    wordBreak: 'break-word',
-                    width: '100%',
-                    marginTop: 2,
-                    textAlign: 'center'
-                  }}>
-                    {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {isExpanded && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 12, alignItems: 'flex-end' }}>
-                {gifUrl && tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) && (
-                  <button 
-                    onClick={e => { e.stopPropagation(); setAliasSelectorOpen(name); }} 
-                    style={{ 
-                      width: 'fit-content', 
-                      background: 'rgba(52, 152, 219, 0.1)',
-                      border: '1.5px solid #3498db',
-                      borderRadius: 12, 
-                      padding: '8px 16px', 
-                      color: '#3498db', 
-                      cursor: 'pointer', 
-                      fontSize: 12, 
-                      fontWeight: 900, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: 7, 
-                      fontFamily: "var(--heading-font)",
-                      transition: 'transform 0.1s',
-                      letterSpacing: '0.2px'
-                    }}
-                  >
-                    <ImageIcon size={13} strokeWidth={2.5} /> Edit GIF
-                  </button>
-                )}
-                <button 
-                  onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} 
-                  style={{ 
-                    width: 'fit-content', 
-                    background: 'rgba(230, 126, 34, 0.1)',
-                    border: '1.5px solid #E67E22',
-                    borderRadius: 12, 
-                    padding: '8px 16px', 
-                    color: '#E67E22', 
-                    cursor: 'pointer', 
-                    fontSize: 12, 
-                    fontWeight: 900, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: 7, 
-                    fontFamily: "var(--heading-font)",
-                    transition: 'transform 0.1s',
-                    letterSpacing: '0.2px'
-                  }}
-                >
-                  <Pen size={13} strokeWidth={2.5} /> Rename
-                </button>
-                <button 
-                  onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} 
-                  style={{ 
-                    width: 'fit-content', 
-                    background: 'rgba(231, 76, 60, 0.1)',
-                    border: '1.5px solid #e74c3c',
-                    borderRadius: 12, 
-                    padding: '8px 16px', 
-                    color: '#e74c3c', 
-                    cursor: 'pointer', 
-                    fontSize: 12, 
-                    fontWeight: 900, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: 7, 
-                    fontFamily: "var(--heading-font)",
-                    transition: 'transform 0.1s',
-                    letterSpacing: '0.2px'
-                  }}
-                >
-                  <Trash2 size={13} strokeWidth={2.5} /> Remove
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Absolute positioned control buttons */}
-          <div 
-            onClick={e => e.stopPropagation()} 
-            style={{ 
-              position: 'absolute', 
-              top: isExpanded ? 8 : 4, 
-              right: isExpanded ? 8 : 4, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 6, 
-              zIndex: 15
-            }}
-          >
-            {/* Expand button (three dots options) */}
-            <button
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                setExpandedExercise(expandedExercise === name ? null : name); 
-              }}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.85)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.85)'}
-              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              style={{
-                background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
-                border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
-                padding: 0,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: isExpanded ? '#3498db' : 'var(--text-primary)',
-                opacity: isExpanded ? 1 : 0.7,
-                width: isExpanded ? 36 : 28,
-                height: isExpanded ? 36 : 28,
-                borderRadius: isExpanded ? 10 : 8,
-                boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
-                transition: 'width 0.3s, height 0.3s, border-radius 0.3s, transform 0.1s, opacity 0.2s',
-                outline: 'none',
-                WebkitTapHighlightColor: 'transparent'
-              }}
-            >
-              <MoreVertical size={isExpanded ? 19 : 15} strokeWidth={2.5} />
-            </button>
-
-            {/* Grip Handle */}
-            <div
-              onTouchStart={e => { 
-                e.stopPropagation(); 
-                const idx = filteredExercises.indexOf(name); 
-                if (idx !== -1) {
-                  if (dragTimer.current) clearTimeout(dragTimer.current);
-                  dragTimer.current = setTimeout(() => {
-                    setDraggingIndex(idx);
-                  }, 180);
-                }
-              }}
-              onMouseDown={e => { 
-                e.stopPropagation(); 
-                const idx = filteredExercises.indexOf(name); 
-                if (idx !== -1) {
-                  if (dragTimer.current) clearTimeout(dragTimer.current);
-                  dragTimer.current = setTimeout(() => {
-                    setDraggingIndex(idx);
-                  }, 180);
-                }
-              }}
-              onTouchEnd={e => {
-                e.stopPropagation();
-                if (dragTimer.current) {
-                  clearTimeout(dragTimer.current);
-                  dragTimer.current = null;
-                }
-                if (draggingIndex !== null && localExerciseOrder) {
-                  tracker.reorderExercises(muscleGroup as MuscleGroup, localExerciseOrder);
-                  setLocalExerciseOrder(null);
-                }
-                setDraggingIndex(null);
-              }}
-              onTouchMove={() => {
-                if (draggingIndex === null) {
-                  if (dragTimer.current) {
-                    clearTimeout(dragTimer.current);
-                    dragTimer.current = null;
-                  }
-                }
-              }}
-              onMouseUp={e => {
-                e.stopPropagation();
-                if (dragTimer.current) {
-                  clearTimeout(dragTimer.current);
-                  dragTimer.current = null;
-                }
-                if (draggingIndex !== null && localExerciseOrder) {
-                  tracker.reorderExercises(muscleGroup as MuscleGroup, localExerciseOrder);
-                  setLocalExerciseOrder(null);
-                }
-                setDraggingIndex(null);
-              }}
-              onMouseLeave={e => {
-                e.stopPropagation();
-                if (dragTimer.current) {
-                  clearTimeout(dragTimer.current);
-                  dragTimer.current = null;
-                }
-                if (draggingIndex !== null && localExerciseOrder) {
-                  tracker.reorderExercises(muscleGroup as MuscleGroup, localExerciseOrder);
-                  setLocalExerciseOrder(null);
-                }
-                setDraggingIndex(null);
-              }}
-              style={{ 
-                touchAction: 'none', 
-                cursor: 'grab', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                 width: isExpanded ? 36 : 28, 
-                height: isExpanded ? 36 : 28, 
-                borderRadius: isExpanded ? 10 : 8, 
-                background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
-                color: 'var(--text-primary)', 
-                flexShrink: 0, 
-                border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
-                marginTop: 0,
-                boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
-                transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
-              }}
-            >
-              <Grip size={isExpanded ? 19 : 15} strokeWidth={2} style={{ opacity: 0.7 }} />
-            </div>
-          </div>
-        </div>
-      </div>
+      <ExerciseItemCard
+        key={name}
+        name={name}
+        isFirst={isFirst}
+        isPrevActive={isPrevActive}
+        isPrevExpanded={isPrevExpanded}
+        index={index}
+        isActive={activeExercises.includes(name)}
+        isExpanded={expandedExercise === name}
+        isDragging={draggingIndex === index}
+        isLight={isLight}
+        gifUrl={getGifUrl(name)}
+        muscleGroup={muscleGroup}
+        isCustom={tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) || false}
+        customTranslation={customTranslations[name]}
+        onToggle={stableOnToggle}
+        onExpand={stableOnExpand}
+        onRename={stableOnRename}
+        onAliasSelect={stableOnAliasSelect}
+        onHide={stableOnHide}
+        onDragStart={stableOnDragStart}
+        onDragEnd={stableOnDragEnd}
+        onDragCancel={stableOnDragCancel}
+        itemRefs={itemRefs}
+      />
     );
   };
 

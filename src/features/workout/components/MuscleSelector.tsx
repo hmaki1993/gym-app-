@@ -48,9 +48,10 @@ const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, muscl
       return dateA < dateB ? -1 : 1;
     });
 
-    // 2. Try sequence prediction based on historical transition patterns
+    // 2. Try sequence prediction based on historical transition patterns (limit to recent logs for speed)
     let predictedNextMuscle: string | null = null;
-    const sortedLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const recentLogsForPrediction = logs.slice(0, 50);
+    const sortedLogs = [...recentLogsForPrediction].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     const trainedSequence: string[] = [];
     sortedLogs.forEach(log => {

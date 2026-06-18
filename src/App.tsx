@@ -8,7 +8,6 @@ import { ProgressPage } from './features/progress/ProgressPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { BottomNav } from './features/common/BottomNav';
 import { NutritionPage } from './features/nutrition/NutritionPage';
-import gsap from 'gsap';
 import './index.css';
 import { preWarmImages } from './features/workout/components/TransparentImage';
 import { MUSCLE_GROUPS } from './data/exercises';
@@ -23,12 +22,17 @@ const FloatingWidget = registerPlugin<any>('FloatingWidget');
 
 function InactiveWidgetSync({ tracker }: { tracker: ReturnType<typeof useGymTracker> }) {
   const todayStr = tracker.getLocalDateStr();
-  const isFinished = tracker.logs.some(log => {
+  let isFinished = false;
+  if (tracker.logs.length > 0) {
+    const log = tracker.logs[0];
     const logDate = new Date(log.date);
     const logLocalDate = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
-    return logLocalDate === todayStr || log.date.startsWith(todayStr);
-  });
-  useWidgetSync(false, null, 0, '', null, tracker.logs.map(l => l.date.split('T')[0]), isFinished, tracker.settings.accentColor);
+    isFinished = logLocalDate === todayStr || log.date.startsWith(todayStr);
+  }
+  
+  // Only extract dates from the first 50 logs for the widget heatmap to keep it fast
+  const recentHistoryDates = tracker.logs.slice(0, 50).map(l => l.date.split('T')[0]);
+  useWidgetSync(false, null, 0, '', null, recentHistoryDates, isFinished, tracker.settings.accentColor);
   return null;
 }
 
@@ -234,26 +238,7 @@ export default function App() {
   const switchTab = (newTab: Tab) => {
     if (newTab === tab) return;
     window.history.pushState({ tab: newTab }, '', window.location.href);
-    
-    if (contentRef.current) {
-      // Rocket-speed transition
-      gsap.to(contentRef.current, {
-        opacity: 0,
-        x: newTab === 'home' ? 10 : -10,
-        duration: 0.1, // Ultra fast
-        force3D: true,
-        ease: 'power2.in',
-        onComplete: () => {
-          setTab(newTab);
-          gsap.fromTo(contentRef.current,
-            { opacity: 0, x: newTab === 'home' ? -10 : 10 },
-            { opacity: 1, x: 0, duration: 0.15, ease: 'power2.out', force3D: true }
-          );
-        }
-      });
-    } else {
-      setTab(newTab);
-    }
+    setTab(newTab);
   };
 
 

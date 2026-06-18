@@ -40,19 +40,26 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     const MUSCLE_KEYS = Object.keys(DEFAULT_EXERCISES) as MuscleGroup[];
     let bestMuscle = 'chest' as MuscleGroup;
 
-    // 1. Calculate when each muscle was last trained
     const lastTrainedByMuscle: Record<string, string | null> = {};
-    MUSCLE_KEYS.forEach(muscle => {
-      const logsWithMuscle = tracker.logs.filter(l => 
-        l.muscleGroup === muscle || l.exercises.some(e => ((e as any).muscleGroup || l.muscleGroup) === muscle)
-      );
-      if (logsWithMuscle.length > 0) {
-        lastTrainedByMuscle[muscle] = logsWithMuscle.reduce((latest, current) => {
-          return new Date(current.date) > new Date(latest.date) ? current : latest;
-        }).date;
-      } else {
-        lastTrainedByMuscle[muscle] = null;
-      }
+    MUSCLE_KEYS.forEach(k => lastTrainedByMuscle[k] = null);
+    
+    // Single pass to find the latest training date for each muscle
+    tracker.logs.forEach(log => {
+      const musclesInLog = new Set<string>();
+      if (log.muscleGroup) musclesInLog.add(log.muscleGroup);
+      log.exercises.forEach(e => {
+        const mg = (e as any).muscleGroup || log.muscleGroup;
+        if (mg) musclesInLog.add(mg);
+      });
+      
+      musclesInLog.forEach(mg => {
+        if (MUSCLE_KEYS.includes(mg as MuscleGroup)) {
+          const currentLatest = lastTrainedByMuscle[mg];
+          if (!currentLatest || new Date(log.date) > new Date(currentLatest)) {
+            lastTrainedByMuscle[mg] = log.date;
+          }
+        }
+      });
     });
 
     const sortedByNeeded = [...MUSCLE_KEYS].sort((a, b) => {
@@ -65,8 +72,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     // 2. Try sequence prediction based on historical transition patterns
     let predictedNextMuscle: MuscleGroup | null = null;
     if (tracker.logs.length > 1) {
-      // Sort logs chronologically (oldest to newest)
-      const sortedLogs = [...tracker.logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      // Sort logs chronologically (oldest to newest), limit to recent 50 logs for performance
+      const recentLogsForPrediction = tracker.logs.slice(0, 50);
+      const sortedLogs = [...recentLogsForPrediction].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       
       const lastLog = sortedLogs[sortedLogs.length - 1];
       if (lastLog) {
@@ -239,7 +247,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const completedSetsCount = activeExerciseName && loggedData[activeExerciseName] ? loggedData[activeExerciseName].length : 0;
   
   const historyDates = React.useMemo(() => {
-    return tracker.logs.map(log => log.date.split('T')[0]);
+    return tracker.logs.slice(0, 50).map(log => log.date.split('T')[0]);
   }, [tracker.logs]);
 
   useWidgetSync(

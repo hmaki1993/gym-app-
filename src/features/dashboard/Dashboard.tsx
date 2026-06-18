@@ -31,11 +31,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
   const containerRef = useRef<HTMLDivElement>(null);
   const recentLog = tracker.logs[0];
 
-  const historyDates = React.useMemo(() => {
-    return tracker.logs.map(log => log.date.split('T')[0]);
-  }, [tracker.logs]);
-
-  useWidgetSync(false, null, 0, '', null, historyDates);
+  // Widget sync is now handled globally in App.tsx via InactiveWidgetSync
 
   // Removed unused volume memo
 
@@ -84,7 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
   }, []);
 
   const hasWorkoutToday = React.useMemo(() => {
-    return tracker.logs.some(log => log.date.startsWith(todayStr));
+    return tracker.logs.length > 0 && tracker.logs[0].date.startsWith(todayStr);
   }, [tracker.logs, todayStr]);
 
   return (

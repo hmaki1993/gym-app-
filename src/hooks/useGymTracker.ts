@@ -59,20 +59,23 @@ function loadState(): GymState {
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw) as GymState;
 
-    // --- DATA MIGRATION: Backfill missing 'unit' field on old set logs ---
+    // --- DATA MIGRATION: Backfill missing 'unit' field on old set logs in-place for performance ---
     const savedUnit = parsed.settings?.weightUnit || DEFAULT_SETTINGS.weightUnit;
-    const migratedLogs = (parsed.logs || []).map(log => ({
-      ...log,
-      // Ensure YYYY-MM-DD local date format on legacy ISO dates
-      date: log.date.includes('T') ? getLocalDateStr(new Date(log.date)) : log.date,
-      exercises: log.exercises.map(ex => ({
-        ...ex,
-        sets: ex.sets.map(set => ({
-          ...set,
-          unit: set.unit || savedUnit,
-        })),
-      })),
-    }));
+    const logs = parsed.logs || [];
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      if (log.date.includes('T')) log.date = getLocalDateStr(new Date(log.date));
+      if (log.exercises) {
+        for (let j = 0; j < log.exercises.length; j++) {
+          const ex = log.exercises[j];
+          if (ex.sets) {
+            for (let k = 0; k < ex.sets.length; k++) {
+              if (!ex.sets[k].unit) ex.sets[k].unit = savedUnit;
+            }
+          }
+        }
+      }
+    }
 
     // --- COLOR MIGRATION: Eradicate dark green #326144 and replace with neon green #00E676 ---
     if (parsed.settings) {
@@ -84,7 +87,7 @@ function loadState(): GymState {
     return {
       ...DEFAULT_STATE,
       ...parsed,
-      logs: migratedLogs,
+      logs: logs,
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
     };
   } catch {
@@ -120,7 +123,8 @@ function syncActiveMusclesToNative(logs: any[], exerciseToMuscle: any) {
   } catch {}
 }
 
-let lastSavedStr = "";
+let lastSavedStr = '';
+let syncTimeout: any;
 
 function saveState(state: GymState) {
   try {
@@ -134,18 +138,21 @@ function saveState(state: GymState) {
       (window as any).AndroidStorage.setItem(STORAGE_KEY, raw);
     }
 
-    // Compute active muscles per day for the Android Widget
-    const exerciseToMuscle: Record<string, string> = {};
-    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
-    });
-    if (state.customExercises) {
-      Object.entries(state.customExercises).forEach(([group, exercises]) => {
+    clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => {
+      // Compute active muscles per day for the Android Widget
+      const exerciseToMuscle: Record<string, string> = {};
+      Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
         exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
       });
-    }
+      if (state.customExercises) {
+        Object.entries(state.customExercises).forEach(([group, exercises]) => {
+          exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+        });
+      }
 
-    syncActiveMusclesToNative(state.logs, exerciseToMuscle);
+      syncActiveMusclesToNative(state.logs, exerciseToMuscle);
+    }, 1000);
   } catch { /* quota */ }
 }
 
