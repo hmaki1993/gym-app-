@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Search, RotateCcw, Trash2, Pen, Play, PlusCircle, ImageIcon, Minimize2 } from 'lucide-react';
+import { Search, RotateCcw, Trash2, Pen, Play, PlusCircle, ImageIcon, Shrink } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../../hooks/useGymTracker';
 import { DEFAULT_EXERCISES, EXERCISE_TRANSLATIONS, EXERCISE_DETAILS } from '../../../data/exercises';
@@ -295,16 +295,16 @@ const ExerciseItemCard = React.memo(({
                 padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: isExpanded ? '#3498db' : 'var(--text-primary)',
                 opacity: isExpanded ? 1 : 0.7,
-                width: isExpanded ? 36 : 28, height: isExpanded ? 36 : 28,
-                borderRadius: isExpanded ? 10 : 8,
+                width: isExpanded ? 40 : 32, height: isExpanded ? 40 : 32,
+                borderRadius: isExpanded ? 12 : 10,
                 boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
                 outline: 'none', WebkitTapHighlightColor: 'transparent',
                 transition: 'all 0.15s ease'
               }}>
               {isExpanded ? (
-                <Minimize2 size={19} strokeWidth={2.5} color="#3498db" />
+                <Shrink size={22} strokeWidth={2.5} color="#3498db" />
               ) : (
-                <img src="/assets/maximize.png" alt="More" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+                <img src="/assets/maximize.png" alt="More" style={{ width: 18, height: 18, objectFit: 'contain' }} />
               )}
             </button>
           <div
@@ -316,14 +316,14 @@ const ExerciseItemCard = React.memo(({
             onMouseLeave={e => { e.stopPropagation(); onDragEnd(); }}
             style={{ 
               touchAction: 'none', cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              width: isExpanded ? 36 : 28, height: isExpanded ? 36 : 28,
-              borderRadius: isExpanded ? 10 : 8, 
+              width: isExpanded ? 40 : 32, height: isExpanded ? 40 : 32,
+              borderRadius: isExpanded ? 12 : 10, 
               background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
               color: 'var(--text-primary)', flexShrink: 0, 
               border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
               boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)'
             }}>
-            <img src="/assets/dotted-line.png" alt="Drag" style={{ width: isExpanded ? 20 : 16, height: isExpanded ? 20 : 16, objectFit: 'contain', opacity: 0.7 }} />
+            <img src="/assets/dotted-line.png" alt="Drag" style={{ width: isExpanded ? 24 : 18, height: isExpanded ? 24 : 18, objectFit: 'contain', opacity: 0.7 }} />
           </div>
         </div>
       </div>

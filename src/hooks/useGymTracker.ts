@@ -282,12 +282,14 @@ export function useGymTracker() {
 
 
 
-  // Initial sync to fix any "ghost" PRs from storage
+  // Initial sync to fix any "ghost" PRs from storage (async to avoid blocking initial render)
   useEffect(() => {
-    setState(prev => {
-      const fixedPRs = syncPRsFromLogs(prev.logs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
-      return { ...prev, prs: fixedPRs };
-    });
+    setTimeout(() => {
+      setState(prev => {
+        const fixedPRs = syncPRsFromLogs(prev.logs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
+        return { ...prev, prs: fixedPRs };
+      });
+    }, 50);
   }, []); // Run once on mount
 
   const setSettings = useCallback((s: Partial<GymSettings>) => {
@@ -823,19 +825,20 @@ export function useGymTracker() {
     // Count unique days within this slice where the user had a workout
     const workoutDays = new Set<number>();
     
-    state.logs.forEach(l => {
-      // All dates should now be YYYY-MM-DD format after migration
+    for (const l of state.logs) {
       const parts = l.date.split('T')[0].split('-');
       const y = parseInt(parts[0], 10);
       const m = parseInt(parts[1], 10) - 1;
       const d = parseInt(parts[2], 10);
-
-      if (y === currentYear && m === currentMonth) {
-        if (d >= weekStartDay && d <= weekEndDay) {
-          workoutDays.add(d);
-        }
+      
+      if (y < currentYear || (y === currentYear && m < currentMonth)) {
+        break; // Stop immediately since logs are sorted newest to oldest
       }
-    });
+      
+      if (y === currentYear && m === currentMonth && d >= weekStartDay && d <= weekEndDay) {
+        workoutDays.add(d);
+      }
+    }
     
     return workoutDays.size;
   }, [state.logs]);
