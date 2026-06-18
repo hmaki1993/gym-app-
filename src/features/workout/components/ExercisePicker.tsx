@@ -243,24 +243,24 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     const cardBg = isActive
       ? (isLight 
-          ? 'linear-gradient(145deg, #fffaf5 0%, #fff0e5 100%)' 
-          : 'linear-gradient(145deg, #2a221d 0%, #1c1511 100%)')
+          ? 'linear-gradient(145deg, #f5f9ff 0%, #eaf2ff 100%)' 
+          : 'linear-gradient(145deg, #1a2030 0%, #111825 100%)')
       : (isLight 
           ? 'linear-gradient(145deg, #ffffff 0%, #f5f5f7 100%)' 
           : 'linear-gradient(145deg, #222228 0%, #141418 100%)');
 
     const cardBorder = isActive
-      ? '2px solid #E67E22'
+      ? '2px solid #3498db'
       : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.05)');
 
     const cardShadow = draggingIndex === index
       ? (isLight 
-          ? '0 25px 50px -12px rgba(0,0,0,0.18), 0 0 0 2.5px #E67E22'
-          : '0 25px 50px -12px rgba(0,0,0,0.6), 0 0 0 2.5px #E67E22')
+          ? '0 25px 50px -12px rgba(0,0,0,0.18), 0 0 0 2.5px #3498db'
+          : '0 25px 50px -12px rgba(0,0,0,0.6), 0 0 0 2.5px #3498db')
       : (isActive
           ? (isLight
-              ? '0 20px 35px -8px rgba(0, 0, 0, 0.12), 0 10px 18px -10px rgba(0, 0, 0, 0.08), inset 0 2px 0 rgba(255,255,255,0.9)'
-              : '0 30px 55px -12px rgba(0, 0, 0, 0.75), 0 12px 25px -12px rgba(0, 0, 0, 0.55), inset 0 2px 0 rgba(255,255,255,0.18)')
+              ? '0 20px 35px -8px rgba(52,152,219,0.18), 0 10px 18px -10px rgba(52,152,219,0.1), inset 0 2px 0 rgba(255,255,255,0.9)'
+              : '0 30px 55px -12px rgba(0, 0, 0, 0.75), 0 12px 25px -12px rgba(52,152,219,0.2), inset 0 2px 0 rgba(255,255,255,0.18)')
           : (isLight
               ? '0 15px 30px -10px rgba(0, 0, 0, 0.1), 0 8px 16px -8px rgba(0, 0, 0, 0.06), inset 0 2px 0 #ffffff'
               : '0 25px 45px -12px rgba(0, 0, 0, 0.65), 0 10px 20px -10px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.12)'));
@@ -338,13 +338,13 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 width: 22, 
                 height: 22, 
                 borderRadius: '50%', 
-                background: '#E67E22', 
+                background: '#3498db', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 zIndex: 2, 
                 border: '2px solid #ffffff',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                boxShadow: '0 2px 6px rgba(52,152,219,0.35)'
               }}>
                 <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
                   <path d="M1.5 5l2.5 2.5L10.5 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -419,7 +419,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
                 <div style={{ 
                   fontSize: 11, 
-                  color: isActive ? '#D35400' : 'rgba(var(--text-secondary), 0.6)', 
+                  color: isActive ? '#2980b9' : 'rgba(var(--text-secondary), 0.6)', 
                   fontWeight: 800, 
                   fontFamily: "var(--heading-font)", 
                   whiteSpace: 'nowrap', 
@@ -558,16 +558,18 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           outline: none !important;
         }
         .exercise-select-btn:hover {
-          background: ${isLight ? 'rgba(52, 152, 219, 0.05)' : 'rgba(52, 152, 219, 0.08)'} !important;
-          border-color: rgba(52, 152, 219, 0.3) !important;
+          background: ${isLight ? 'rgba(52, 152, 219, 0.06)' : 'rgba(52, 152, 219, 0.1)'} !important;
+          border-color: rgba(52, 152, 219, 0.5) !important;
+          box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.25), 0 8px 24px -6px rgba(52, 152, 219, 0.15) !important;
           transform: none !important;
         }
         .exercise-select-btn:hover::before {
           display: none !important;
         }
         .exercise-select-btn:active {
-          background: ${isLight ? 'rgba(52, 152, 219, 0.1)' : 'rgba(52, 152, 219, 0.15)'} !important;
-          border-color: rgba(52, 152, 219, 0.45) !important;
+          background: ${isLight ? 'rgba(52, 152, 219, 0.12)' : 'rgba(52, 152, 219, 0.18)'} !important;
+          border-color: rgba(52, 152, 219, 0.65) !important;
+          box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.35) !important;
           transform: none !important;
         }
       `}</style>
