@@ -235,11 +235,67 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     const lastSession = tracker.getLastSession(name);
     const gifUrl = getGifUrl(name);
 
+    // Dynamic font size to fit long exercise names nicely without awkward multi-line stacks
+    const getFontSize = (text: string) => {
+      if (text.length <= 12) return 16;
+      if (text.length <= 18) return 14;
+      if (text.length <= 25) return 12;
+      return 11;
+    };
+
+    const cardBg = isActive
+      ? (isLight 
+          ? 'linear-gradient(135deg, rgba(230, 126, 34, 0.15) 0%, rgba(230, 126, 34, 0.04) 100%)' 
+          : 'linear-gradient(135deg, rgba(230, 126, 34, 0.2) 0%, rgba(230, 126, 34, 0.05) 100%)')
+      : (isLight 
+          ? 'linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.005) 100%)' 
+          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.005) 100%)');
+
+    const cardBorder = isActive
+      ? '1px solid rgba(230, 126, 34, 0.4)'
+      : (isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.06)');
+
     return (
       <div key={name} data-index={index} ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} style={{ width: '100%', display: 'flex', flexDirection: 'column', zIndex: draggingIndex === index ? 100 : 1, position: draggingIndex === index ? 'relative' : 'static' }}>
-        <div onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} className="exercise-select-btn" role="button" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', background: isActive ? 'rgba(230, 126, 34, 0.1)' : 'rgba(var(--theme-rgb), 0.02)', border: `1px solid ${isActive ? 'rgba(230, 126, 34, 0.35)' : 'rgba(var(--theme-rgb), 0.05)'}`, borderRadius: 16, cursor: 'pointer', touchAction: 'manipulation', outline: 'none', WebkitTapHighlightColor: 'transparent', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: draggingIndex === index ? '0 20px 40px rgba(0,0,0,0.5), 0 0 0 2px rgba(230,126,34,0.4)' : '0 2px 6px rgba(0,0,0,0.02)', transform: draggingIndex === index ? 'scale(1.02) rotate(-1deg)' : 'scale(1) rotate(0deg)', transition: draggingIndex === index ? 'transform 0.1s ease, box-shadow 0.1s ease' : 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease', overflow: 'hidden' }}>
-          {/* GIF */}
-          <div style={{ width: '45%', minHeight: '120px', alignSelf: 'stretch', flexShrink: 0, background: gifUrl ? '#ffffff' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', borderRight: '1px solid rgba(var(--theme-rgb), 0.04)' }}>
+        <div 
+          onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} 
+          className="exercise-select-btn" 
+          role="button" 
+          style={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            alignItems: 'stretch', 
+            background: cardBg, 
+            border: cardBorder, 
+            borderRadius: 20, 
+            cursor: 'pointer', 
+            touchAction: 'manipulation', 
+            outline: 'none', 
+            WebkitTapHighlightColor: 'transparent', 
+            backdropFilter: 'blur(16px)', 
+            WebkitBackdropFilter: 'blur(16px)', 
+            boxShadow: draggingIndex === index 
+              ? '0 20px 40px rgba(0,0,0,0.5), 0 0 0 2px rgba(230,126,34,0.4)' 
+              : (isActive ? '0 8px 32px rgba(230, 126, 34, 0.08), inset 0 1px 0 rgba(255,255,255,0.05)' : '0 2px 8px rgba(0,0,0,0.03)'), 
+            transform: draggingIndex === index ? 'scale(1.02) rotate(-1deg)' : 'scale(1) rotate(0deg)', 
+            transition: draggingIndex === index ? 'transform 0.1s ease, box-shadow 0.1s ease' : 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, border-color 0.3s ease', 
+            overflow: 'hidden' 
+          }}
+        >
+          {/* GIF container (Left 50%) */}
+          <div style={{ 
+            width: '50%', 
+            aspectRatio: '1', 
+            flexShrink: 0, 
+            background: gifUrl ? '#ffffff' : 'transparent', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            position: 'relative', 
+            borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
+            alignSelf: 'stretch',
+            overflow: 'hidden'
+          }}>
             {gifUrl ? (
               <FastGif src={gifUrl} alt={name} />
             ) : tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) ? (
@@ -247,7 +303,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 onClick={(e) => { e.stopPropagation(); setAliasSelectorOpen(name); }}
                 style={{
                   width: 'calc(100% - 24px)',
-                  aspectRatio: '1',
+                  height: 'calc(100% - 24px)',
                   borderRadius: 12,
                   background: 'rgba(var(--theme-rgb), 0.04)',
                   display: 'flex',
@@ -260,66 +316,203 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 <PlusCircle size={24} color="var(--text-primary)" strokeWidth={2.5} style={{ opacity: 0.7 }} />
               </div>
             ) : (
-              <Play size={28} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
+              <Play size={32} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
             )}
             {/* Active badge */}
             {isActive && (
-              <div style={{ position: 'absolute', top: -4, right: -4, width: 22, height: 22, borderRadius: '50%', background: '#E67E22', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, border: '2px solid var(--bg-color)' }}>
-                <svg width="10" height="8" viewBox="0 0 12 10" fill="none"><path d="M1 5l3 3L11 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <div style={{ 
+                position: 'absolute', 
+                top: 8, 
+                right: 8, 
+                width: 22, 
+                height: 22, 
+                borderRadius: '50%', 
+                background: '#E67E22', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                zIndex: 2, 
+                border: '2px solid #ffffff',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+              }}>
+                <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
+                  <path d="M1.5 5l2.5 2.5L10.5 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
             )}
           </div>
-          {/* Info */}
-          <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0, justifyContent: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {isRecent && <RotateCcw size={14} style={{ opacity: 0.5, flexShrink: 0 }} color="var(--text-secondary)" />}
-              <div style={{ 
-                fontSize: 16, 
-                fontWeight: 900, 
-                color: 'var(--text-primary)', 
-                fontFamily: "var(--heading-font)", 
-                lineHeight: 1.2, 
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                flex: 1
-              }}>
-                {name}
+
+          {/* Info & Actions container (Right 50%) */}
+          <div style={{ 
+            padding: '12px 14px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between',
+            flex: 1, 
+            minWidth: 0,
+            alignSelf: 'stretch'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, width: '100%' }}>
+                <div style={{ 
+                  fontSize: getFontSize(name), 
+                  fontWeight: 900, 
+                  color: 'var(--text-primary)', 
+                  fontFamily: "var(--heading-font)", 
+                  lineHeight: 1.15, 
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'normal',
+                  flex: 1
+                }}>
+                  {isRecent && (
+                    <RotateCcw 
+                      size={12} 
+                      style={{ 
+                        display: 'inline-block', 
+                        marginRight: 4, 
+                        verticalAlign: 'middle', 
+                        opacity: 0.5,
+                        marginTop: -2
+                      }} 
+                      color="var(--text-secondary)" 
+                    />
+                  )}
+                  {name}
+                </div>
+                <div
+                  onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+                  onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+                  style={{ 
+                    touchAction: 'none', 
+                    cursor: 'grab', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    width: 28, 
+                    height: 28, 
+                    borderRadius: 8, 
+                    background: 'rgba(var(--theme-rgb), 0.04)', 
+                    color: 'var(--text-primary)', 
+                    flexShrink: 0, 
+                    border: '1px solid rgba(var(--theme-rgb), 0.04)',
+                    marginTop: 1
+                  }}
+                >
+                  <Grip size={14} strokeWidth={2.5} style={{ opacity: 0.5 }} />
+                </div>
               </div>
-              <div
-                onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                style={{ touchAction: 'none', cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 10, background: 'rgba(var(--theme-rgb), 0.04)', color: 'var(--text-primary)', marginLeft: 4, flexShrink: 0, border: '1px solid rgba(var(--theme-rgb), 0.04)' }}
-              >
-                <Grip size={18} strokeWidth={2.5} style={{ opacity: 0.6 }} />
-              </div>
+              {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
+                <div style={{ 
+                  fontSize: 11, 
+                  color: isActive ? '#D35400' : 'rgba(var(--text-secondary), 0.6)', 
+                  fontWeight: 800, 
+                  fontFamily: "var(--heading-font)", 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%'
+                }}>
+                  {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
+                </div>
+              )}
             </div>
-            {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
-              <div style={{ fontSize: 13, color: isActive ? '#D35400' : 'rgba(var(--text-secondary), 0.7)', fontWeight: 800, fontFamily: "var(--heading-font)", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
-              </div>
-            )}
-            {lastSession && (() => {
+
+            {lastSession ? (() => {
               const displayUnit = tracker.getDisplayUnit(name, muscleGroup as MuscleGroup);
               const convertedWeight = tracker.convertWeight(lastSession.bestSet?.weight || 0, lastSession.bestSet?.unit || 'kg', displayUnit);
               const roundedWeight = Number(convertedWeight.toFixed(1));
               return (
-                <div style={{ fontSize: 10, color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isLight ? 950 : 800, opacity: isLight ? 0.7 : 0.5, letterSpacing: '0.3px', marginTop: 2 }}>
+                <div style={{ 
+                  fontSize: 9, 
+                  color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', 
+                  fontWeight: isLight ? 950 : 800, 
+                  opacity: isLight ? 0.6 : 0.4, 
+                  letterSpacing: '0.3px',
+                  marginTop: 4,
+                  marginBottom: isActive ? 8 : 0
+                }}>
                   {t('lastSession').toUpperCase()}: {roundedWeight} {t(displayUnit as any)} × {lastSession.bestSet?.reps}
                 </div>
               );
-            })()}
+            })() : (
+              <div style={{ height: 4 }} />
+            )}
+
             {isActive && (
-              <div style={{ display: 'flex', flexDirection: 'row', gap: 6, marginTop: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', marginTop: 'auto' }}>
                 {gifUrl && tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) && (
-                  <button onClick={e => { e.stopPropagation(); setAliasSelectorOpen(name); }} style={{ flex: 1, background: 'rgba(52,152,219,0.12)', border: '1px solid rgba(52,152,219,0.25)', borderRadius: 8, padding: '6px 4px', color: '#3498db', cursor: 'pointer', fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: "var(--heading-font)" }}>
-                    <ImageIcon size={12} strokeWidth={2.5} /> Edit
+                  <button 
+                    onClick={e => { e.stopPropagation(); setAliasSelectorOpen(name); }} 
+                    style={{ 
+                      width: '100%', 
+                      background: isLight ? 'rgba(52,152,219,0.08)' : 'rgba(52,152,219,0.12)', 
+                      border: isLight ? '1px solid rgba(52,152,219,0.15)' : '1px solid rgba(52,152,219,0.25)', 
+                      borderRadius: 10, 
+                      padding: '8px', 
+                      color: isLight ? '#2980b9' : '#3498db', 
+                      cursor: 'pointer', 
+                      fontSize: 11, 
+                      fontWeight: 900, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: 6, 
+                      fontFamily: "var(--heading-font)",
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      transition: 'background 0.2s, transform 0.1s'
+                    }}
+                  >
+                    <ImageIcon size={12} strokeWidth={2.5} /> Edit GIF
                   </button>
                 )}
-                <button onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} style={{ flex: 1, background: 'rgba(230,126,34,0.12)', border: '1px solid rgba(230,126,34,0.25)', borderRadius: 8, padding: '6px 4px', color: '#E67E22', cursor: 'pointer', fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: "var(--heading-font)" }}>
+                <button 
+                  onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} 
+                  style={{ 
+                    width: '100%', 
+                    background: isLight ? 'rgba(230,126,34,0.08)' : 'rgba(230,126,34,0.12)', 
+                    border: isLight ? '1px solid rgba(230,126,34,0.15)' : '1px solid rgba(230,126,34,0.25)', 
+                    borderRadius: 10, 
+                    padding: '8px', 
+                    color: isLight ? '#d35400' : '#E67E22', 
+                    cursor: 'pointer', 
+                    fontSize: 11, 
+                    fontWeight: 900, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 6, 
+                    fontFamily: "var(--heading-font)",
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    transition: 'background 0.2s, transform 0.1s'
+                  }}
+                >
                   <Pen size={12} strokeWidth={2.5} /> Rename
                 </button>
-                <button onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} style={{ flex: 1, background: 'rgba(255,60,60,0.12)', border: '1px solid rgba(255,60,60,0.25)', borderRadius: 8, padding: '6px 4px', color: '#ff4444', cursor: 'pointer', fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: "var(--heading-font)" }}>
+                <button 
+                  onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} 
+                  style={{ 
+                    width: '100%', 
+                    background: isLight ? 'rgba(255,60,60,0.08)' : 'rgba(255,60,60,0.12)', 
+                    border: isLight ? '1px solid rgba(255,60,60,0.15)' : '1px solid rgba(255,60,60,0.25)', 
+                    borderRadius: 10, 
+                    padding: '8px', 
+                    color: isLight ? '#c0392b' : '#ff4444', 
+                    cursor: 'pointer', 
+                    fontSize: 11, 
+                    fontWeight: 900, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 6, 
+                    fontFamily: "var(--heading-font)",
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    transition: 'background 0.2s, transform 0.1s'
+                  }}
+                >
                   <Trash2 size={12} strokeWidth={2.5} /> Remove
                 </button>
               </div>
