@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Search, RotateCcw, Trash2, Pen, Play, PlusCircle, ImageIcon } from 'lucide-react';
+import { Search, RotateCcw, Trash2, Pen, Play, PlusCircle, ImageIcon, Minimize2 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../../hooks/useGymTracker';
 import { DEFAULT_EXERCISES, EXERCISE_TRANSLATIONS, EXERCISE_DETAILS } from '../../../data/exercises';
@@ -116,11 +116,21 @@ const ExerciseItemCard = React.memo(({
   onDragStart, onDragEnd, onDragCancel, itemRefs
 }: ExerciseItemCardProps) => {
 
-  const cardBg = isLight
-    ? (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(245, 245, 250, 1) 100%)' : 'rgba(255, 255, 255, 1)')
-    : (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.18) 0%, rgba(32, 32, 40, 1) 100%)' : 'rgba(30, 30, 38, 1)');
+  const [localActive, setLocalActive] = React.useState(isActive);
+  React.useEffect(() => {
+    setLocalActive(isActive);
+  }, [isActive]);
 
-  const cardBorder = isActive
+  const handleToggle = React.useCallback(() => {
+    setLocalActive(!isActive);
+    setTimeout(() => onToggle(name), 10);
+  }, [isActive, name, onToggle]);
+
+  const cardBg = isLight
+    ? (localActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(245, 245, 250, 1) 100%)' : 'rgba(255, 255, 255, 1)')
+    : (localActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.18) 0%, rgba(32, 32, 40, 1) 100%)' : 'rgba(30, 30, 38, 1)');
+
+  const cardBorder = localActive
     ? '2px solid #3498db'
     : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.04)');
 
@@ -146,7 +156,7 @@ const ExerciseItemCard = React.memo(({
       }}
     >
       <div 
-        onClick={() => onToggle(name)} 
+        onClick={handleToggle} 
         className="exercise-select-btn" 
         role="button" 
         style={{ 
@@ -161,7 +171,7 @@ const ExerciseItemCard = React.memo(({
           outline: 'none', 
           WebkitTapHighlightColor: 'transparent', 
           boxShadow: cardShadow, 
-          transition: 'background 0.15s, border 0.15s, transform 0.15s',
+          transition: 'background 0.05s, border 0.05s, transform 0.05s',
           transform: isDragging ? 'scale(1.04) rotate(-1.5deg)' : 'none', 
           opacity: isDragging ? 0.9 : 1,
           overflow: 'hidden',
@@ -201,7 +211,7 @@ const ExerciseItemCard = React.memo(({
           ) : (
             <Play size={32} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
           )}
-          {isActive && (
+          {localActive && (
             <div style={{ 
               position: 'absolute', top: 8, right: 8, width: 22, height: 22, 
               borderRadius: '50%', background: '#3498db', 
@@ -241,7 +251,7 @@ const ExerciseItemCard = React.memo(({
               {(EXERCISE_TRANSLATIONS[name] || customTranslation) && (
                 <div style={{ 
                   fontSize: isExpanded ? 13.5 : 11.5, 
-                  color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
+                  color: localActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
                   fontWeight: 800, fontFamily: "var(--heading-font)", 
                   whiteSpace: 'normal', wordBreak: 'break-word', width: '100%',
                   marginTop: 2, textAlign: 'center'
@@ -275,20 +285,28 @@ const ExerciseItemCard = React.memo(({
         {/* Control buttons */}
         <div onClick={e => e.stopPropagation()} 
           style={{ position: 'absolute', top: isExpanded ? 8 : 4, right: isExpanded ? 8 : 4, display: 'flex', alignItems: 'center', gap: 6, zIndex: 15 }}>
-          <button onClick={(e) => { e.stopPropagation(); onExpand(name); }}
-            style={{
-              background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
-              border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
-              padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: isExpanded ? '#3498db' : 'var(--text-primary)',
-              opacity: isExpanded ? 1 : 0.7,
-              width: isExpanded ? 36 : 28, height: isExpanded ? 36 : 28,
-              borderRadius: isExpanded ? 10 : 8,
-              boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
-              outline: 'none', WebkitTapHighlightColor: 'transparent'
-            }}>
-            <img src="/assets/maximize.png" alt="More" style={{ width: isExpanded ? 20 : 16, height: isExpanded ? 20 : 16, objectFit: 'contain' }} />
-          </button>
+            <button onClick={(e) => { 
+              e.stopPropagation(); 
+              onExpand(name); 
+            }}
+              style={{
+                background: isExpanded ? 'rgba(52, 152, 219, 0.1)' : (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'),
+                border: isExpanded ? '1px solid rgba(52, 152, 219, 0.3)' : (isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)'),
+                padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: isExpanded ? '#3498db' : 'var(--text-primary)',
+                opacity: isExpanded ? 1 : 0.7,
+                width: isExpanded ? 36 : 28, height: isExpanded ? 36 : 28,
+                borderRadius: isExpanded ? 10 : 8,
+                boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+                outline: 'none', WebkitTapHighlightColor: 'transparent',
+                transition: 'all 0.15s ease'
+              }}>
+              {isExpanded ? (
+                <Minimize2 size={19} strokeWidth={2.5} color="#3498db" />
+              ) : (
+                <img src="/assets/maximize.png" alt="More" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+              )}
+            </button>
           <div
             onTouchStart={e => { e.stopPropagation(); onDragStart(name); }}
             onMouseDown={e => { e.stopPropagation(); onDragStart(name); }}
