@@ -58,6 +58,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const [exercisesList, setExercisesList] = useState<any[] | null>(null);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
+  const [localExerciseOrder, setLocalExerciseOrder] = useState<string[] | null>(null);
   // True only after the modal slide-up animation finishes — prevents GIF fetch during animation
   const [modalReady, setModalReady] = useState(false);
   const modalReadyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -221,10 +222,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     if (el) {
       const idx = parseInt(el.getAttribute('data-index') || '-1');
       if (idx !== -1 && idx !== draggingIndex) {
-        const arr = [...filteredExercises];
-        const [item] = arr.splice(draggingIndex, 1);
-        arr.splice(idx, 0, item);
-        tracker.reorderExercises(muscleGroup as MuscleGroup, arr);
+        setLocalExerciseOrder(prev => {
+          const arr = [...(prev || filteredExercises)];
+          const [item] = arr.splice(draggingIndex, 1);
+          arr.splice(idx, 0, item);
+          return arr;
+        });
         setDraggingIndex(idx);
       }
     }
@@ -244,12 +247,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     };
 
     const cardBg = isLight
-      ? (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.12) 0%, rgba(255, 255, 255, 0.8) 100%)' : 'rgba(255,255,255,0.6)')
-      : (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.18) 0%, rgba(30, 30, 38, 0.85) 100%)' : 'rgba(28, 28, 36, 0.75)');
+      ? (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(245, 245, 250, 1) 100%)' : 'rgba(255, 255, 255, 1)')
+      : (isActive ? 'linear-gradient(135deg, rgba(52, 152, 219, 0.18) 0%, rgba(32, 32, 40, 1) 100%)' : 'rgba(30, 30, 38, 1)');
 
     const cardBorder = isActive
       ? '2px solid #3498db'
-      : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.08)');
+      : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.04)');
 
     const cardShadow = draggingIndex === index
       ? (isLight 
@@ -302,8 +305,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, border-radius 0.3s', 
             overflow: 'hidden',
             padding: 0,
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
             willChange: 'transform, border-radius'
           }}
         >
@@ -575,6 +576,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   clearTimeout(dragTimer.current);
                   dragTimer.current = null;
                 }
+                if (draggingIndex !== null && localExerciseOrder) {
+                  tracker.reorderExercises(muscleGroup as MuscleGroup, localExerciseOrder);
+                  setLocalExerciseOrder(null);
+                }
                 setDraggingIndex(null);
               }}
               onTouchMove={() => {
@@ -591,6 +596,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   clearTimeout(dragTimer.current);
                   dragTimer.current = null;
                 }
+                if (draggingIndex !== null && localExerciseOrder) {
+                  tracker.reorderExercises(muscleGroup as MuscleGroup, localExerciseOrder);
+                  setLocalExerciseOrder(null);
+                }
                 setDraggingIndex(null);
               }}
               onMouseLeave={e => {
@@ -598,6 +607,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 if (dragTimer.current) {
                   clearTimeout(dragTimer.current);
                   dragTimer.current = null;
+                }
+                if (draggingIndex !== null && localExerciseOrder) {
+                  tracker.reorderExercises(muscleGroup as MuscleGroup, localExerciseOrder);
+                  setLocalExerciseOrder(null);
                 }
                 setDraggingIndex(null);
               }}
@@ -632,7 +645,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   Object.entries(DEFAULT_EXERCISES).forEach(([mg, exs]) => (exs as string[]).forEach(ex => { exerciseMap[ex] = mg; }));
   Object.entries(tracker.customExercises).forEach(([mg, exs]) => exs.forEach(ex => { exerciseMap[ex] = mg; }));
   const recentNames: string[] = [], otherNames: string[] = [];
-  filteredExercises.forEach(name => { tracker.getLastSession(name) ? recentNames.push(name) : otherNames.push(name); });
+  (localExerciseOrder || filteredExercises).forEach(name => { tracker.getLastSession(name) ? recentNames.push(name) : otherNames.push(name); });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 0, userSelect: draggingIndex === null ? 'auto' : 'none' }}>
@@ -1008,7 +1021,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 const isFirst = idxInList === 0;
                 const isPrevActive = !isFirst && activeExercises.includes(recentNames[idxInList - 1]);
                 const isPrevExpanded = !isFirst && expandedExercise === recentNames[idxInList - 1];
-                return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, filteredExercises.indexOf(name));
+                return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, (localExerciseOrder || filteredExercises).indexOf(name));
               })}
             </div>
           </>
@@ -1025,7 +1038,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               const isFirst = idxInList === 0;
               const isPrevActive = !isFirst && activeExercises.includes(otherNames[idxInList - 1]);
               const isPrevExpanded = !isFirst && expandedExercise === otherNames[idxInList - 1];
-              return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, filteredExercises.indexOf(name));
+              return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, (localExerciseOrder || filteredExercises).indexOf(name));
             })}
           </div>
         )}

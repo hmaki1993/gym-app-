@@ -199,8 +199,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
               willChange: 'transform, filter',
               display: 'block',
               filter: tracker.settings.themeMode === 'light'
-                ? 'drop-shadow(0 15px 25px rgba(0,0,0,0.12))'
-                : 'drop-shadow(0 20px 35px rgba(0,0,0,0.5))'
+                ? 'drop-shadow(0 6px 12px rgba(0,0,0,0.08))'
+                : 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))'
             }} 
           />
         </div>
@@ -212,9 +212,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
           <div 
           style={{ 
             padding: '24px 20px 16px 32px', 
-            background: 'rgba(var(--theme-rgb), 0.03)',
-            backdropFilter: 'var(--glass-blur)',
-            WebkitBackdropFilter: 'var(--glass-blur)',
+            background: tracker.settings.themeMode === 'dark' ? '#1c1c24' : '#fcfcfc',
             borderLeft: 'none',
             borderRight: 'none',
             borderBottom: '1px solid var(--glass-border)',
