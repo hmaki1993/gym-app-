@@ -314,7 +314,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
             alignSelf: 'stretch',
             overflow: 'hidden',
-            transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
+            borderTopLeftRadius: isActive ? 18 : 10,
+            borderBottomLeftRadius: isActive ? 18 : 10,
+            transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.3s'
           }}>
             {gifUrl ? (
               <FastGif src={gifUrl} alt={name} />
