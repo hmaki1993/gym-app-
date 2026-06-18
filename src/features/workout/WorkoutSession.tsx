@@ -1015,28 +1015,28 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
       <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
         {phase === 'exercises' && (
-          isReady ? (
-            <>
-              <MuscleSelector 
-                selectedMuscle={selectedMuscle} 
-                onSelect={(m) => setSelectedMuscle(m as MuscleGroup)} 
-                lang={lang} 
-                musclesWithExercises={musclesWithExercises}
-                logs={tracker.logs}
-              />
-              <ExercisePicker
-                search={search}
-                onSearchChange={setSearch}
-                activeExercises={activeExercises}
-                onToggle={toggleExercise}
-                onRename={handleRename}
-                muscleGroup={selectedMuscle}
-                tracker={tracker}
-                t={t as any}
-              />
-            </>
-          ) : null
-        )}
+          <>
+            {isReady ? (
+              <>
+                <MuscleSelector 
+                  selectedMuscle={selectedMuscle} 
+                  onSelect={(m) => setSelectedMuscle(m as MuscleGroup)} 
+                  lang={lang} 
+                  musclesWithExercises={musclesWithExercises}
+                  logs={tracker.logs}
+                />
+                <ExercisePicker
+                  search={search}
+                  onSearchChange={setSearch}
+                  activeExercises={activeExercises}
+                  onToggle={toggleExercise}
+                  onRename={handleRename}
+                  muscleGroup={selectedMuscle}
+                  tracker={tracker}
+                  t={t as any}
+                />
+              </>
+            ) : null}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 'max(12px, env(safe-area-inset-bottom))', marginTop: '8px', gap: '8px' }}>
                 {/* Show frozen timer when paused */}
                 {hasStartedSession && (
