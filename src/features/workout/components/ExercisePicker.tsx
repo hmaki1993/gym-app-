@@ -284,7 +284,7 @@ const ExerciseItemCard = React.memo(({
 
         {/* Control buttons */}
         <div onClick={e => e.stopPropagation()} 
-          style={{ position: 'absolute', top: isExpanded ? 8 : 4, right: isExpanded ? 8 : 4, display: 'flex', alignItems: 'center', gap: 6, zIndex: 15 }}>
+          style={{ position: 'absolute', top: 8, right: 8, display: 'flex', alignItems: 'center', gap: 6, zIndex: 15 }}>
             <button onClick={(e) => { 
               e.stopPropagation(); 
               onExpand(name); 
@@ -295,8 +295,8 @@ const ExerciseItemCard = React.memo(({
                 padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: isExpanded ? '#3498db' : 'var(--text-primary)',
                 opacity: isExpanded ? 1 : 0.7,
-                width: isExpanded ? 40 : 32, height: isExpanded ? 40 : 32,
-                borderRadius: isExpanded ? 12 : 10,
+                width: 40, height: 40,
+                borderRadius: 12,
                 boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
                 outline: 'none', WebkitTapHighlightColor: 'transparent',
                 transition: 'all 0.15s ease'
@@ -304,7 +304,7 @@ const ExerciseItemCard = React.memo(({
               {isExpanded ? (
                 <Shrink size={22} strokeWidth={2.5} color="#3498db" />
               ) : (
-                <img src="/assets/maximize.png" alt="More" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+                <img src="/assets/maximize.png" alt="More" style={{ width: 22, height: 22, objectFit: 'contain' }} />
               )}
             </button>
           <div
@@ -316,14 +316,14 @@ const ExerciseItemCard = React.memo(({
             onMouseLeave={e => { e.stopPropagation(); onDragEnd(); }}
             style={{ 
               touchAction: 'none', cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              width: isExpanded ? 40 : 32, height: isExpanded ? 40 : 32,
-              borderRadius: isExpanded ? 12 : 10, 
+              width: 40, height: 40,
+              borderRadius: 12, 
               background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
               color: 'var(--text-primary)', flexShrink: 0, 
               border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
               boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)'
             }}>
-            <img src="/assets/dotted-line.png" alt="Drag" style={{ width: isExpanded ? 24 : 18, height: isExpanded ? 24 : 18, objectFit: 'contain', opacity: 0.7 }} />
+            <img src="/assets/dotted-line.png" alt="Drag" style={{ width: 22, height: 22, objectFit: 'contain', opacity: 0.7 }} />
           </div>
         </div>
       </div>

@@ -107,13 +107,11 @@
 }
 
 .exercise-select-btn {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-tap-highlight-color: transparent;
 }
 
 .exercise-select-btn:active {
-  transform: scale(0.97) translateX(-2px);
-  opacity: 1;
+  opacity: 0.95;
 }
 @keyframes pulse-glow {
   0%, 100% { 
