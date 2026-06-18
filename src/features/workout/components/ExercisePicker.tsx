@@ -259,8 +259,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           : '0 25px 50px -12px rgba(0,0,0,0.6), 0 0 0 2.5px #E67E22')
       : (isActive
           ? (isLight
-              ? '0 12px 28px -6px rgba(230, 126, 34, 0.18), 0 6px 12px -4px rgba(230, 126, 34, 0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
-              : '0 15px 30px -8px rgba(230, 126, 34, 0.25), 0 5px 10px -4px rgba(230, 126, 34, 0.15), inset 0 1px 0 rgba(255,255,255,0.15)')
+              ? '0 10px 20px -5px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04), inset 0 1.5px 0 #ffffff'
+              : '0 15px 30px -8px rgba(0, 0, 0, 0.55), 0 4px 8px -3px rgba(0, 0, 0, 0.45), inset 0 1.5px 0 rgba(255, 255, 255, 0.1)')
           : (isLight
               ? '0 10px 20px -5px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03), inset 0 1.5px 0 #ffffff'
               : '0 15px 30px -8px rgba(0, 0, 0, 0.4), 0 4px 8px -3px rgba(0, 0, 0, 0.3), inset 0 1.5px 0 rgba(255, 255, 255, 0.08)'));
