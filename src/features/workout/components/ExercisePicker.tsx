@@ -299,7 +299,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               ? 'transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease' 
               : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, border-radius 0.3s', 
             overflow: 'hidden',
-            padding: isExpanded ? '10px 12px' : '4px 6px'
+            padding: isExpanded ? '8px 8px' : '4px 6px'
           }}
         >
           {/* GIF container (Left dynamic width) */}
@@ -312,11 +312,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             alignItems: 'center', 
             justifyContent: 'center', 
             position: 'relative', 
-            borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
-            alignSelf: 'stretch',
+            border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
+            alignSelf: 'center',
             overflow: 'hidden',
-            borderTopLeftRadius: isExpanded ? 18 : 10,
-            borderBottomLeftRadius: isExpanded ? 18 : 10,
+            borderRadius: isExpanded ? 14 : 8,
             transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.3s'
           }}>
             {gifUrl ? (
@@ -367,7 +366,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
           {/* Info & Actions container (Right dynamic width) */}
           <div style={{ 
-            padding: isExpanded ? '12px 14px' : '6px 8px', 
+            padding: isExpanded ? '8px 8px' : '6px 8px', 
             display: 'flex', 
             flexDirection: 'column', 
             justifyContent: isExpanded ? 'space-between' : 'center',
@@ -376,9 +375,19 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             alignSelf: 'stretch',
             transition: 'padding 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
               {/* Centering column container for names */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 2, 
+                flex: 1, 
+                minWidth: 0, 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                textAlign: 'center',
+                paddingRight: isExpanded ? 64 : 44
+              }}>
                 <div style={{ 
                   fontSize: isExpanded ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
                   fontWeight: 800, 
@@ -410,57 +419,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
                   </div>
                 )}
-              </div>
-
-              {/* Right side buttons container */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                {/* Expand button (three dots options) */}
-                <button
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    setExpandedExercise(expandedExercise === name ? null : name); 
-                  }}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    padding: 4,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: isExpanded ? '#3498db' : 'var(--text-primary)',
-                    opacity: isExpanded ? 1 : 0.45,
-                    transition: 'all 0.2s',
-                    borderRadius: 6
-                  }}
-                >
-                  <MoreVertical size={isExpanded ? 18 : 15} strokeWidth={2.5} />
-                </button>
-
-                {/* Grip Handle */}
-                <div
-                  onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                  onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                  style={{ 
-                    touchAction: 'none', 
-                    cursor: 'grab', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    width: isExpanded ? 34 : 24, 
-                    height: isExpanded ? 34 : 24, 
-                    borderRadius: isExpanded ? 10 : 6, 
-                    background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
-                    color: 'var(--text-primary)', 
-                    flexShrink: 0, 
-                    border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
-                    marginTop: 0,
-                    boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
-                    transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
-                  }}
-                >
-                  <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
-                </div>
               </div>
             </div>
 
@@ -539,6 +497,68 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Absolute positioned control buttons */}
+          <div 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              position: 'absolute', 
+              top: isExpanded ? 8 : 4, 
+              right: isExpanded ? 8 : 4, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 4, 
+              zIndex: 15
+            }}
+          >
+            {/* Expand button (three dots options) */}
+            <button
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setExpandedExercise(expandedExercise === name ? null : name); 
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 4,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isExpanded ? '#3498db' : 'var(--text-primary)',
+                opacity: isExpanded ? 1 : 0.45,
+                transition: 'all 0.2s',
+                borderRadius: 6
+              }}
+            >
+              <MoreVertical size={isExpanded ? 18 : 15} strokeWidth={2.5} />
+            </button>
+
+            {/* Grip Handle */}
+            <div
+              onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+              onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+              style={{ 
+                touchAction: 'none', 
+                cursor: 'grab', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                width: isExpanded ? 34 : 24, 
+                height: isExpanded ? 34 : 24, 
+                borderRadius: isExpanded ? 10 : 6, 
+                background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
+                color: 'var(--text-primary)', 
+                flexShrink: 0, 
+                border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+                marginTop: 0,
+                boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+                transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
+              }}
+            >
+              <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
+            </div>
           </div>
         </div>
       </div>
