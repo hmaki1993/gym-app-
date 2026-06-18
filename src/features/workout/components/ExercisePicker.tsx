@@ -89,15 +89,12 @@ const getFontSize = (text: string) => {
 interface ExerciseItemCardProps {
   name: string;
   isFirst: boolean;
-  isPrevActive: boolean;
-  isPrevExpanded: boolean;
   index: number;
   isActive: boolean;
   isExpanded: boolean;
   isDragging: boolean;
   isLight: boolean;
   gifUrl: string | null;
-  muscleGroup: string;
   isCustom: boolean;
   customTranslation: string | undefined;
   onToggle: (name: string) => void;
@@ -112,9 +109,9 @@ interface ExerciseItemCardProps {
 }
 
 const ExerciseItemCard = React.memo(({ 
-  name, isFirst, isPrevActive, isPrevExpanded, index, 
+  name, isFirst, index, 
   isActive, isExpanded, isDragging, isLight, gifUrl,
-  muscleGroup, isCustom, customTranslation, 
+  isCustom, customTranslation, 
   onToggle, onExpand, onRename, onAliasSelect, onHide,
   onDragStart, onDragEnd, onDragCancel, itemRefs
 }: ExerciseItemCardProps) => {
@@ -541,7 +538,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     callbacksRef.current.tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name);
   }, [muscleGroup]);
 
-  const stableOnDragStart = React.useCallback((name: string) => {
+  const stableOnDragStart = React.useCallback((_name: string) => {
     // drag start handled externally
   }, []);
 
@@ -554,21 +551,18 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     if (dragTimer.current) { clearTimeout(dragTimer.current); dragTimer.current = null; }
   }, []);
 
-  const renderExerciseItem = (name: string, isFirst: boolean, isPrevActive: boolean, isPrevExpanded: boolean, index: number) => {
+  const renderExerciseItem = (name: string, isFirst: boolean, index: number) => {
     return (
       <ExerciseItemCard
         key={name}
         name={name}
         isFirst={isFirst}
-        isPrevActive={isPrevActive}
-        isPrevExpanded={isPrevExpanded}
         index={index}
         isActive={activeExercises.includes(name)}
         isExpanded={expandedExercise === name}
         isDragging={draggingIndex === index}
         isLight={isLight}
         gifUrl={getGifUrl(name)}
-        muscleGroup={muscleGroup}
         isCustom={tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) || false}
         customTranslation={customTranslations[name]}
         onToggle={stableOnToggle}
@@ -963,9 +957,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
               {recentNames.map((name, idxInList) => {
                 const isFirst = idxInList === 0;
-                const isPrevActive = !isFirst && activeExercises.includes(recentNames[idxInList - 1]);
-                const isPrevExpanded = !isFirst && expandedExercise === recentNames[idxInList - 1];
-                return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, (localExerciseOrder || filteredExercises).indexOf(name));
+                return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name));
               })}
             </div>
           </>
@@ -980,9 +972,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
             {otherNames.map((name, idxInList) => {
               const isFirst = idxInList === 0;
-              const isPrevActive = !isFirst && activeExercises.includes(otherNames[idxInList - 1]);
-              const isPrevExpanded = !isFirst && expandedExercise === otherNames[idxInList - 1];
-              return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, (localExerciseOrder || filteredExercises).indexOf(name));
+              return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name));
             })}
           </div>
         )}

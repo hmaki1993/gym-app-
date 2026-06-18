@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useGymTracker } from '../../hooks/useGymTracker';
-import { useWidgetSync } from '../../hooks/useWidgetSync';
 import { translations } from '../../translations';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../../data/exercises';
 
