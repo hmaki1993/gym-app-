@@ -203,7 +203,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     else { setShowSearch(false); onSearchChange(''); }
   };
 
-  const toggleWithAnim = (name: string, el: HTMLElement | null) => {
+  const toggleWithAnim = (name: string) => {
     // If selecting from search and it was hidden/deleted, restore it to main list
     const isHidden = hiddenExercises.includes(name);
     const isDeleted = deletedExercises.includes(name);
@@ -280,7 +280,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         }}
       >
         <div 
-          onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} 
+          onClick={() => toggleWithAnim(name)} 
           className="exercise-select-btn" 
           role="button" 
           style={{ 
@@ -577,7 +577,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 }
                 setDraggingIndex(null);
               }}
-              onTouchMove={e => {
+              onTouchMove={() => {
                 if (draggingIndex === null) {
                   if (dragTimer.current) {
                     clearTimeout(dragTimer.current);
@@ -905,7 +905,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               const isActive = activeExercises.includes(name);
               const lastSession = tracker.getLastSession(name);
               return (
-                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name, null); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(230, 126, 34, 0.28)' : 'rgba(var(--theme-rgb), 0.12)', border: isActive ? '1px solid rgba(230, 126, 34, 0.4)' : '1px solid rgba(var(--theme-rgb), 0.16)', borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
+                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(230, 126, 34, 0.28)' : 'rgba(var(--theme-rgb), 0.12)', border: isActive ? '1px solid rgba(230, 126, 34, 0.4)' : '1px solid rgba(var(--theme-rgb), 0.16)', borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#D35400' : 'var(--text-primary)', fontFamily: "var(--heading-font)" }}>{name}</div>
