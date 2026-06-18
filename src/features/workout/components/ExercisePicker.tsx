@@ -925,8 +925,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             {archivedExercises.map(name => (
               <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'transparent', borderBottom: '1px solid rgba(var(--theme-rgb), 0.1)', transition: 'all 0.2s ease' }}>
                 <div 
-                  onClick={() => tracker.restoreExercise(muscleGroup as MuscleGroup, name)}
-                  style={{ flex: 1, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "var(--heading-font)", opacity: 0.7, cursor: 'pointer' }}
+                  style={{ flex: 1, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "var(--heading-font)", opacity: 0.7 }}
                 >
                   {name}
                 </div>
