@@ -50,6 +50,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const isLight = tracker.settings.themeMode === 'light';
 
   const [showSearch, setShowSearch] = useState(false);
+  const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [renamingExercise, setRenamingExercise] = useState<string | null>(null);
   const [aliasSelectorOpen, setAliasSelectorOpen] = useState<string | null>(null);
@@ -228,8 +229,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     }
   };
 
-  const renderExerciseItem = (name: string, isFirst: boolean, isPrevActive: boolean, index: number) => {
+  const renderExerciseItem = (name: string, isFirst: boolean, isPrevExpanded: boolean, index: number) => {
     const isActive = activeExercises.includes(name);
+    const isExpanded = expandedExercise === name;
     const lastSession = tracker.getLastSession(name);
     const gifUrl = getGifUrl(name);
 
@@ -253,7 +255,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       ? (isLight 
           ? '0 24px 48px -8px rgba(0,0,0,0.22), 0 0 0 3px #3498db'
           : '0 24px 48px -8px rgba(0,0,0,0.65), 0 0 0 3px #3498db')
-      : (isActive
+      : (isExpanded
           ? (isLight
               ? '0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 6px -2px rgba(0,0,0,0.06)'
               : '0 8px 24px -8px rgba(0,0,0,0.5), 0 4px 10px -4px rgba(0,0,0,0.35)')
@@ -270,14 +272,14 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           width: '100%', 
           display: 'flex', 
           flexDirection: 'column', 
-          zIndex: draggingIndex === index ? 100 : (isActive ? 12 : index + 2), 
+          zIndex: draggingIndex === index ? 100 : (isExpanded ? 12 : index + 2), 
           position: 'relative', 
-          marginTop: isFirst ? '0px' : (isPrevActive ? '6px' : (isActive ? '-2px' : '-22px')),
+          marginTop: isFirst ? '0px' : (isPrevExpanded ? '6px' : (isExpanded ? '-2px' : '-22px')),
           transition: 'margin-top 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0.3s'
         }}
       >
         <div 
-          onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} 
+          onClick={() => setExpandedExercise(isExpanded ? null : name)} 
           className="exercise-select-btn" 
           role="button" 
           style={{ 
@@ -286,7 +288,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             alignItems: 'stretch', 
             background: cardBg, 
             border: cardBorder, 
-            borderRadius: isActive ? 20 : 12, 
+            borderRadius: isExpanded ? 20 : 12, 
             cursor: 'pointer', 
             touchAction: 'manipulation', 
             outline: 'none', 
@@ -298,26 +300,30 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               ? 'transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease' 
               : 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, border-radius 0.3s', 
             overflow: 'hidden',
-            padding: isActive ? '10px 12px' : '4px 6px'
+            padding: isExpanded ? '10px 12px' : '4px 6px'
           }}
         >
           {/* GIF container (Left dynamic width) */}
-          <div style={{ 
-            width: isActive ? '38%' : '20%', 
-            aspectRatio: '1', 
-            flexShrink: 0, 
-            background: gifUrl ? '#ffffff' : 'transparent', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            position: 'relative', 
-            borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
-            alignSelf: 'stretch',
-            overflow: 'hidden',
-            borderTopLeftRadius: isActive ? 18 : 10,
-            borderBottomLeftRadius: isActive ? 18 : 10,
-            transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.3s'
-          }}>
+          <div 
+            onClick={(e) => { e.stopPropagation(); toggleWithAnim(name, itemRefs.current.get(name) ?? null); }}
+            style={{ 
+              width: isExpanded ? '38%' : '20%', 
+              aspectRatio: '1', 
+              flexShrink: 0, 
+              background: gifUrl ? '#ffffff' : 'transparent', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              position: 'relative', 
+              borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
+              alignSelf: 'stretch',
+              overflow: 'hidden',
+              borderTopLeftRadius: isExpanded ? 18 : 10,
+              borderBottomLeftRadius: isExpanded ? 18 : 10,
+              transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.3s',
+              cursor: 'pointer'
+            }}
+          >
             {gifUrl ? (
               <FastGif src={gifUrl} alt={name} />
             ) : tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) ? (
@@ -340,33 +346,34 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             ) : (
               <Play size={32} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
             )}
-            {/* Active badge */}
-            {isActive && (
-              <div style={{ 
-                position: 'absolute', 
-                top: 8, 
-                right: 8, 
-                width: 22, 
-                height: 22, 
-                borderRadius: '50%', 
-                background: '#3498db', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                zIndex: 2, 
-                border: '2px solid #ffffff',
-                boxShadow: '0 2px 6px rgba(52,152,219,0.35)'
-              }}>
-                <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
+            {/* Selection indicator circle */}
+            <div style={{ 
+              position: 'absolute', 
+              top: isExpanded ? 8 : 4, 
+              right: isExpanded ? 8 : 4, 
+              width: isExpanded ? 22 : 18, 
+              height: isExpanded ? 22 : 18, 
+              borderRadius: '50%', 
+              background: isActive ? '#3498db' : 'rgba(0,0,0,0.3)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              zIndex: 5, 
+              border: isActive ? '2.2px solid #ffffff' : '1.5px solid rgba(255,255,255,0.4)',
+              boxShadow: isActive ? '0 2px 6px rgba(52,152,219,0.35)' : 'none',
+              transition: 'all 0.3s ease'
+            }}>
+              {isActive && (
+                <svg width={isExpanded ? "10" : "8"} height={isExpanded ? "8" : "6"} viewBox="0 0 12 10" fill="none">
                   <path d="M1.5 5l2.5 2.5L10.5 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Info & Actions container (Right dynamic width) */}
           <div style={{ 
-            padding: isActive ? '12px 14px' : '6px 8px', 
+            padding: isExpanded ? '12px 14px' : '6px 8px', 
             display: 'flex', 
             flexDirection: 'column', 
             justifyContent: 'space-between',
@@ -378,7 +385,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, width: '100%' }}>
                 <div style={{ 
-                  fontSize: isActive ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
+                  fontSize: isExpanded ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
                   fontWeight: 800, 
                   color: 'var(--text-primary)', 
                   fontFamily: "var(--heading-font)", 
@@ -400,9 +407,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    width: isActive ? 34 : 24, 
-                    height: isActive ? 34 : 24, 
-                    borderRadius: isActive ? 10 : 6, 
+                    width: isExpanded ? 34 : 24, 
+                    height: isExpanded ? 34 : 24, 
+                    borderRadius: isExpanded ? 10 : 6, 
                     background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
                     color: 'var(--text-primary)', 
                     flexShrink: 0, 
@@ -412,10 +419,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
                   }}
                 >
-                  <Grip size={isActive ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
+                  <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
                 </div>
               </div>
-              {isActive && (EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
+              {isExpanded && (EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
                 <div style={{ 
                   fontSize: 11, 
                   color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
@@ -431,7 +438,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               )}
             </div>
 
-            {isActive && lastSession ? (() => {
+            {isExpanded && lastSession ? (() => {
               const displayUnit = tracker.getDisplayUnit(name, muscleGroup as MuscleGroup);
               const convertedWeight = tracker.convertWeight(lastSession.bestSet?.weight || 0, lastSession.bestSet?.unit || 'kg', displayUnit);
               const roundedWeight = Number(convertedWeight.toFixed(1));
@@ -443,7 +450,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   opacity: isLight ? 0.6 : 0.4, 
                   letterSpacing: '0.3px',
                   marginTop: 4,
-                  marginBottom: isActive ? 8 : 0
+                  marginBottom: isExpanded ? 8 : 0
                 }}>
                   {t('lastSession').toUpperCase()}: {roundedWeight} {t(displayUnit as any)} × {lastSession.bestSet?.reps}
                 </div>
@@ -910,8 +917,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
               {recentNames.map((name, idxInList) => {
                 const isFirst = idxInList === 0;
-                const isPrevActive = !isFirst && activeExercises.includes(recentNames[idxInList - 1]);
-                return renderExerciseItem(name, isFirst, isPrevActive, filteredExercises.indexOf(name));
+                const isPrevExpanded = !isFirst && expandedExercise === recentNames[idxInList - 1];
+                return renderExerciseItem(name, isFirst, isPrevExpanded, filteredExercises.indexOf(name));
               })}
             </div>
           </>
@@ -926,8 +933,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
             {otherNames.map((name, idxInList) => {
               const isFirst = idxInList === 0;
-              const isPrevActive = !isFirst && activeExercises.includes(otherNames[idxInList - 1]);
-              return renderExerciseItem(name, isFirst, isPrevActive, filteredExercises.indexOf(name));
+              const isPrevExpanded = !isFirst && expandedExercise === otherNames[idxInList - 1];
+              return renderExerciseItem(name, isFirst, isPrevExpanded, filteredExercises.indexOf(name));
             })}
           </div>
         )}
