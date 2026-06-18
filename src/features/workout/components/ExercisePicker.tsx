@@ -465,7 +465,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             </div>
 
             {isExpanded && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 'auto', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 12, alignItems: 'center' }}>
                 {gifUrl && tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) && (
                   <button 
                     onClick={e => { e.stopPropagation(); setAliasSelectorOpen(name); }} 
