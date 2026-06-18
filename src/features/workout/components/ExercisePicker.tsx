@@ -229,7 +229,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     }
   };
 
-  const renderExerciseItem = (name: string, isFirst: boolean, isPrevExpanded: boolean, index: number) => {
+  const renderExerciseItem = (name: string, isFirst: boolean, isPrevActive: boolean, isPrevExpanded: boolean, index: number) => {
     const isActive = activeExercises.includes(name);
     const isExpanded = expandedExercise === name;
     const lastSession = tracker.getLastSession(name);
@@ -272,9 +272,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           width: '100%', 
           display: 'flex', 
           flexDirection: 'column', 
-          zIndex: draggingIndex === index ? 100 : (isExpanded ? 12 : index + 2), 
+          zIndex: draggingIndex === index ? 100 : (isExpanded ? 12 : (isActive ? 11 : index + 2)), 
           position: 'relative', 
-          marginTop: isFirst ? '0px' : (isPrevExpanded ? '6px' : (isExpanded ? '-2px' : '-22px')),
+          marginTop: isFirst ? '0px' : ((isPrevActive || isPrevExpanded) ? '6px' : ((isActive || isExpanded) ? '-2px' : '-22px')),
           transition: 'margin-top 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0.3s'
         }}
       >
@@ -938,8 +938,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
               {recentNames.map((name, idxInList) => {
                 const isFirst = idxInList === 0;
+                const isPrevActive = !isFirst && activeExercises.includes(recentNames[idxInList - 1]);
                 const isPrevExpanded = !isFirst && expandedExercise === recentNames[idxInList - 1];
-                return renderExerciseItem(name, isFirst, isPrevExpanded, filteredExercises.indexOf(name));
+                return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, filteredExercises.indexOf(name));
               })}
             </div>
           </>
@@ -954,8 +955,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
             {otherNames.map((name, idxInList) => {
               const isFirst = idxInList === 0;
+              const isPrevActive = !isFirst && activeExercises.includes(otherNames[idxInList - 1]);
               const isPrevExpanded = !isFirst && expandedExercise === otherNames[idxInList - 1];
-              return renderExerciseItem(name, isFirst, isPrevExpanded, filteredExercises.indexOf(name));
+              return renderExerciseItem(name, isFirst, isPrevActive, isPrevExpanded, filteredExercises.indexOf(name));
             })}
           </div>
         )}
