@@ -563,20 +563,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           -webkit-tap-highlight-color: transparent !important;
           outline: none !important;
         }
-        .exercise-select-btn:hover {
-          background: ${isLight ? 'rgba(52, 152, 219, 0.06)' : 'rgba(52, 152, 219, 0.1)'} !important;
-          border-color: rgba(52, 152, 219, 0.5) !important;
-          box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.25), 0 8px 24px -6px rgba(52, 152, 219, 0.15) !important;
-          transform: none !important;
-        }
+        .exercise-select-btn:hover,
         .exercise-select-btn:hover::before {
-          display: none !important;
+          /* no hover effect on desktop */
         }
         .exercise-select-btn:active {
-          background: ${isLight ? 'rgba(52, 152, 219, 0.12)' : 'rgba(52, 152, 219, 0.18)'} !important;
-          border-color: rgba(52, 152, 219, 0.65) !important;
-          box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.35) !important;
-          transform: none !important;
+          transform: scale(0.99) !important;
         }
       `}</style>
 
