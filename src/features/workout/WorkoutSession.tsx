@@ -29,7 +29,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   // Synchronously compute initial state or load from autosave
   const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted, initialBaseSeconds, initialStartTime } = React.useMemo(() => {
     const freq: Record<string, number> = {};
-    tracker.logs.forEach(log => {
+    const recentLogs = tracker.logs.slice(0, 100);
+    recentLogs.forEach(log => {
       if (log.muscleGroup) { freq[log.muscleGroup] = (freq[log.muscleGroup] || 0) + 1; }
       log.exercises.forEach(ex => {
         const group = (ex as any).muscleGroup || log.muscleGroup;
@@ -44,7 +45,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     MUSCLE_KEYS.forEach(k => lastTrainedByMuscle[k] = null);
     
     // Single pass to find the latest training date for each muscle
-    tracker.logs.forEach(log => {
+    recentLogs.forEach(log => {
       const musclesInLog = new Set<string>();
       if (log.muscleGroup) musclesInLog.add(log.muscleGroup);
       log.exercises.forEach(e => {
@@ -233,6 +234,12 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Wait one frame to render heavy list so the modal slides in instantly
+    requestAnimationFrame(() => setIsReady(true));
+  }, []);
 
   const [isSaved, setIsSaved] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1008,24 +1015,28 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
       <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
         {phase === 'exercises' && (
-          <>
-            <MuscleSelector 
-              selectedMuscle={selectedMuscle} 
-              onSelect={(m) => setSelectedMuscle(m as MuscleGroup)} 
-              lang={lang} 
-              musclesWithExercises={musclesWithExercises}
-              logs={tracker.logs}
-            />
-            <ExercisePicker
-              search={search}
-              onSearchChange={setSearch}
-              activeExercises={activeExercises}
-              onToggle={toggleExercise}
-              onRename={handleRename}
-              muscleGroup={selectedMuscle}
-              tracker={tracker}
-              t={t as any}
-            />
+          isReady ? (
+            <>
+              <MuscleSelector 
+                selectedMuscle={selectedMuscle} 
+                onSelect={(m) => setSelectedMuscle(m as MuscleGroup)} 
+                lang={lang} 
+                musclesWithExercises={musclesWithExercises}
+                logs={tracker.logs}
+              />
+              <ExercisePicker
+                search={search}
+                onSearchChange={setSearch}
+                activeExercises={activeExercises}
+                onToggle={toggleExercise}
+                onRename={handleRename}
+                muscleGroup={selectedMuscle}
+                tracker={tracker}
+                t={t as any}
+              />
+            </>
+          ) : null
+        )}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 'max(12px, env(safe-area-inset-bottom))', marginTop: '8px', gap: '8px' }}>
                 {/* Show frozen timer when paused */}
                 {hasStartedSession && (
