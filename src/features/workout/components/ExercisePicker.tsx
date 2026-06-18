@@ -123,7 +123,11 @@ const ExerciseItemCard = React.memo(({
 
   const handleToggle = React.useCallback(() => {
     setLocalActive(!isActive);
-    setTimeout(() => onToggle(name), 10);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        onToggle(name);
+      });
+    });
   }, [isActive, name, onToggle]);
 
   const cardBg = isLight
@@ -234,10 +238,9 @@ const ExerciseItemCard = React.memo(({
           flex: 1, minWidth: 0, alignSelf: 'stretch'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <div style={{ 
               display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0, 
               alignItems: 'center', justifyContent: 'center', textAlign: 'center',
-              paddingRight: isExpanded ? 82 : 62
+              paddingRight: 92
             }}>
               <div style={{ 
                 fontSize: isExpanded ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
