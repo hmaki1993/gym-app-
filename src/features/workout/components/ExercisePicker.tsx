@@ -235,10 +235,10 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     // Dynamic font size to fit long exercise names nicely without awkward multi-line stacks
     const getFontSize = (text: string) => {
-      if (text.length <= 12) return 16;
-      if (text.length <= 18) return 14;
-      if (text.length <= 25) return 12;
-      return 11;
+      if (text.length <= 12) return 17;
+      if (text.length <= 18) return 15;
+      if (text.length <= 25) return 13;
+      return 12;
     };
 
     const cardBg = isLight
@@ -289,9 +289,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             overflow: 'hidden' 
           }}
         >
-          {/* GIF container (Left 50%) */}
+          {/* GIF container (Left 40%) */}
           <div style={{ 
-            width: '50%', 
+            width: '40%', 
             aspectRatio: '1', 
             flexShrink: 0, 
             background: gifUrl ? '#ffffff' : 'transparent', 
@@ -363,31 +363,15 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, width: '100%' }}>
                 <div style={{ 
                   fontSize: getFontSize(name), 
-                  fontWeight: 900, 
+                  fontWeight: 800, 
                   color: 'var(--text-primary)', 
                   fontFamily: "var(--heading-font)", 
-                  lineHeight: 1.15, 
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  lineHeight: 1.2, 
                   whiteSpace: 'normal',
-                  flex: 1
+                  wordBreak: 'break-word',
+                  flex: 1,
+                  letterSpacing: '-0.3px'
                 }}>
-                  {isRecent && (
-                    <RotateCcw 
-                      size={12} 
-                      style={{ 
-                        display: 'inline-block', 
-                        marginRight: 4, 
-                        verticalAlign: 'middle', 
-                        opacity: 0.5,
-                        marginTop: -2
-                      }} 
-                      color="var(--text-secondary)" 
-                    />
-                  )}
                   {name}
                 </div>
                 <div
@@ -416,13 +400,13 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
                 <div style={{ 
                   fontSize: 11, 
-                  color: isActive ? '#2980b9' : 'rgba(var(--text-secondary), 0.6)', 
+                  color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
                   fontWeight: 800, 
                   fontFamily: "var(--heading-font)", 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden', 
-                  textOverflow: 'ellipsis',
-                  maxWidth: '100%'
+                  whiteSpace: 'normal', 
+                  wordBreak: 'break-word',
+                  maxWidth: '100%',
+                  marginTop: 2
                 }}>
                   {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
                 </div>
