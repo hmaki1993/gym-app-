@@ -243,15 +243,27 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     const cardBg = isActive
       ? (isLight 
-          ? 'linear-gradient(135deg, rgba(230, 126, 34, 0.15) 0%, rgba(230, 126, 34, 0.04) 100%)' 
-          : 'linear-gradient(135deg, rgba(230, 126, 34, 0.2) 0%, rgba(230, 126, 34, 0.05) 100%)')
+          ? 'linear-gradient(135deg, #fffcf9 0%, #fff7f2 100%)' 
+          : 'linear-gradient(135deg, #271f1a 0%, #1a1512 100%)')
       : (isLight 
-          ? 'linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.005) 100%)' 
-          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.005) 100%)');
+          ? 'linear-gradient(135deg, #ffffff 0%, #f9f9fb 100%)' 
+          : 'linear-gradient(135deg, #1d1d22 0%, #151519 100%)');
 
     const cardBorder = isActive
       ? '2px solid #E67E22'
-      : (isLight ? '2px solid rgba(0, 0, 0, 0.08)' : '2px solid rgba(255, 255, 255, 0.06)');
+      : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.05)');
+
+    const cardShadow = draggingIndex === index
+      ? (isLight 
+          ? '0 25px 50px -12px rgba(0,0,0,0.18), 0 0 0 2.5px #E67E22'
+          : '0 25px 50px -12px rgba(0,0,0,0.6), 0 0 0 2.5px #E67E22')
+      : (isActive
+          ? (isLight
+              ? '0 12px 28px -6px rgba(230, 126, 34, 0.18), 0 6px 12px -4px rgba(230, 126, 34, 0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
+              : '0 15px 30px -8px rgba(230, 126, 34, 0.25), 0 5px 10px -4px rgba(230, 126, 34, 0.15), inset 0 1px 0 rgba(255,255,255,0.15)')
+          : (isLight
+              ? '0 10px 20px -5px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03), inset 0 1.5px 0 #ffffff'
+              : '0 15px 30px -8px rgba(0, 0, 0, 0.4), 0 4px 8px -3px rgba(0, 0, 0, 0.3), inset 0 1.5px 0 rgba(255, 255, 255, 0.08)'));
 
     return (
       <div key={name} data-index={index} ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} style={{ width: '100%', display: 'flex', flexDirection: 'column', zIndex: draggingIndex === index ? 100 : 1, position: draggingIndex === index ? 'relative' : 'static' }}>
@@ -272,9 +284,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             WebkitTapHighlightColor: 'transparent', 
             backdropFilter: 'blur(16px)', 
             WebkitBackdropFilter: 'blur(16px)', 
-            boxShadow: draggingIndex === index 
-              ? '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 2.5px #E67E22' 
-              : (isActive ? '0 8px 32px rgba(230, 126, 34, 0.08), inset 0 1px 0 rgba(255,255,255,0.05)' : '0 2px 8px rgba(0,0,0,0.03)'), 
+            boxShadow: cardShadow, 
             transform: draggingIndex === index ? 'scale(1.04) rotate(-1.5deg)' : 'scale(1) rotate(0deg)', 
             opacity: draggingIndex === index ? 0.9 : 1,
             transition: draggingIndex === index 
