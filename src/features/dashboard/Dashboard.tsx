@@ -197,7 +197,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
               height: 'auto', 
               objectFit: 'contain',
               willChange: 'transform, filter',
-              display: 'block'
+              display: 'block',
+              filter: tracker.settings.themeMode === 'light'
+                ? 'drop-shadow(0 15px 25px rgba(0,0,0,0.12))'
+                : 'drop-shadow(0 20px 35px rgba(0,0,0,0.5))'
             }} 
           />
         </div>
