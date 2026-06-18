@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Search, RotateCcw, Trash2, Pen, Play, Grip, PlusCircle, ImageIcon } from 'lucide-react';
+import { Search, RotateCcw, Trash2, Pen, Play, Grip, PlusCircle, ImageIcon, MoreVertical } from 'lucide-react';
 import gsap from 'gsap';
 import { useGymTracker } from '../../../hooks/useGymTracker';
 import { DEFAULT_EXERCISES, EXERCISE_TRANSLATIONS, EXERCISE_DETAILS } from '../../../data/exercises';
@@ -50,7 +50,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const isLight = tracker.settings.themeMode === 'light';
 
   const [showSearch, setShowSearch] = useState(false);
-  const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [renamingExercise, setRenamingExercise] = useState<string | null>(null);
   const [aliasSelectorOpen, setAliasSelectorOpen] = useState<string | null>(null);
@@ -58,6 +57,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const [selectedVideoExercise, setSelectedVideoExercise] = useState<string | null>(null);
   const [exercisesList, setExercisesList] = useState<any[] | null>(null);
   const [loadingVideos, setLoadingVideos] = useState(false);
+  const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   // True only after the modal slide-up animation finishes — prevents GIF fetch during animation
   const [modalReady, setModalReady] = useState(false);
   const modalReadyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -279,7 +279,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         }}
       >
         <div 
-          onClick={() => setExpandedExercise(isExpanded ? null : name)} 
+          onClick={() => toggleWithAnim(name, itemRefs.current.get(name) ?? null)} 
           className="exercise-select-btn" 
           role="button" 
           style={{ 
@@ -304,26 +304,22 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           }}
         >
           {/* GIF container (Left dynamic width) */}
-          <div 
-            onClick={(e) => { e.stopPropagation(); toggleWithAnim(name, itemRefs.current.get(name) ?? null); }}
-            style={{ 
-              width: isExpanded ? '38%' : '20%', 
-              aspectRatio: '1', 
-              flexShrink: 0, 
-              background: gifUrl ? '#ffffff' : 'transparent', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              position: 'relative', 
-              borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
-              alignSelf: 'stretch',
-              overflow: 'hidden',
-              borderTopLeftRadius: isExpanded ? 18 : 10,
-              borderBottomLeftRadius: isExpanded ? 18 : 10,
-              transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.3s',
-              cursor: 'pointer'
-            }}
-          >
+          <div style={{ 
+            width: isExpanded ? '38%' : '20%', 
+            aspectRatio: '1', 
+            flexShrink: 0, 
+            background: gifUrl ? '#ffffff' : 'transparent', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            position: 'relative', 
+            borderRight: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
+            alignSelf: 'stretch',
+            overflow: 'hidden',
+            borderTopLeftRadius: isExpanded ? 18 : 10,
+            borderBottomLeftRadius: isExpanded ? 18 : 10,
+            transition: 'width 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.3s'
+          }}>
             {gifUrl ? (
               <FastGif src={gifUrl} alt={name} />
             ) : tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) ? (
@@ -346,29 +342,28 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             ) : (
               <Play size={32} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
             )}
-            {/* Selection indicator circle */}
-            <div style={{ 
-              position: 'absolute', 
-              top: isExpanded ? 8 : 4, 
-              right: isExpanded ? 8 : 4, 
-              width: isExpanded ? 22 : 18, 
-              height: isExpanded ? 22 : 18, 
-              borderRadius: '50%', 
-              background: isActive ? '#3498db' : 'rgba(0,0,0,0.3)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              zIndex: 5, 
-              border: isActive ? '2.2px solid #ffffff' : '1.5px solid rgba(255,255,255,0.4)',
-              boxShadow: isActive ? '0 2px 6px rgba(52,152,219,0.35)' : 'none',
-              transition: 'all 0.3s ease'
-            }}>
-              {isActive && (
-                <svg width={isExpanded ? "10" : "8"} height={isExpanded ? "8" : "6"} viewBox="0 0 12 10" fill="none">
+            {/* Active badge */}
+            {isActive && (
+              <div style={{ 
+                position: 'absolute', 
+                top: 8, 
+                right: 8, 
+                width: 22, 
+                height: 22, 
+                borderRadius: '50%', 
+                background: '#3498db', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                zIndex: 2, 
+                border: '2px solid #ffffff',
+                boxShadow: '0 2px 6px rgba(52,152,219,0.35)'
+              }}>
+                <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
                   <path d="M1.5 5l2.5 2.5L10.5 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Info & Actions container (Right dynamic width) */}
@@ -398,28 +393,54 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 }}>
                   {name}
                 </div>
-                <div
-                  onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                  onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                  style={{ 
-                    touchAction: 'none', 
-                    cursor: 'grab', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    width: isExpanded ? 34 : 24, 
-                    height: isExpanded ? 34 : 24, 
-                    borderRadius: isExpanded ? 10 : 6, 
-                    background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
-                    color: 'var(--text-primary)', 
-                    flexShrink: 0, 
-                    border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
-                    marginTop: 0,
-                    boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
-                    transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
-                  }}
-                >
-                  <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  {/* Expand button (three dots options) */}
+                  <button
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setExpandedExercise(expandedExercise === name ? null : name); 
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 4,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: isExpanded ? '#3498db' : 'var(--text-primary)',
+                      opacity: isExpanded ? 1 : 0.45,
+                      transition: 'all 0.2s',
+                      borderRadius: 6
+                    }}
+                  >
+                    <MoreVertical size={isExpanded ? 18 : 15} strokeWidth={2.5} />
+                  </button>
+
+                  {/* Grip Handle */}
+                  <div
+                    onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+                    onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+                    style={{ 
+                      touchAction: 'none', 
+                      cursor: 'grab', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      width: isExpanded ? 34 : 24, 
+                      height: isExpanded ? 34 : 24, 
+                      borderRadius: isExpanded ? 10 : 6, 
+                      background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
+                      color: 'var(--text-primary)', 
+                      flexShrink: 0, 
+                      border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+                      marginTop: 0,
+                      boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+                      transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
+                    }}
+                  >
+                    <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
+                  </div>
                 </div>
               </div>
               {isExpanded && (EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
@@ -450,14 +471,14 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   opacity: isLight ? 0.6 : 0.4, 
                   letterSpacing: '0.3px',
                   marginTop: 4,
-                  marginBottom: isExpanded ? 8 : 0
+                  marginBottom: isActive ? 8 : 0
                 }}>
                   {t('lastSession').toUpperCase()}: {roundedWeight} {t(displayUnit as any)} × {lastSession.bestSet?.reps}
                 </div>
               );
             })() : null}
 
-            {isActive && (
+            {isExpanded && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 'auto' }}>
                 {gifUrl && tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) && (
                   <button 
