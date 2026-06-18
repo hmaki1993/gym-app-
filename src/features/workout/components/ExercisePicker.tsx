@@ -232,7 +232,6 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const renderExerciseItem = (name: string, isFirst: boolean, isPrevActive: boolean, isPrevExpanded: boolean, index: number) => {
     const isActive = activeExercises.includes(name);
     const isExpanded = expandedExercise === name;
-    const lastSession = tracker.getLastSession(name);
     const gifUrl = getGifUrl(name);
 
     // Dynamic font size to fit long exercise names nicely without awkward multi-line stacks
@@ -377,8 +376,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             alignSelf: 'stretch',
             transition: 'padding 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, width: '100%' }}>
+              {/* Centering column container for names */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                 <div style={{ 
                   fontSize: isExpanded ? getFontSize(name) : Math.max(11, getFontSize(name) - 3), 
                   fontWeight: 800, 
@@ -387,112 +387,94 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                   lineHeight: 1.2, 
                   whiteSpace: 'normal',
                   wordBreak: 'break-word',
-                  flex: 1,
+                  width: '100%',
                   letterSpacing: '-0.3px',
                   transition: 'font-size 0.3s',
                   textAlign: 'center'
                 }}>
                   {name}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                  {/* Expand button (three dots options) */}
-                  <button
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setExpandedExercise(expandedExercise === name ? null : name); 
-                    }}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      padding: 4,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: isExpanded ? '#3498db' : 'var(--text-primary)',
-                      opacity: isExpanded ? 1 : 0.45,
-                      transition: 'all 0.2s',
-                      borderRadius: 6
-                    }}
-                  >
-                    <MoreVertical size={isExpanded ? 18 : 15} strokeWidth={2.5} />
-                  </button>
-
-                  {/* Grip Handle */}
-                  <div
-                    onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                    onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
-                    style={{ 
-                      touchAction: 'none', 
-                      cursor: 'grab', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      width: isExpanded ? 34 : 24, 
-                      height: isExpanded ? 34 : 24, 
-                      borderRadius: isExpanded ? 10 : 6, 
-                      background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
-                      color: 'var(--text-primary)', 
-                      flexShrink: 0, 
-                      border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
-                      marginTop: 0,
-                      boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
-                      transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
-                    }}
-                  >
-                    <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
+                {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
+                  <div style={{ 
+                    fontSize: isExpanded ? 11 : 9.5, 
+                    color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
+                    fontWeight: 800, 
+                    fontFamily: "var(--heading-font)", 
+                    whiteSpace: 'normal', 
+                    wordBreak: 'break-word',
+                    width: '100%',
+                    marginTop: 2,
+                    transition: 'font-size 0.3s',
+                    textAlign: 'center'
+                  }}>
+                    {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
                   </div>
+                )}
+              </div>
+
+              {/* Right side buttons container */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                {/* Expand button (three dots options) */}
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setExpandedExercise(expandedExercise === name ? null : name); 
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 4,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: isExpanded ? '#3498db' : 'var(--text-primary)',
+                    opacity: isExpanded ? 1 : 0.45,
+                    transition: 'all 0.2s',
+                    borderRadius: 6
+                  }}
+                >
+                  <MoreVertical size={isExpanded ? 18 : 15} strokeWidth={2.5} />
+                </button>
+
+                {/* Grip Handle */}
+                <div
+                  onTouchStart={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+                  onMouseDown={e => { e.stopPropagation(); const idx = filteredExercises.indexOf(name); if (idx !== -1) setDraggingIndex(idx); }}
+                  style={{ 
+                    touchAction: 'none', 
+                    cursor: 'grab', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    width: isExpanded ? 34 : 24, 
+                    height: isExpanded ? 34 : 24, 
+                    borderRadius: isExpanded ? 10 : 6, 
+                    background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
+                    color: 'var(--text-primary)', 
+                    flexShrink: 0, 
+                    border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+                    marginTop: 0,
+                    boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+                    transition: 'width 0.3s, height 0.3s, border-radius 0.3s'
+                  }}
+                >
+                  <Grip size={isExpanded ? 18 : 13} strokeWidth={2} style={{ opacity: 0.7 }} />
                 </div>
               </div>
-              {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
-                <div style={{ 
-                  fontSize: isExpanded ? 11 : 9.5, 
-                  color: isActive ? '#2980b9' : 'rgba(var(--theme-rgb), 0.45)', 
-                  fontWeight: 800, 
-                  fontFamily: "var(--heading-font)", 
-                  whiteSpace: 'normal', 
-                  wordBreak: 'break-word',
-                  maxWidth: '100%',
-                  marginTop: 2,
-                  transition: 'font-size 0.3s',
-                  textAlign: 'center',
-                  width: '100%'
-                }}>
-                  {EXERCISE_TRANSLATIONS[name] || customTranslations[name]}
-                </div>
-              )}
             </div>
 
-            {isExpanded && lastSession ? (() => {
-              const displayUnit = tracker.getDisplayUnit(name, muscleGroup as MuscleGroup);
-              const convertedWeight = tracker.convertWeight(lastSession.bestSet?.weight || 0, lastSession.bestSet?.unit || 'kg', displayUnit);
-              const roundedWeight = Number(convertedWeight.toFixed(1));
-              return (
-                <div style={{ 
-                  fontSize: 9, 
-                  color: isLight ? 'var(--text-primary)' : 'var(--text-secondary)', 
-                  fontWeight: isLight ? 950 : 800, 
-                  opacity: isLight ? 0.6 : 0.4, 
-                  letterSpacing: '0.3px',
-                  marginTop: 4,
-                  marginBottom: isActive ? 8 : 0
-                }}>
-                  {t('lastSession').toUpperCase()}: {roundedWeight} {t(displayUnit as any)} × {lastSession.bestSet?.reps}
-                </div>
-              );
-            })() : null}
-
             {isExpanded && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 'auto', alignItems: 'center' }}>
                 {gifUrl && tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) && (
                   <button 
                     onClick={e => { e.stopPropagation(); setAliasSelectorOpen(name); }} 
                     style={{ 
-                      width: '100%', 
+                      width: 'fit-content', 
                       background: 'rgba(52, 152, 219, 0.1)',
                       border: '1.5px solid #3498db',
                       borderRadius: 12, 
-                      padding: '9px 12px', 
+                      padding: '8px 16px', 
                       color: '#3498db', 
                       cursor: 'pointer', 
                       fontSize: 12, 
@@ -512,11 +494,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 <button 
                   onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} 
                   style={{ 
-                    width: '100%', 
+                    width: 'fit-content', 
                     background: 'rgba(230, 126, 34, 0.1)',
                     border: '1.5px solid #E67E22',
                     borderRadius: 12, 
-                    padding: '9px 12px', 
+                    padding: '8px 16px', 
                     color: '#E67E22', 
                     cursor: 'pointer', 
                     fontSize: 12, 
@@ -535,11 +517,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 <button 
                   onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} 
                   style={{ 
-                    width: '100%', 
+                    width: 'fit-content', 
                     background: 'rgba(231, 76, 60, 0.1)',
                     border: '1.5px solid #e74c3c',
                     borderRadius: 12, 
-                    padding: '9px 12px', 
+                    padding: '8px 16px', 
                     color: '#e74c3c', 
                     cursor: 'pointer', 
                     fontSize: 12, 
