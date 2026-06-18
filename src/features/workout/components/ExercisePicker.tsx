@@ -255,15 +255,15 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
     const cardShadow = draggingIndex === index
       ? (isLight 
-          ? '0 25px 50px -12px rgba(0,0,0,0.18), 0 0 0 2.5px #3498db'
-          : '0 25px 50px -12px rgba(0,0,0,0.6), 0 0 0 2.5px #3498db')
+          ? '0 32px 60px -10px rgba(0,0,0,0.28), 0 0 0 3px #3498db, 0 0 20px rgba(52,152,219,0.3)'
+          : '0 32px 60px -10px rgba(0,0,0,0.7), 0 0 0 3px #3498db, 0 0 24px rgba(52,152,219,0.4)')
       : (isActive
           ? (isLight
-              ? '0 20px 35px -8px rgba(52,152,219,0.18), 0 10px 18px -10px rgba(52,152,219,0.1), inset 0 2px 0 rgba(255,255,255,0.9)'
-              : '0 30px 55px -12px rgba(0, 0, 0, 0.75), 0 12px 25px -12px rgba(52,152,219,0.2), inset 0 2px 0 rgba(255,255,255,0.18)')
+              ? '0 12px 40px -8px rgba(52,152,219,0.28), 0 6px 16px -6px rgba(52,152,219,0.18), inset 0 1px 0 rgba(255,255,255,0.95)'
+              : '0 16px 48px -10px rgba(52,152,219,0.35), 0 8px 24px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)')
           : (isLight
-              ? '0 15px 30px -10px rgba(0, 0, 0, 0.1), 0 8px 16px -8px rgba(0, 0, 0, 0.06), inset 0 2px 0 #ffffff'
-              : '0 25px 45px -12px rgba(0, 0, 0, 0.65), 0 10px 20px -10px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.12)'));
+              ? '0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 6px -2px rgba(0,0,0,0.06), inset 0 1px 0 #ffffff'
+              : '0 8px 28px -8px rgba(0,0,0,0.55), 0 4px 10px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'));
 
     return (
       <div key={name} data-index={index} ref={el => { if (el) itemRefs.current.set(name, el); else itemRefs.current.delete(name); }} style={{ width: '100%', display: 'flex', flexDirection: 'column', zIndex: draggingIndex === index ? 100 : 1, position: draggingIndex === index ? 'relative' : 'static' }}>
@@ -403,17 +403,18 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    width: 28, 
-                    height: 28, 
-                    borderRadius: 8, 
-                    background: 'rgba(var(--theme-rgb), 0.04)', 
+                    width: 34, 
+                    height: 34, 
+                    borderRadius: 10, 
+                    background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)', 
                     color: 'var(--text-primary)', 
                     flexShrink: 0, 
-                    border: '1px solid rgba(var(--theme-rgb), 0.04)',
-                    marginTop: 1
+                    border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.1)',
+                    marginTop: 0,
+                    boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)'
                   }}
                 >
-                  <Grip size={14} strokeWidth={2.5} style={{ opacity: 0.5 }} />
+                  <Grip size={18} strokeWidth={2} style={{ opacity: 0.7 }} />
                 </div>
               </div>
               {(EXERCISE_TRANSLATIONS[name] || customTranslations[name]) && (
@@ -454,77 +455,82 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             )}
 
             {isActive && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', marginTop: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: '100%', marginTop: 'auto' }}>
                 {gifUrl && tracker.customExercises[muscleGroup as MuscleGroup]?.includes(name) && (
                   <button 
                     onClick={e => { e.stopPropagation(); setAliasSelectorOpen(name); }} 
                     style={{ 
                       width: '100%', 
-                      background: isLight ? 'rgba(52,152,219,0.08)' : 'rgba(52,152,219,0.12)', 
-                      border: isLight ? '1px solid rgba(52,152,219,0.15)' : '1px solid rgba(52,152,219,0.25)', 
-                      borderRadius: 10, 
-                      padding: '8px', 
-                      color: isLight ? '#2980b9' : '#3498db', 
+                      background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
+                      border: 'none',
+                      borderRadius: 12, 
+                      padding: '9px 12px', 
+                      color: '#ffffff', 
                       cursor: 'pointer', 
-                      fontSize: 11, 
+                      fontSize: 12, 
                       fontWeight: 900, 
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center', 
-                      gap: 6, 
+                      gap: 7, 
                       fontFamily: "var(--heading-font)",
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                      transition: 'background 0.2s, transform 0.1s'
+                      boxShadow: '0 4px 14px rgba(52,152,219,0.45)',
+                      transition: 'transform 0.1s, box-shadow 0.1s',
+                      letterSpacing: '0.2px'
                     }}
                   >
-                    <ImageIcon size={12} strokeWidth={2.5} /> Edit GIF
+                    <ImageIcon size={13} strokeWidth={2.5} /> Edit GIF
                   </button>
                 )}
                 <button 
                   onClick={e => { e.stopPropagation(); setRenamingExercise(name); }} 
                   style={{ 
                     width: '100%', 
-                    background: isLight ? 'rgba(230,126,34,0.08)' : 'rgba(230,126,34,0.12)', 
-                    border: isLight ? '1px solid rgba(230,126,34,0.15)' : '1px solid rgba(230,126,34,0.25)', 
-                    borderRadius: 10, 
-                    padding: '8px', 
-                    color: isLight ? '#d35400' : '#E67E22', 
+                    background: isLight
+                      ? 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'
+                      : 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%)',
+                    border: isLight ? '1.5px solid rgba(0,0,0,0.12)' : '1.5px solid rgba(255,255,255,0.14)',
+                    borderRadius: 12, 
+                    padding: '9px 12px', 
+                    color: 'var(--text-primary)', 
                     cursor: 'pointer', 
-                    fontSize: 11, 
+                    fontSize: 12, 
                     fontWeight: 900, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    gap: 6, 
+                    gap: 7, 
                     fontFamily: "var(--heading-font)",
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                    transition: 'background 0.2s, transform 0.1s'
+                    boxShadow: isLight ? '0 3px 10px rgba(0,0,0,0.1)' : '0 3px 10px rgba(0,0,0,0.35)',
+                    transition: 'transform 0.1s, box-shadow 0.1s',
+                    letterSpacing: '0.2px'
                   }}
                 >
-                  <Pen size={12} strokeWidth={2.5} /> Rename
+                  <Pen size={13} strokeWidth={2.5} /> Rename
                 </button>
                 <button 
                   onClick={e => { e.stopPropagation(); tracker.hideDefaultExercise(muscleGroup as MuscleGroup, name); if (activeExercises.includes(name)) onToggle(name); }} 
                   style={{ 
                     width: '100%', 
-                    background: isLight ? 'rgba(255,60,60,0.08)' : 'rgba(255,60,60,0.12)', 
-                    border: isLight ? '1px solid rgba(255,60,60,0.15)' : '1px solid rgba(255,60,60,0.25)', 
-                    borderRadius: 10, 
-                    padding: '8px', 
-                    color: isLight ? '#c0392b' : '#ff4444', 
+                    background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+                    border: 'none',
+                    borderRadius: 12, 
+                    padding: '9px 12px', 
+                    color: '#ffffff', 
                     cursor: 'pointer', 
-                    fontSize: 11, 
+                    fontSize: 12, 
                     fontWeight: 900, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    gap: 6, 
+                    gap: 7, 
                     fontFamily: "var(--heading-font)",
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                    transition: 'background 0.2s, transform 0.1s'
+                    boxShadow: '0 4px 14px rgba(231,76,60,0.45)',
+                    transition: 'transform 0.1s, box-shadow 0.1s',
+                    letterSpacing: '0.2px'
                   }}
                 >
-                  <Trash2 size={12} strokeWidth={2.5} /> Remove
+                  <Trash2 size={13} strokeWidth={2.5} /> Remove
                 </button>
               </div>
             )}
