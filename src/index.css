@@ -168,7 +168,7 @@
 
 /* Premium draggable scrollbar for long lists */
 .premium-scrollbar::-webkit-scrollbar {
-  width: 14px; /* Wide touch target */
+  width: 24px; /* Much wider touch target so finger doesn't slip off */
 }
 
 .premium-scrollbar::-webkit-scrollbar-track {
@@ -177,10 +177,10 @@
 
 .premium-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--accent-color);
-  background-clip: content-box;
-  border: 4px solid transparent; /* Makes the visible part 6px while touch area is 14px */
+  background-clip: padding-box; /* Use padding-box instead of content-box for better touch handling sometimes */
+  border: 9px solid transparent; /* 24px total width - 18px border = 6px visible thumb */
   border-radius: 9999px;
-  min-height: 40px; /* Ensure it's not too small to grab */
+  min-height: 40px;
 }
 
 .premium-scrollbar::-webkit-scrollbar-thumb:hover,
