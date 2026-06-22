@@ -8,24 +8,78 @@ import { EXERCISE_YOUTUBE_VIDEOS } from '../../../data/exerciseVideos';
 import { getExerciseGifUrl } from '../../../data/premiumGifs';
 import type { MuscleGroup } from '../../../types';
 
-const FastGif = React.memo(({ src, alt, ready = true }: { src: string; alt: string; play?: boolean; ready?: boolean }) => {
+const FastGif = React.memo(({ src, alt, play = false, ready = true }: { src: string; alt: string; play?: boolean; ready?: boolean }) => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const imgRef = React.useRef<HTMLImageElement>(null);
+  const [loaded, setLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  React.useEffect(() => {
+    const img = imgRef.current;
+    const canvas = canvasRef.current;
+    if (!img || !canvas || play || !ready) return;
+
+    let active = true;
+    let animFrameId: number;
+
+    const tryDraw = () => {
+      if (!active || !canvas) return;
+      if (img.naturalWidth > 0) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          ctx.drawImage(img, 0, 0);
+          setLoaded(true);
+        }
+      } else if (!img.complete) {
+        animFrameId = requestAnimationFrame(tryDraw);
+      }
+    };
+
+    if (img.complete && img.naturalWidth > 0) {
+      tryDraw();
+    } else {
+      animFrameId = requestAnimationFrame(tryDraw);
+      img.addEventListener('load', tryDraw);
+    }
+
+    return () => {
+      active = false;
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      img.removeEventListener('load', tryDraw);
+    };
+  }, [src, play, ready]);
+
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px', position: 'relative' }}>
-      {ready ? (
-        <img 
-          src={src} 
-          alt={alt} 
-          loading="lazy" 
-          decoding="async"
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'contain', 
-          }} 
+      <img 
+        ref={imgRef}
+        src={src} 
+        alt={alt} 
+        loading="lazy" 
+        decoding="async"
+        style={{ 
+          width: play ? '100%' : 1, 
+          height: play ? '100%' : 1, 
+          objectFit: 'contain', 
+          visibility: play ? 'visible' : 'hidden',
+          position: play ? 'relative' : 'absolute',
+          opacity: play ? 1 : 0
+        }} 
+      />
+      {!play && ready ? (
+        <canvas 
+          ref={canvasRef} 
+          style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease-out' }} 
         />
-      ) : (
+      ) : null}
+      {!play && (!ready || !loaded) ? (
         <div style={{ position: 'absolute', inset: 6, background: 'rgba(0,0,0,0.03)', borderRadius: 8 }} />
-      )}
+      ) : null}
     </div>
   );
 });
