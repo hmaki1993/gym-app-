@@ -105,18 +105,15 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
   const [progress, setProgress] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const [show, setShow] = React.useState(false);
-  const [thumbHeight, setThumbHeight] = React.useState(40);
+  const [scrollDirection, setScrollDirection] = React.useState<'up' | 'down'>('down');
+  const lastScrollTop = React.useRef(0);
+  const thumbHeight = 32; // Fixed height for the icon
 
   const checkShow = React.useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     const canScroll = el.scrollHeight > el.clientHeight;
     setShow(canScroll);
-    if (canScroll) {
-      // Dynamic thumb height proportional to viewport / content, min 30px
-      const h = Math.max(30, (el.clientHeight / el.scrollHeight) * el.clientHeight);
-      setThumbHeight(h);
-    }
   }, [scrollRef]);
 
   React.useEffect(() => {
@@ -126,6 +123,10 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
     const handleScroll = () => {
       if (isDragging) return;
       const { scrollTop, scrollHeight, clientHeight } = el;
+      if (scrollTop > lastScrollTop.current) setScrollDirection('down');
+      else if (scrollTop < lastScrollTop.current) setScrollDirection('up');
+      lastScrollTop.current = scrollTop;
+
       if (scrollHeight <= clientHeight) {
         setProgress(0);
         return;
@@ -166,6 +167,9 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
     if (!el) return;
     
     const deltaY = e.touches[0].clientY - dragStartInfo.current.startY;
+    if (deltaY > 0) setScrollDirection('down');
+    else if (deltaY < 0) setScrollDirection('up');
+
     const { scrollHeight, clientHeight } = el;
     if (scrollHeight <= clientHeight) return;
 
@@ -180,6 +184,7 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
     newScrollTop = Math.max(0, Math.min(maxScroll, newScrollTop));
     el.scrollTop = newScrollTop;
     setProgress(newScrollTop / maxScroll);
+    lastScrollTop.current = newScrollTop;
   };
 
   const handleTouchEnd = () => {
@@ -201,17 +206,18 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      <div 
+      <img 
+        src={scrollDirection === 'down' ? '/assets/move2.png' : '/assets/move1.png'}
         style={{
           position: 'absolute',
           top: `calc(${progress * 100}% - ${progress * thumbHeight}px)`, 
-          width: isDragging ? 8 : 4,
+          width: isDragging ? 36 : 32,
           height: thumbHeight,
-          backgroundColor: isDragging ? 'var(--accent-color)' : 'rgba(230, 126, 34, 0.45)',
-          borderRadius: 10,
-          transition: 'width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, height 0.2s',
-          boxShadow: isDragging ? '0 0 12px rgba(230, 126, 34, 0.5)' : 'none',
+          objectFit: 'contain',
+          transition: 'width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          filter: isDragging ? 'drop-shadow(0 0 8px rgba(230, 126, 34, 0.8))' : 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
         }}
+        alt="scroll"
       />
     </div>
   );
