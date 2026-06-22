@@ -30,16 +30,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
   const containerRef = useRef<HTMLDivElement>(null);
   const recentLog = tracker.logs[0];
 
+  const handleStartPress = React.useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (e.type === 'touchend') {
+      e.preventDefault();
+    }
+    // Delay slightly to allow the button's scale(1) transition to paint before heavy mounting
+    setTimeout(() => {
+      onStartWorkout();
+    }, 50);
+  }, [onStartWorkout]);
+
   // Widget sync is now handled globally in App.tsx via InactiveWidgetSync
 
   // Removed unused volume memo
 
+const exerciseToMuscle: Record<string, string> = {};
+Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+  exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
+});
+
   const recentGroupKeys = React.useMemo(() => {
     if (!recentLog) return [];
-    const exerciseToMuscle: Record<string, string> = {};
-    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { exerciseToMuscle[ex] = group; });
-    });
 
     const involvedGroups = new Set<string>();
     recentLog.exercises.forEach(ex => {
@@ -153,7 +164,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
                 height: '100%', 
                 background: 'var(--accent-color)', 
                 borderRadius: '3px',
-                transition: 'width 0.5s ease-in-out'
+                transition: 'width 0.15s ease-out'
               }} />
             </div>
           </div>
@@ -163,11 +174,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '0 16px', position: 'relative' }}>
         <FloatingExercises themeMode={tracker.settings.themeMode} />
         <div
-          onClick={onStartWorkout}
+          onClick={handleStartPress}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
-          onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; handleStartPress(e); }}
           style={{
             cursor: 'pointer',
             transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -297,11 +308,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ tracker, onStartWorkout })
           </div>
         ) : (
           <div 
-            onClick={onStartWorkout}
+            onClick={handleStartPress}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
             onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
-            onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; handleStartPress(e); }}
             style={{
               padding: '10px 20px', 
               background: 'transparent',

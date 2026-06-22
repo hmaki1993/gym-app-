@@ -32,6 +32,154 @@ interface Props {
   customExercises: Record<string, string[]>;
 }
 
+interface SessionLoggerItemProps {
+  name: string;
+  index: number;
+  isDragging: boolean;
+  loggedData: Record<string, SetLog[]>;
+  onOpenExercise: (name: string) => void;
+  handleTouchStart: (index: number) => void;
+  handleTouchMove: (e: React.TouchEvent) => void;
+  handleTouchEnd: () => void;
+  customExercises: Record<string, string[]>;
+}
+
+const SessionLoggerItem = React.memo(({
+  name, index, isDragging, loggedData, onOpenExercise,
+  handleTouchStart, handleTouchMove, handleTouchEnd, customExercises
+}: SessionLoggerItemProps) => {
+  const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
+  const touchMovedRef = React.useRef(false);
+
+  const handleItemTouchStart = React.useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    touchMovedRef.current = false;
+  }, []);
+
+  const handleItemTouchMove = React.useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartRef.current.x);
+    const dy = Math.abs(touch.clientY - touchStartRef.current.y);
+    if (dx > 8 || dy > 8) {
+      touchMovedRef.current = true;
+    }
+  }, []);
+
+  const handleItemTouchEnd = React.useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    touchStartRef.current = null;
+    if (!touchMovedRef.current) {
+      e.preventDefault();
+      onOpenExercise(name);
+    }
+  }, [name, onOpenExercise]);
+
+  const handleItemClick = React.useCallback(() => {
+    onOpenExercise(name);
+  }, [name, onOpenExercise]);
+
+  return (
+    <div 
+      data-index={index} 
+      style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px',
+        transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0, 0.2, 1)',
+        zIndex: isDragging ? 100 : 1,
+        scale: isDragging ? 0.96 : 1,
+        background: isDragging ? 'var(--glass-bg)' : 'transparent',
+        borderRadius: isDragging ? '16px' : '0',
+        boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.6), 0 0 20px var(--accent-color-alpha)' : 'none',
+        padding: isDragging ? '0 12px' : '0',
+        border: isDragging ? '1.5px solid var(--accent-color)' : '1.5px solid transparent',
+        boxSizing: 'border-box',
+        margin: isDragging ? '0 8px' : '0',
+        width: isDragging ? 'calc(100% - 16px)' : '100%'
+      }}
+    >
+      <div 
+        onTouchStart={() => handleTouchStart(index)} 
+        onTouchMove={handleTouchMove} 
+        onTouchEnd={handleTouchEnd} 
+        style={{ 
+          color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', 
+          opacity: isDragging ? 1 : 0.85,
+          padding: '10px',
+          cursor: 'grab',
+          touchAction: 'none'
+        }}
+      >
+        <GripVertical size={20} strokeWidth={isDragging ? 3 : 2.5} />
+      </div>
+      <button 
+        onClick={handleItemClick}
+        onTouchStart={handleItemTouchStart}
+        onTouchMove={handleItemTouchMove}
+        onTouchEnd={handleItemTouchEnd}
+        disabled={isDragging}
+        style={{ 
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+          padding: '14px 0', background: 'none', border: 'none', 
+          flex: 1, textAlign: 'left',
+          pointerEvents: isDragging ? 'none' : 'auto',
+          touchAction: 'manipulation',
+          WebkitTapHighlightColor: 'transparent',
+          outline: 'none'
+        }}
+      >
+        <div>
+          <div style={{ 
+            fontSize: '18px', 
+            fontWeight: '900', 
+            color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)', 
+            fontFamily: "var(--heading-font)",
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            position: 'relative'
+          }}>
+            {loggedData[name] && (
+              <img src="/assets/check-custom.png" alt="Done" style={{ width: 26, height: 26, objectFit: 'contain' }} />
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={loggedData[name] ? {
+                color: 'var(--accent-color)',
+                opacity: 0.9
+              } : { color: 'var(--text-primary)' }}>
+                {name}
+              </span>
+              <div style={{ 
+                fontSize: '10px', 
+                fontWeight: '900', 
+                color: 'var(--text-secondary)', 
+                opacity: 0.95, 
+                textTransform: 'uppercase', 
+                letterSpacing: '1px',
+                marginTop: '2px',
+                WebkitTextFillColor: 'initial' // Ensure visibility
+              }}>
+                {(() => {
+                  for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
+                    if ((exercises as string[]).includes(name)) return group;
+                  }
+                  for (const [group, exercises] of Object.entries(customExercises)) {
+                    if ((exercises as string[]).includes(name)) return group;
+                  }
+                  return '';
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+        <CustomPlus size={16} color="#FF8C00" />
+      </button>
+    </div>
+  );
+});
+
 export function SessionLogger({
   activeExercises, loggedData, onOpenExercise, onSave,
   handleTouchStart, handleTouchMove, handleTouchEnd, draggingIndex, customExercises
@@ -44,97 +192,18 @@ export function SessionLogger({
         {activeExercises.map((name, index) => {
           const isDragging = draggingIndex === index;
           return (
-            <div 
-              key={name} 
-              data-index={index} 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '12px',
-                transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0, 0.2, 1)',
-                zIndex: isDragging ? 100 : 1,
-                scale: isDragging ? 0.96 : 1,
-                background: isDragging ? 'var(--glass-bg)' : 'transparent',
-                borderRadius: isDragging ? '16px' : '0',
-                boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.6), 0 0 20px var(--accent-color-alpha)' : 'none',
-                padding: isDragging ? '0 12px' : '0',
-                border: isDragging ? '1.5px solid var(--accent-color)' : '1.5px solid transparent',
-                boxSizing: 'border-box',
-                margin: isDragging ? '0 8px' : '0',
-                width: isDragging ? 'calc(100% - 16px)' : '100%'
-              }}
-            >
-              <div 
-                onTouchStart={() => handleTouchStart(index)} 
-                onTouchMove={handleTouchMove} 
-                onTouchEnd={handleTouchEnd} 
-                style={{ 
-                  color: isDragging ? 'var(--accent-color)' : 'var(--text-secondary)', 
-                  opacity: isDragging ? 1 : 0.85,
-                  padding: '10px',
-                  cursor: 'grab',
-                  touchAction: 'none'
-                }}
-              >
-                <GripVertical size={20} strokeWidth={isDragging ? 3 : 2.5} />
-              </div>
-              <button 
-                onClick={() => onOpenExercise(name)} 
-                disabled={isDragging}
-                style={{ 
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                  padding: '14px 0', background: 'none', border: 'none', 
-                  flex: 1, textAlign: 'left',
-                  pointerEvents: isDragging ? 'none' : 'auto'
-                }}
-              >
-                <div>
-                  <div style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '900', 
-                    color: loggedData[name] ? 'var(--accent-color)' : 'var(--text-primary)', 
-                    fontFamily: "var(--heading-font)",
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    position: 'relative'
-                  }}>
-                    {loggedData[name] && (
-                      <img src="/assets/check-custom.png" alt="Done" style={{ width: 26, height: 26, objectFit: 'contain' }} />
-                    )}
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={loggedData[name] ? {
-                        color: 'var(--accent-color)',
-                        opacity: 0.9
-                      } : { color: 'var(--text-primary)' }}>
-                        {name}
-                      </span>
-                      <div style={{ 
-                        fontSize: '10px', 
-                        fontWeight: '900', 
-                        color: 'var(--text-secondary)', 
-                        opacity: 0.95, 
-                        textTransform: 'uppercase', 
-                        letterSpacing: '1px',
-                        marginTop: '2px',
-                        WebkitTextFillColor: 'initial' // Ensure visibility
-                      }}>
-                        {(() => {
-                          for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
-                            if ((exercises as string[]).includes(name)) return group;
-                          }
-                          for (const [group, exercises] of Object.entries(customExercises)) {
-                            if ((exercises as string[]).includes(name)) return group;
-                          }
-                          return '';
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <CustomPlus size={16} color="#FF8C00" />
-              </button>
-            </div>
+            <SessionLoggerItem
+              key={name}
+              name={name}
+              index={index}
+              isDragging={isDragging}
+              loggedData={loggedData}
+              onOpenExercise={onOpenExercise}
+              handleTouchStart={handleTouchStart}
+              handleTouchMove={handleTouchMove}
+              handleTouchEnd={handleTouchEnd}
+              customExercises={customExercises}
+            />
           );
         })}
       </div>

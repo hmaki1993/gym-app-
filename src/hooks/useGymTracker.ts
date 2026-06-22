@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import type { GymState, WorkoutLog, GymSettings, MuscleGroup, PersonalRecord, SetLog, MealLog, WeightUnit } from '../types';
 import { THEME_COLORS, DEFAULT_EXERCISES } from '../data/exercises';
 
 const STORAGE_KEY = 'gymlog_state_v1';
+
 
 const DEFAULT_SETTINGS: GymSettings = {
   userName: '',
@@ -220,14 +222,18 @@ export function convertWeight(weight: number | string, from: WeightUnit | undefi
 }
 
 export function useGymTracker() {
-  const [state, setState] = useState<GymState>(loadState);
+  const initialStateRef = useRef<GymState | null>(null);
+  const [state, setState] = useState<GymState>(() => {
+    initialStateRef.current = loadState();
+    return initialStateRef.current;
+  });
   const [lastDeletedLog, setLastDeletedLog] = useState<WorkoutLog | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
 
   
   // Use state for sessionStartTime to ensure reactivity
   const [sessionStartTime, setSessionStartTimeState] = useState<number>(() => {
-    const initialState = loadState();
+    const initialState = initialStateRef.current!;
     const today = getLocalDateStr();
     // Only resume if there's a log from EXACTLY today
     const todayLogs = initialState.logs.filter(l => isLogFromLocalDate(l.date, today));
@@ -245,6 +251,9 @@ export function useGymTracker() {
     } else {
       saveState(state);
     }
+  }, [state]);
+
+  useEffect(() => {
     // Apply theme & color
     const root = document.documentElement;
     const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -262,7 +271,7 @@ export function useGymTracker() {
     root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${displayAccent}, ${secondaryColor})`);
     root.style.setProperty('--accent-color-alpha', `${displayAccent}25`);
     root.style.setProperty('--accent-color-alpha-heavy', `${displayAccent}50`);
-  }, [state]);
+  }, [state.settings.themeMode, state.settings.accentColor, state.settings.accentSecondary]);
 
   useEffect(() => {
     const handleSync = () => {
@@ -284,15 +293,34 @@ export function useGymTracker() {
 
   // Initial sync to fix any "ghost" PRs from storage (async to avoid blocking initial render)
   useEffect(() => {
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setState(prev => {
         const fixedPRs = syncPRsFromLogs(prev.logs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
         return { ...prev, prs: fixedPRs };
       });
     }, 50);
+    return () => clearTimeout(t);
   }, []); // Run once on mount
 
   const setSettings = useCallback((s: Partial<GymSettings>) => {
+    if (s.themeMode !== undefined && (document as any).startViewTransition) {
+      const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      const nextTheme = s.themeMode === 'system'
+        ? (systemPrefersLight ? 'light' : 'dark')
+        : s.themeMode;
+
+      if (nextTheme !== activeTheme) {
+        (document as any).startViewTransition(() => {
+          flushSync(() => {
+            // Apply data-theme attribute synchronously so colors update in this frame
+            document.documentElement.setAttribute('data-theme', nextTheme);
+            setState(prev => ({ ...prev, settings: { ...prev.settings, ...s } }));
+          });
+        });
+        return;
+      }
+    }
     setState(prev => ({ ...prev, settings: { ...prev.settings, ...s } }));
   }, []);
 
@@ -471,33 +499,6 @@ export function useGymTracker() {
     });
   }, []);
 
-  const getLastSession = useCallback((exerciseName: string): { sets: SetLog[]; date: string; bestSet: SetLog } | null => {
-    for (const log of state.logs) {
-      const ex = log.exercises.find(e => e.name === exerciseName);
-      if (ex && ex.sets.length > 0) {
-        // Find the BEST set in this specific session using normalized weight for comparison
-        const bestSet = ex.sets.reduce((prev, curr) => {
-          const prevInKg = convertWeight(prev.weight || 0, prev.unit || 'kg', 'kg');
-          const currInKg = convertWeight(curr.weight || 0, curr.unit || 'kg', 'kg');
-          return (currInKg > prevInKg || (currInKg === prevInKg && curr.reps > prev.reps)) ? curr : prev;
-        }, ex.sets[0]);
-        
-        return { sets: ex.sets, date: log.date, bestSet: { ...bestSet, unit: bestSet.unit || 'kg' } };
-      }
-    }
-    return null;
-  }, [state.logs]);
-
-  const getLastUsedUnit = useCallback((exerciseName: string): WeightUnit => {
-    for (const log of state.logs) {
-      const ex = log.exercises.find(e => e.name === exerciseName);
-      if (ex && ex.sets.length > 0 && ex.sets[0].unit) {
-        return ex.sets[0].unit;
-      }
-    }
-    return state.settings.weightUnit;
-  }, [state.logs, state.settings.weightUnit]);
-
   // Memoize the exercise-to-muscle mapping so it's built once per data change, not per call
   const exerciseToMuscleMap = useMemo(() => {
     const map: Record<string, MuscleGroup> = {};
@@ -510,35 +511,68 @@ export function useGymTracker() {
     return map;
   }, [state.customExercises]);
 
-  const getDisplayUnit = useCallback((exerciseName: string, muscle?: MuscleGroup): WeightUnit => {
-    const nameKey = exerciseName.trim().toLowerCase();
+  // Precompute O(1) maps for logs and muscle units once state.logs changes, preventing heavy loops in getters
+  const { lastSessionMap, lastUsedMuscleUnitMap } = useMemo(() => {
+    const sessionMap: Record<string, { sets: SetLog[]; date: string; bestSet: SetLog }> = {};
+    const muscleUnitMap: Record<string, WeightUnit> = {};
 
-    // 1. Check the exercise's specific last used unit first
-    for (const log of state.logs) {
-      const ex = log.exercises.find(e => e.name.trim().toLowerCase() === nameKey);
-      if (ex && ex.sets.length > 0 && ex.sets[0].unit) {
-        return ex.sets[0].unit;
-      }
-    }
+    // Loop from oldest to newest so that newer sessions overwrite older ones in the map
+    for (let i = state.logs.length - 1; i >= 0; i--) {
+      const log = state.logs[i];
+      for (const ex of log.exercises) {
+        if (ex.sets.length > 0) {
+          const bestSet = ex.sets.reduce((prev, curr) => {
+            const prevInKg = convertWeight(prev.weight || 0, prev.unit || 'kg', 'kg');
+            const currInKg = convertWeight(curr.weight || 0, curr.unit || 'kg', 'kg');
+            return (currInKg > prevInKg || (currInKg === prevInKg && curr.reps > prev.reps)) ? curr : prev;
+          }, ex.sets[0]);
 
-    // Determine the muscle group if not provided
-    const targetMuscle = muscle || exerciseToMuscleMap[nameKey];
+          const targetSet = { ...bestSet, unit: bestSet.unit || 'kg' };
+          sessionMap[ex.name] = { sets: ex.sets, date: log.date, bestSet: targetSet };
 
-    // 2. Fallback to the most recent set in the ENTIRE muscle group
-    if (targetMuscle) {
-      for (const log of state.logs) {
-        for (const ex of log.exercises) {
-          const group = ex.muscleGroup || exerciseToMuscleMap[ex.name.trim().toLowerCase()] || log.muscleGroup;
-          if (group === targetMuscle && ex.sets.length > 0 && ex.sets[0].unit) {
-            return ex.sets[0].unit;
+          if (ex.sets[0].unit) {
+            const nameKey = ex.name.trim().toLowerCase();
+            const group = ex.muscleGroup || exerciseToMuscleMap[nameKey] || log.muscleGroup;
+            if (group) {
+              muscleUnitMap[group] = ex.sets[0].unit;
+            }
           }
         }
       }
     }
+    return { lastSessionMap: sessionMap, lastUsedMuscleUnitMap: muscleUnitMap };
+  }, [state.logs, exerciseToMuscleMap]);
+
+  const getLastSession = useCallback((exerciseName: string): { sets: SetLog[]; date: string; bestSet: SetLog } | null => {
+    return lastSessionMap[exerciseName] || null;
+  }, [lastSessionMap]);
+
+  const getLastUsedUnit = useCallback((exerciseName: string): WeightUnit => {
+    const lastSession = lastSessionMap[exerciseName];
+    if (lastSession && lastSession.sets.length > 0 && lastSession.sets[0].unit) {
+      return lastSession.sets[0].unit as WeightUnit;
+    }
+    return state.settings.weightUnit;
+  }, [lastSessionMap, state.settings.weightUnit]);
+
+  const getDisplayUnit = useCallback((exerciseName: string, muscle?: MuscleGroup): WeightUnit => {
+    const nameKey = exerciseName.trim().toLowerCase();
+
+    // 1. Check last used unit for this specific exercise
+    const lastSession = lastSessionMap[exerciseName];
+    if (lastSession && lastSession.sets.length > 0 && lastSession.sets[0].unit) {
+      return lastSession.sets[0].unit as WeightUnit;
+    }
+
+    // 2. Fallback to the last used unit of the muscle group
+    const targetMuscle = muscle || exerciseToMuscleMap[nameKey];
+    if (targetMuscle && lastUsedMuscleUnitMap[targetMuscle]) {
+      return lastUsedMuscleUnitMap[targetMuscle];
+    }
 
     // 3. Fallback to global setting
     return state.settings.weightUnit;
-  }, [state.logs, state.settings.weightUnit, exerciseToMuscleMap]);
+  }, [lastSessionMap, lastUsedMuscleUnitMap, exerciseToMuscleMap, state.settings.weightUnit]);
 
   const getExercisesByMuscle = useCallback((muscle: MuscleGroup) => {
     const defaults = (DEFAULT_EXERCISES[muscle] || []).map(name => ({ name, isCustom: false }));
@@ -773,6 +807,13 @@ export function useGymTracker() {
     setSessionStartTimeState(Date.now());
   }, []);
 
+  const n8nWebhookUrlRef = useRef(state.settings.n8nWebhookUrl);
+  const userNameRef = useRef(state.settings.userName);
+  useEffect(() => {
+    n8nWebhookUrlRef.current = state.settings.n8nWebhookUrl;
+    userNameRef.current = state.settings.userName;
+  }, [state.settings.n8nWebhookUrl, state.settings.userName]);
+
   const addMealLog = useCallback((meal: Omit<MealLog, 'id' | 'date'> & { date?: string }) => {
     const newMeal: MealLog = {
       ...meal,
@@ -785,16 +826,16 @@ export function useGymTracker() {
     }));
 
     // Trigger n8n Webhook
-    if (state.settings.n8nWebhookUrl) {
-      fetch(state.settings.n8nWebhookUrl, {
+    if (n8nWebhookUrlRef.current) {
+      fetch(n8nWebhookUrlRef.current, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'nutrition', meal: newMeal, user: state.settings.userName })
+        body: JSON.stringify({ type: 'nutrition', meal: newMeal, user: userNameRef.current })
       }).catch(err => console.warn('n8n Webhook failed:', err));
     }
 
     return newMeal;
-  }, [state.settings]);
+  }, []);
 
   const updateMealLog = useCallback((id: string, updates: Partial<MealLog>) => {
     setState(prev => ({
@@ -869,7 +910,149 @@ export function useGymTracker() {
     });
   }, []);
 
-  return {
+  const seedPastWorkouts = useCallback(() => {
+    setState(prev => {
+      const now = new Date();
+      const createPastDate = (daysAgo: number) => {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo, 16, 0, 0);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return {
+          dateStr: `${y}-${m}-${day}`,
+          isoStr: d.toISOString()
+        };
+      };
+
+      const pastWorkouts: WorkoutLog[] = [
+        {
+          id: `dummy_wl_1`,
+          date: createPastDate(2).dateStr,
+          muscleGroup: 'chest',
+          durationMinutes: 45,
+          durationSeconds: 2700,
+          startTime: createPastDate(2).isoStr,
+          endTime: new Date(new Date(createPastDate(2).isoStr).getTime() + 45 * 60000).toISOString(),
+          exercises: [
+            {
+              name: 'Barbell Bench Press',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 60, reps: 10, unit: prev.settings.weightUnit },
+                { weight: 70, reps: 8, unit: prev.settings.weightUnit },
+                { weight: 80, reps: 6, unit: prev.settings.weightUnit }
+              ]
+            },
+            {
+              name: 'Incline Dumbbell Press',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 24, reps: 10, unit: prev.settings.weightUnit },
+                { weight: 26, reps: 8, unit: prev.settings.weightUnit }
+              ]
+            }
+          ]
+        },
+        {
+          id: `dummy_wl_2`,
+          date: createPastDate(4).dateStr,
+          muscleGroup: 'back',
+          durationMinutes: 50,
+          durationSeconds: 3000,
+          startTime: createPastDate(4).isoStr,
+          endTime: new Date(new Date(createPastDate(4).isoStr).getTime() + 50 * 60000).toISOString(),
+          exercises: [
+            {
+              name: 'Lat Pulldown',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 55, reps: 12, unit: prev.settings.weightUnit },
+                { weight: 65, reps: 10, unit: prev.settings.weightUnit },
+                { weight: 70, reps: 8, unit: prev.settings.weightUnit }
+              ]
+            },
+            {
+              name: 'Barbell Row',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 50, reps: 10, unit: prev.settings.weightUnit },
+                { weight: 60, reps: 8, unit: prev.settings.weightUnit }
+              ]
+            }
+          ]
+        },
+        {
+          id: `dummy_wl_3`,
+          date: createPastDate(6).dateStr,
+          muscleGroup: 'legs',
+          durationMinutes: 60,
+          durationSeconds: 3600,
+          startTime: createPastDate(6).isoStr,
+          endTime: new Date(new Date(createPastDate(6).isoStr).getTime() + 60 * 60000).toISOString(),
+          exercises: [
+            {
+              name: 'Barbell Squat',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 80, reps: 10, unit: prev.settings.weightUnit },
+                { weight: 100, reps: 8, unit: prev.settings.weightUnit },
+                { weight: 110, reps: 6, unit: prev.settings.weightUnit }
+              ]
+            },
+            {
+              name: 'Leg Press',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 160, reps: 12, unit: prev.settings.weightUnit },
+                { weight: 200, reps: 10, unit: prev.settings.weightUnit }
+              ]
+            }
+          ]
+        },
+        {
+          id: `dummy_wl_4`,
+          date: createPastDate(8).dateStr,
+          muscleGroup: 'shoulders',
+          durationMinutes: 40,
+          durationSeconds: 2400,
+          startTime: createPastDate(8).isoStr,
+          endTime: new Date(new Date(createPastDate(8).isoStr).getTime() + 40 * 60000).toISOString(),
+          exercises: [
+            {
+              name: 'Dumbbell Shoulder Press',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 18, reps: 10, unit: prev.settings.weightUnit },
+                { weight: 22, reps: 8, unit: prev.settings.weightUnit },
+                { weight: 24, reps: 6, unit: prev.settings.weightUnit }
+              ]
+            },
+            {
+              name: 'Lateral Raise',
+              restSeconds: prev.settings.defaultRestSeconds || 90,
+              sets: [
+                { weight: 10, reps: 15, unit: prev.settings.weightUnit },
+                { weight: 12, reps: 12, unit: prev.settings.weightUnit }
+              ]
+            }
+          ]
+        }
+      ];
+
+      // Filter out existing dummy logs to prevent duplication
+      const cleanLogs = prev.logs.filter(l => !l.id.startsWith('dummy_wl_'));
+      const updatedLogs = [...pastWorkouts, ...cleanLogs];
+      const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
+
+      return {
+        ...prev,
+        logs: updatedLogs,
+        prs: updatedPRs
+      };
+    });
+  }, []);
+
+  return useMemo(() => ({
     state,
     settings: state.settings,
     logs: state.logs,
@@ -911,146 +1094,37 @@ export function useGymTracker() {
     resetAllData,
     convertWeight,
     nutritionLogs: state.nutritionLogs || [],
-    seedPastWorkouts: useCallback(() => {
-      setState(prev => {
-        const now = new Date();
-        const createPastDate = (daysAgo: number) => {
-          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo, 16, 0, 0);
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          return {
-            dateStr: `${y}-${m}-${day}`,
-            isoStr: d.toISOString()
-          };
-        };
-
-        const pastWorkouts: WorkoutLog[] = [
-          {
-            id: `dummy_wl_1`,
-            date: createPastDate(2).dateStr,
-            muscleGroup: 'chest',
-            durationMinutes: 45,
-            durationSeconds: 2700,
-            startTime: createPastDate(2).isoStr,
-            endTime: new Date(new Date(createPastDate(2).isoStr).getTime() + 45 * 60000).toISOString(),
-            exercises: [
-              {
-                name: 'Barbell Bench Press',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 60, reps: 10, unit: prev.settings.weightUnit },
-                  { weight: 70, reps: 8, unit: prev.settings.weightUnit },
-                  { weight: 80, reps: 6, unit: prev.settings.weightUnit }
-                ]
-              },
-              {
-                name: 'Incline Dumbbell Press',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 24, reps: 10, unit: prev.settings.weightUnit },
-                  { weight: 26, reps: 8, unit: prev.settings.weightUnit }
-                ]
-              }
-            ]
-          },
-          {
-            id: `dummy_wl_2`,
-            date: createPastDate(4).dateStr,
-            muscleGroup: 'back',
-            durationMinutes: 50,
-            durationSeconds: 3000,
-            startTime: createPastDate(4).isoStr,
-            endTime: new Date(new Date(createPastDate(4).isoStr).getTime() + 50 * 60000).toISOString(),
-            exercises: [
-              {
-                name: 'Lat Pulldown',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 55, reps: 12, unit: prev.settings.weightUnit },
-                  { weight: 65, reps: 10, unit: prev.settings.weightUnit },
-                  { weight: 70, reps: 8, unit: prev.settings.weightUnit }
-                ]
-              },
-              {
-                name: 'Barbell Row',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 50, reps: 10, unit: prev.settings.weightUnit },
-                  { weight: 60, reps: 8, unit: prev.settings.weightUnit }
-                ]
-              }
-            ]
-          },
-          {
-            id: `dummy_wl_3`,
-            date: createPastDate(6).dateStr,
-            muscleGroup: 'legs',
-            durationMinutes: 60,
-            durationSeconds: 3600,
-            startTime: createPastDate(6).isoStr,
-            endTime: new Date(new Date(createPastDate(6).isoStr).getTime() + 60 * 60000).toISOString(),
-            exercises: [
-              {
-                name: 'Barbell Squat',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 80, reps: 10, unit: prev.settings.weightUnit },
-                  { weight: 100, reps: 8, unit: prev.settings.weightUnit },
-                  { weight: 110, reps: 6, unit: prev.settings.weightUnit }
-                ]
-              },
-              {
-                name: 'Leg Press',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 160, reps: 12, unit: prev.settings.weightUnit },
-                  { weight: 200, reps: 10, unit: prev.settings.weightUnit }
-                ]
-              }
-            ]
-          },
-          {
-            id: `dummy_wl_4`,
-            date: createPastDate(8).dateStr,
-            muscleGroup: 'shoulders',
-            durationMinutes: 40,
-            durationSeconds: 2400,
-            startTime: createPastDate(8).isoStr,
-            endTime: new Date(new Date(createPastDate(8).isoStr).getTime() + 40 * 60000).toISOString(),
-            exercises: [
-              {
-                name: 'Dumbbell Shoulder Press',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 18, reps: 10, unit: prev.settings.weightUnit },
-                  { weight: 22, reps: 8, unit: prev.settings.weightUnit },
-                  { weight: 24, reps: 6, unit: prev.settings.weightUnit }
-                ]
-              },
-              {
-                name: 'Lateral Raise',
-                restSeconds: prev.settings.defaultRestSeconds || 90,
-                sets: [
-                  { weight: 10, reps: 15, unit: prev.settings.weightUnit },
-                  { weight: 12, reps: 12, unit: prev.settings.weightUnit }
-                ]
-              }
-            ]
-          }
-        ];
-
-        // Filter out existing dummy logs to prevent duplication
-        const cleanLogs = prev.logs.filter(l => !l.id.startsWith('dummy_wl_'));
-        const updatedLogs = [...pastWorkouts, ...cleanLogs];
-        const updatedPRs = syncPRsFromLogs(updatedLogs, prev.customExercises, prev.hiddenExercises, prev.deletedExercises);
-
-        return {
-          ...prev,
-          logs: updatedLogs,
-          prs: updatedPRs
-        };
-      });
-    }, []),
-  };
+    seedPastWorkouts
+  }), [
+    state,
+    logToDelete,
+    sessionStartTime,
+    setSettings,
+    addCustomExercise,
+    removeCustomExercise,
+    hideDefaultExercise,
+    restoreExercise,
+    permanentlyDeleteExercise,
+    renameExercise,
+    reorderExercises,
+    setExerciseAlias,
+    getLastSession,
+    getLastUsedUnit,
+    getDisplayUnit,
+    getExercisePR,
+    saveWorkout,
+    updateWorkoutUnit,
+    deleteWorkout,
+    restoreLastDeleted,
+    resetSessionTimer,
+    getWeeklyCount,
+    getTotalVolume,
+    getExercisesByMuscle,
+    getBestExercises,
+    addMealLog,
+    updateMealLog,
+    deleteMealLog,
+    convertWeight,
+    seedPastWorkouts
+  ]);
 }

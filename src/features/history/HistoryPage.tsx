@@ -165,9 +165,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, o
     const mergedExercises = [...base.exercises];
     for (let i = 1; i < filteredLogs.length; i++) {
       filteredLogs[i].exercises.forEach(ex => {
-        const existing = mergedExercises.find(e => e.name === ex.name);
-        if (existing) {
-          existing.sets = [...existing.sets, ...ex.sets];
+        const existingIndex = mergedExercises.findIndex(e => e.name === ex.name);
+        if (existingIndex !== -1) {
+          const existing = mergedExercises[existingIndex];
+          mergedExercises[existingIndex] = { ...existing, sets: [...existing.sets, ...ex.sets] };
         } else {
           mergedExercises.push(ex);
         }
@@ -197,21 +198,6 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, o
       position: 'relative',
       ...(isFloating ? { overflowY: 'auto', height: '100dvh' } : {})
     }}>
-      <style>{`
-        @keyframes premiumPopIn {
-          0% {
-            transform: translate(-50%, 15px) scale(0.85);
-            opacity: 0;
-          }
-          100% {
-            transform: translate(-50%, 4px) scale(1);
-            opacity: 1;
-          }
-        }
-        .premium-overlay-animate {
-          animation: premiumPopIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-      `}</style>
       
       {/* Floating Close Button */}
       {isFloating && onClose && (
@@ -773,6 +759,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, o
             return (
               <div 
                 key={log.id} id={`log-${log.id}`}
+                className="fast-card"
                 onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
                 role="button"
                 style={{ 

@@ -105,7 +105,7 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
   sessions: any[]; 
   lang: string; 
   isOpen: boolean;
-  toggleOpen: () => void;
+  toggleOpen: (e: React.MouseEvent) => void;
 }) {
   const t = (k: keyof typeof translations.en) => (translations[lang as 'en' | 'ar'] as any)[k] ?? k;
   const [showAll, setShowAll] = useState(false);
@@ -247,7 +247,7 @@ const ExerciseHistoryDetails = React.memo(function ExerciseHistoryDetails({
       )}
 
       <button 
-        onClick={(e) => { e.stopPropagation(); toggleOpen(); }}
+        onClick={toggleOpen}
         style={{
           width: '100%',
           marginTop: isOpen ? '20px' : '4px',
@@ -302,21 +302,22 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
   lang: string;
   t: any;
   isOpen: boolean;
-  onToggle: () => void;
+  onToggle: (name: string) => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const isLight = tracker.settings.themeMode === 'light';
   const isDark = tracker.settings.themeMode === 'dark';
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggle();
-  };
+    onToggle(name);
+  }, [onToggle, name]);
 
   return (
     <div 
       id={`exercise-${name.replace(/[^a-zA-Z0-9]/g, '')}`}
       ref={cardRef}
+      className="fast-card"
       onClick={handleCardClick}
       style={{ 
         padding: '20px',
@@ -445,7 +446,7 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
         sessions={sessions} 
         lang={lang} 
         isOpen={isOpen}
-        toggleOpen={onToggle}
+        toggleOpen={handleCardClick}
       />
     </div>
   );
@@ -455,7 +456,6 @@ const ExerciseProgressCard = React.memo(function ExerciseProgressCard({
     prevProps.lang === nextProps.lang &&
     prevProps.history === nextProps.history &&
     prevProps.sessions === nextProps.sessions &&
-    prevProps.tracker.settings.themeMode === nextProps.tracker.settings.themeMode &&
     prevProps.tracker.logs === nextProps.tracker.logs
   );
 });
@@ -468,6 +468,10 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [expandedExerciseName, setExpandedExerciseName] = useState<string | null>(null);
+
+  const handleToggleCard = useCallback((name: string) => {
+    setExpandedExerciseName(prev => prev === name ? null : name);
+  }, []);
 
   // Auto-scroll natively AFTER the CSS transition to avoid layout thrashing
   useEffect(() => {
@@ -591,7 +595,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
       });
     });
     return { topExercises: Object.entries(freq).sort((a, b) => b[1] - a[1]).map(([name]) => name), exerciseToMuscle: mapping };
-  }, [tracker.logs, selectedMuscle, tracker.customExercises]);
+  }, [tracker.logs, selectedMuscle, tracker.customExercises, (tracker as any).hiddenExercises, (tracker as any).deletedExercises]);
 
   // Memoize history computation for all top exercises in active muscle group
   // Pre-compute EVERYTHING here (sessions, dates, sets) so clicking a card triggers ZERO computation
@@ -642,7 +646,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
             };
           });
 
-          sessions.push({
+          sessions.unshift({
             date: log.date,
             displayDate,
             sets: precomputedSets
@@ -767,7 +771,7 @@ export const ProgressPage: React.FC<Props> = ({ tracker }) => {
                       lang={lang}
                       t={t}
                       isOpen={expandedExerciseName === item.name}
-                      onToggle={() => setExpandedExerciseName(expandedExerciseName === item.name ? null : item.name)}
+                      onToggle={handleToggleCard}
                     />
                   );
                 });

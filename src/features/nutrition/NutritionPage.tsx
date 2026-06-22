@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Trash2, Scan, RefreshCw } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -95,7 +95,10 @@ export function NutritionPage({ tracker }: { tracker: any }) {
 
   const searchCache = useRef<Record<string, any[]>>({});
   const nutritionLogs = tracker.nutritionLogs || [];
-  const todayDateStr = new Date().toLocaleDateString('en-CA');
+  const todayDateStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
   const isLight = tracker.settings.themeMode === 'light';
   const lang = tracker.settings.language || 'en';
   const t = (k: string) => (translations[lang as 'en' | 'ar'] as Record<string, string>)[k] ?? k;
@@ -208,16 +211,58 @@ export function NutritionPage({ tracker }: { tracker: any }) {
   }, []);
 
 
-  const today = todayDateStr;
-  const todayMeals = nutritionLogs.filter((m: any) => {
-    const logDate = new Date(m.date).toLocaleDateString('en-CA');
-    return logDate === today;
-  });
+  const { consumedCal, consumedPro, consumedCarb, consumedFat, categorizedMeals } = useMemo(() => {
+    const today = todayDateStr;
+    const meals = nutritionLogs.filter((m: any) => {
+      if (!m.date) return false;
+      const d = new Date(m.date);
+      const logDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return logDate === today;
+    });
 
-  const consumedCal = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.calories) || 0), 0);
-  const consumedPro = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.protein) || 0), 0);
-  const consumedCarb = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.carbs) || 0), 0);
-  const consumedFat = todayMeals.reduce((sum: number, m: any) => sum + (Number(m.fats) || 0), 0);
+    let cal = 0;
+    let pro = 0;
+    let carb = 0;
+    let fat = 0;
+
+    const categorized = {
+      Breakfast: [] as any[],
+      Lunch: [] as any[],
+      Dinner: [] as any[],
+      Snacks: [] as any[]
+    };
+
+    for (let i = 0; i < meals.length; i++) {
+      const m = meals[i];
+      cal += Number(m.calories) || 0;
+      pro += Number(m.protein) || 0;
+      carb += Number(m.carbs) || 0;
+      fat += Number(m.fats) || 0;
+
+      if (m.mealType) {
+        const type = m.mealType;
+        if (type === 'Breakfast') categorized.Breakfast.push(m);
+        else if (type === 'Lunch') categorized.Lunch.push(m);
+        else if (type === 'Dinner') categorized.Dinner.push(m);
+        else if (type === 'Snacks') categorized.Snacks.push(m);
+      } else {
+        const hour = new Date(m.date).getHours();
+        if (hour >= 4 && hour < 11) categorized.Breakfast.push(m);
+        else if (hour >= 11 && hour < 16) categorized.Lunch.push(m);
+        else if (hour >= 16 && hour < 22) categorized.Dinner.push(m);
+        else categorized.Snacks.push(m);
+      }
+    }
+
+    return {
+      todayMeals: meals,
+      consumedCal: cal,
+      consumedPro: pro,
+      consumedCarb: carb,
+      consumedFat: fat,
+      categorizedMeals: categorized
+    };
+  }, [nutritionLogs, todayDateStr]);
 
   const settings = tracker.settings;
   const profile = settings.nutritionProfile;
@@ -882,16 +927,8 @@ export function NutritionPage({ tracker }: { tracker: any }) {
           }} />
         </div>
 
-        {/* DIARY SECTIONS */}
         {(['Breakfast', 'Lunch', 'Dinner', 'Snacks'] as const).map((category) => {
-          const catMeals = todayMeals.filter((m: any) => {
-            if (m.mealType) return m.mealType === category;
-            const hour = new Date(m.date).getHours();
-            if (category === 'Breakfast') return hour >= 4 && hour < 11;
-            if (category === 'Lunch') return hour >= 11 && hour < 16;
-            if (category === 'Dinner') return hour >= 16 && hour < 22;
-            return hour >= 22 || hour < 4;
-          });
+          const catMeals = categorizedMeals[category];
           const catCal = catMeals.reduce((s: number, m: any) => s + m.calories, 0);
 
           return (

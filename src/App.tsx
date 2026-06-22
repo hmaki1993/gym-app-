@@ -13,6 +13,7 @@ import { preWarmImages } from './features/workout/components/TransparentImage';
 import { MUSCLE_GROUPS } from './data/exercises';
 import { SplashScreen } from '@capacitor/splash-screen';
 
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { Header } from './features/common/Header';
 import { ConfirmModal } from './features/common/ConfirmModal';
 import { useWidgetSync, syncWidgetState } from './hooks/useWidgetSync';
@@ -72,6 +73,9 @@ export default function App() {
   }, [tracker.settings.userName]);
   
   // Synchronize workout active state from storage when app is resumed or synced
+  const showWorkoutRef = useRef(showWorkout);
+  useEffect(() => { showWorkoutRef.current = showWorkout; }, [showWorkout]);
+
   useEffect(() => {
     const checkActiveSession = () => {
       let draftRaw = localStorage.getItem('gymlog_active_session');
@@ -79,26 +83,26 @@ export default function App() {
         draftRaw = (window as any).AndroidStorage.getItem('gymlog_active_session');
       }
       
-      if (!draftRaw && showWorkout && (window as any).gymlog_workout_active) {
+      if (!draftRaw && showWorkoutRef.current && (window as any).gymlog_workout_active) {
         setShowWorkout(false);
         setTab('home');
       }
     };
 
-    window.addEventListener('gymlog_sync', checkActiveSession);
-    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         checkActiveSession();
       }
     };
+
+    window.addEventListener('gymlog_sync', checkActiveSession);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('gymlog_sync', checkActiveSession);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [showWorkout]);
+  }, []);
 
   const isFloating = window.location.search.includes('floating=true');
   const [floatingMode, setFloatingMode] = useState(() => new URLSearchParams(window.location.search).get('mode'));
@@ -108,6 +112,15 @@ export default function App() {
       const customEvent = e as CustomEvent;
       if (customEvent.detail) {
         setFloatingMode(customEvent.detail);
+        
+        // Give React time to commit the DOM, then signal Android to show the card
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if ((window as any).AndroidStorage && (window as any).AndroidStorage.onRouteReady) {
+              (window as any).AndroidStorage.onRouteReady();
+            }
+          }, 10); // Slight delay ensures layout calculation is complete
+        });
       }
     };
     window.addEventListener('gymlog_route', handleRoute);
@@ -121,6 +134,16 @@ export default function App() {
   useEffect(() => {
     // Hide splash screen smoothly after the app is mounted and ready
     SplashScreen.hide().catch(err => console.log('Splash hide error:', err));
+    
+    if (isFloating) {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if ((window as any).AndroidStorage && (window as any).AndroidStorage.onRouteReady) {
+            (window as any).AndroidStorage.onRouteReady();
+          }
+        }, 10);
+      });
+    }
 
     // Defer CPU-intensive image pre-processing to prevent blocking startup
     const timer = setTimeout(() => {
@@ -129,6 +152,9 @@ export default function App() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  const tabRef = useRef(tab);
+  useEffect(() => { tabRef.current = tab; }, [tab]);
 
   // ── Unified Navigation & History System ──
   useEffect(() => {
@@ -163,16 +189,16 @@ export default function App() {
     // 2. The Internal "Back Button" Engine
     const handlePopState = () => {
       // Logic: If Workout is open -> Close it. If not on Home -> Go Home.
-      if (showWorkout) {
+      if (showWorkoutRef.current) {
         setShowWorkout(false);
         window.history.pushState(null, '', window.location.href); // Keep the trap active
-      } else if (tab !== 'home') {
+      } else if (tabRef.current !== 'home') {
         setTab('home');
         window.history.pushState(null, '', window.location.href);
       }
     };
 
-    // Initial trap
+    // Initial trap (only push once on mount)
     window.history.pushState(null, '', window.location.href);
 
     window.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -184,41 +210,31 @@ export default function App() {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [tab, showWorkout]); // Re-bind when state changes to have fresh values
+  }, []); // Run only once on mount
 
-  // ── Dynamic Theme Synchronization ──
+  // ── Dynamic Theme & StatusBar Synchronization ──
   useEffect(() => {
-    const root = document.documentElement;
-    const baseAccent = tracker.settings.accentColor || '#00E676';
-    
-    // In light mode, the default neon green (#00E676) lacks contrast.
-    // We dynamically switch it to a premium medium-dark forest/olive green (#166E36) for light mode.
-    const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-    const actualTheme = tracker.settings.themeMode === 'system' ? (systemPrefersLight ? 'light' : 'dark') : tracker.settings.themeMode;
-    const isLightMode = actualTheme === 'light';
-    const displayAccent = (isLightMode && baseAccent.toUpperCase() === '#00E676') ? '#166E36' : baseAccent;
-
-    root.style.setProperty('--accent-color', displayAccent);
-    
-    // Convert hex to RGB for transparency effects (like borders)
-    const hexToRgb = (hex: string) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : (isLightMode ? '22, 110, 54' : '0, 230, 118');
+    const applyStatusBarTheme = (systemLight: boolean) => {
+      if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+        const actualTheme = tracker.settings.themeMode === 'system' ? (systemLight ? 'light' : 'dark') : tracker.settings.themeMode;
+        const isLightMode = actualTheme === 'light';
+        StatusBar.setOverlaysWebView({ overlay: true }).then(() => {
+          StatusBar.setStyle({ style: isLightMode ? Style.Light : Style.Dark }).catch(err => console.log('StatusBar style error:', err));
+        }).catch(err => console.log('StatusBar overlay error:', err));
+      }
     };
-    
-    // Force-sync theme colors to match GitHub version if they differ
-    if (tracker.settings.accentColor !== '#00E676') {
-      tracker.setSettings({ 
-        accentColor: '#00E676', 
-        accentSecondary: '#E67E22' 
-      });
-    }
 
-    root.style.setProperty('--accent-rgb', hexToRgb(displayAccent));
-    
-    // Update theme data-attribute
-    root.setAttribute('data-theme', actualTheme);
-  }, [tracker.settings.accentColor, tracker.settings.themeMode]);
+    const mediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+    applyStatusBarTheme(mediaQuery ? mediaQuery.matches : false);
+
+    const listener = (e: MediaQueryListEvent) => applyStatusBarTheme(e.matches);
+    if (mediaQuery) {
+      mediaQuery.addEventListener('change', listener);
+    }
+    return () => {
+      if (mediaQuery) mediaQuery.removeEventListener('change', listener);
+    };
+  }, [tracker.settings.themeMode]);
 
   // ── Entrance Animation (Removed for rocket speed launch) ──
   useEffect(() => {
@@ -431,7 +447,7 @@ export default function App() {
           <div className="accent-divider" style={{ marginBottom: '5px' }} />
 
           {/* Main Content Area - Handles internal scroll and padding */}
-          <div ref={contentRef} className="hide-scrollbar" style={{
+          <div ref={contentRef} className="hide-scrollbar main-scroll-area" style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',

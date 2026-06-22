@@ -17,6 +17,14 @@ interface Props {
   onSaved: () => void;
 }
 
+const STATIC_EXERCISE_TO_MUSCLE: Record<string, MuscleGroup> = (() => {
+  const map: Record<string, MuscleGroup> = {};
+  Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
+    exercises.forEach(ex => { map[ex] = group as MuscleGroup; });
+  });
+  return map;
+})();
+
 export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const lang = tracker.settings.language;
   const t = (k: keyof typeof translations.en) => (translations[lang] as any)[k] ?? k;
@@ -27,7 +35,47 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   }, []);
 
   // Synchronously compute initial state or load from autosave
-  const { initialPhase, initialMuscle, initialActiveExercises, initialLoggedData, initialStarted, initialBaseSeconds, initialStartTime } = React.useMemo(() => {
+  // Synchronously compute initial state or load from autosave to prevent any blank flash
+  const initialState = React.useMemo(() => {
+    // 1. Try to load draft from localStorage
+    let draft = null;
+    let raw = null;
+    try {
+      raw = localStorage.getItem('gymlog_active_session');
+      if (raw) draft = JSON.parse(raw);
+    } catch {}
+
+    // Restoring draft from AndroidStorage (blocking native deferred call) if not in localStorage
+    try {
+      if (!draft && (window as any).AndroidStorage) {
+        const draftRawAndroid = (window as any).AndroidStorage.getItem('gymlog_active_session');
+        if (draftRawAndroid) {
+          raw = draftRawAndroid;
+          draft = JSON.parse(draftRawAndroid);
+          localStorage.setItem('gymlog_active_session', raw);
+        }
+      }
+    } catch {}
+
+    if (draft) {
+      const todayStr = tracker.getLocalDateStr();
+      const draftAgeMs = Date.now() - (draft.sessionStartTime || Date.now());
+      const isDraftValid = draft.date === todayStr && draftAgeMs < 16 * 60 * 60 * 1000;
+      if (isDraftValid) {
+        return {
+          phase: draft.phase || 'logging',
+          selectedMuscle: draft.selectedMuscle || 'chest',
+          activeExercises: draft.activeExercises || [],
+          loggedData: draft.loggedData || {},
+          hasStartedSession: draft.hasStartedSession || false,
+          elapsedSeconds: draft.baseSeconds || draft.elapsedSeconds || 0,
+          sessionStartTime: draft.sessionStartTime || Date.now(),
+          isReady: true
+        };
+      }
+    }
+
+    // 2. Compute best muscle based on history
     const freq: Record<string, number> = {};
     const recentLogs = tracker.logs.slice(0, 100);
     recentLogs.forEach(log => {
@@ -44,7 +92,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     const lastTrainedByMuscle: Record<string, string | null> = {};
     MUSCLE_KEYS.forEach(k => lastTrainedByMuscle[k] = null);
     
-    // Single pass to find the latest training date for each muscle
     recentLogs.forEach(log => {
       const musclesInLog = new Set<string>();
       if (log.muscleGroup) musclesInLog.add(log.muscleGroup);
@@ -70,12 +117,12 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       return new Date(lastTrainedByMuscle[a]!).getTime() - new Date(lastTrainedByMuscle[b]!).getTime();
     });
 
-    // 2. Try sequence prediction based on historical transition patterns
     let predictedNextMuscle: MuscleGroup | null = null;
     if (tracker.logs.length > 1) {
-      // Sort logs chronologically (oldest to newest), limit to recent 50 logs for performance
       const recentLogsForPrediction = tracker.logs.slice(0, 50);
-      const sortedLogs = [...recentLogsForPrediction].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const mappedLogs = recentLogsForPrediction.map(log => ({ log, time: new Date(log.date).getTime() }));
+      mappedLogs.sort((a, b) => a.time - b.time);
+      const sortedLogs = mappedLogs.map(item => item.log);
       
       const lastLog = sortedLogs[sortedLogs.length - 1];
       if (lastLog) {
@@ -109,7 +156,6 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
           if (candidates.length === 1) {
             predictedNextMuscle = candidates[0];
           } else if (candidates.length > 1) {
-            // Tie breaker: pick the one not trained for the longest time
             let oldestTime = Infinity;
             let chosen = candidates[0];
             candidates.forEach(muscle => {
@@ -125,63 +171,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       }
     }
 
-    bestMuscle = predictedNextMuscle || sortedByNeeded[0];
+    bestMuscle = predictedNextMuscle || sortedByNeeded[0] || 'chest';
 
-    // Try restoring autosave draft if it exists and is from today
-    try {
-      let draftRawAndroid = (window as any).AndroidStorage ? (window as any).AndroidStorage.getItem('gymlog_active_session') : null;
-      let draftRawLocal = localStorage.getItem('gymlog_active_session');
-      
-      let draftAndroid = null;
-      let draftLocal = null;
-      try { if (draftRawAndroid) draftAndroid = JSON.parse(draftRawAndroid); } catch {}
-      try { if (draftRawLocal) draftLocal = JSON.parse(draftRawLocal); } catch {}
-      
-      let finalDraft = null;
-      let finalRaw = null;
-      
-      if (draftAndroid && draftLocal) {
-         if ((draftLocal.sessionStartTime || 0) > (draftAndroid.sessionStartTime || 0)) {
-             finalDraft = draftLocal;
-             finalRaw = draftRawLocal;
-         } else {
-             finalDraft = draftAndroid;
-             finalRaw = draftRawAndroid;
-         }
-      } else if (draftAndroid) {
-         finalDraft = draftAndroid;
-         finalRaw = draftRawAndroid;
-      } else if (draftLocal) {
-         finalDraft = draftLocal;
-         finalRaw = draftRawLocal;
-      }
-
-      if (finalRaw) {
-        if ((window as any).AndroidStorage) {
-          (window as any).AndroidStorage.setItem('gymlog_active_session', finalRaw);
-        }
-        localStorage.setItem('gymlog_active_session', finalRaw);
-      }
-
-      if (finalDraft) {
-        const todayStr = tracker.getLocalDateStr();
-        const draftAgeMs = Date.now() - (finalDraft.sessionStartTime || Date.now());
-        const isDraftValid = finalDraft.date === todayStr && draftAgeMs < 16 * 60 * 60 * 1000;
-        
-        if (isDraftValid) {
-          return {
-            initialPhase: finalDraft.phase || 'logging',
-            initialMuscle: finalDraft.selectedMuscle || bestMuscle,
-            initialActiveExercises: finalDraft.activeExercises || [],
-            initialLoggedData: finalDraft.loggedData || {},
-            initialStarted: finalDraft.hasStartedSession || false,
-            initialBaseSeconds: finalDraft.baseSeconds || finalDraft.elapsedSeconds || 0,
-            initialStartTime: finalDraft.sessionStartTime || Date.now()
-          };
-        }
-      }
-    } catch { /* ignore parse errors */ }
-    
+    // 3. Check for today's logs to resume
     const today = tracker.getLocalDateStr();
     const todayLogs = tracker.logs.filter(l => tracker.isLogFromLocalDate(l.date, today));
     
@@ -204,50 +196,47 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       const totalSeconds = todayLogs.reduce((sum, l) => sum + (l.durationSeconds || (l.durationMinutes * 60)), 0);
       
       return {
-        initialPhase: 'logging' as const,
-        initialMuscle: muscle,
-        initialActiveExercises: allExerciseNames,
-        initialLoggedData: logged,
-        initialStarted: true,
-        initialBaseSeconds: totalSeconds,
-        initialStartTime: Date.now()
+        phase: 'logging' as const,
+        selectedMuscle: muscle,
+        activeExercises: allExerciseNames,
+        loggedData: logged,
+        hasStartedSession: true,
+        elapsedSeconds: totalSeconds,
+        sessionStartTime: Date.now(),
+        isReady: true
       };
     }
     
     return {
-      initialPhase: 'exercises' as const,
-      initialMuscle: bestMuscle,
-      initialActiveExercises: [] as string[],
-      initialLoggedData: {} as Record<string, SetLog[]>,
-      initialStarted: false,
-      initialBaseSeconds: 0,
-      initialStartTime: Date.now()
+      phase: 'exercises' as const,
+      selectedMuscle: bestMuscle,
+      activeExercises: [] as string[],
+      loggedData: {} as Record<string, SetLog[]>,
+      hasStartedSession: false,
+      elapsedSeconds: 0,
+      sessionStartTime: Date.now(),
+      isReady: true
     };
-  }, [tracker.logs]);
+  }, [tracker]);
 
-  const [phase, setPhase] = useState<'exercises' | 'logging'>(initialPhase);
-  const [hasStartedSession, setHasStartedSession] = useState(initialStarted);
-  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>(initialMuscle);
-  const [activeExercises, setActiveExercises] = useState<string[]>(initialActiveExercises);
-  const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>(initialLoggedData);
+  const [phase, setPhase] = useState<'exercises' | 'logging'>(initialState.phase);
+  const [hasStartedSession, setHasStartedSession] = useState(initialState.hasStartedSession);
+  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>(initialState.selectedMuscle);
+  const [activeExercises, setActiveExercises] = useState<string[]>(initialState.activeExercises);
+  const [loggedData, setLoggedData] = useState<Record<string, SetLog[]>>(initialState.loggedData);
   const [draftData, setDraftData] = useState<Record<string, any[]>>({});
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    // Wait one frame to render heavy list so the modal slides in instantly
-    requestAnimationFrame(() => setIsReady(true));
-  }, []);
+  const [isReady, setIsReady] = useState(initialState.isReady);
 
   const [isSaved, setIsSaved] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(initialBaseSeconds);
-  const sessionStartTimeRef = useRef<number>(initialStartTime);
-  const baseSecondsRef = useRef<number>(initialBaseSeconds);
+  const [elapsedSeconds, setElapsedSeconds] = useState(initialState.elapsedSeconds);
+  const sessionStartTimeRef = useRef<number>(initialState.sessionStartTime);
+  const baseSecondsRef = useRef<number>(initialState.elapsedSeconds);
 
   // Sync state to native for the widget
   const activeExerciseName = openExercise || (activeExercises.length > 0 ? activeExercises[activeExercises.length - 1] : null);
@@ -255,7 +244,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   
   const historyDates = React.useMemo(() => {
     return tracker.logs.slice(0, 50).map(log => log.date.split('T')[0]);
-  }, [tracker.logs]);
+  }, [tracker.logs.length]);
 
   useWidgetSync(
     !isSaved && phase === 'logging' && hasStartedSession,
@@ -270,6 +259,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   );
 
   // Autosave current session state to localStorage
+  const draftRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (hasStartedSession) {
       const draft = {
@@ -283,27 +274,29 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         sessionStartTime: sessionStartTimeRef.current
       };
       const raw = JSON.stringify(draft);
+      draftRef.current = raw;
       localStorage.setItem('gymlog_active_session', raw);
       if ((window as any).AndroidStorage) {
         (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
       }
       (window as any).gymlog_workout_active = true;
-
-      const handleBeforeUnload = () => {
-        localStorage.setItem('gymlog_active_session', raw);
-        if ((window as any).AndroidStorage) {
-          (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
-        }
-      };
-
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
     } else {
       (window as any).gymlog_workout_active = false;
     }
   }, [phase, selectedMuscle, activeExercises, loggedData, hasStartedSession]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (hasStartedSession && draftRef.current) {
+        localStorage.setItem('gymlog_active_session', draftRef.current);
+        if ((window as any).AndroidStorage) {
+          (window as any).AndroidStorage.setItem('gymlog_active_session', draftRef.current);
+        }
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasStartedSession]);
 
   // Handle timer updates
   useEffect(() => {
@@ -369,7 +362,12 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     setOpenExercise(null);
   };
 
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     if (containerRef.current && containerRef.current.children.length > 0) {
       gsap.fromTo(containerRef.current.children,
         { y: 20, opacity: 0 },
@@ -386,11 +384,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
   // Removed redundant openExercise animation to fix swipe stutter
 
-  const toggleExercise = (name: string) => {
+  const toggleExercise = React.useCallback((name: string) => {
     setActiveExercises(prev =>
       prev.includes(name) ? prev.filter(e => e !== name) : [...prev, name]
     );
-  };
+  }, []);
 
   const handleRename = React.useCallback((oldName: string, newName: string) => {
     setActiveExercises(prev => prev.map(e => e === oldName ? newName : e));
@@ -525,27 +523,34 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   };
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [dragOrderPreview, setDragOrderPreview] = useState<string[] | null>(null);
+
   const handleTouchStart = (index: number) => {
     setDraggingIndex(index);
+    setDragOrderPreview([...activeExercises]);
   };
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (draggingIndex === null) return;
+    if (draggingIndex === null || !dragOrderPreview) return;
     const touchY = e.touches[0].clientY;
     const targetElement = document.elementFromPoint(e.touches[0].clientX, touchY);
     const targetItem = targetElement?.closest('[data-index]');
     if (targetItem) {
       const targetIndex = parseInt(targetItem.getAttribute('data-index') || '-1');
       if (targetIndex !== -1 && targetIndex !== draggingIndex) {
-        const newOrder = [...activeExercises];
+        const newOrder = [...dragOrderPreview];
         const item = newOrder[draggingIndex];
         newOrder.splice(draggingIndex, 1);
         newOrder.splice(targetIndex, 0, item);
-        setActiveExercises(newOrder);
+        setDragOrderPreview(newOrder);
         setDraggingIndex(targetIndex);
       }
     }
   };
-  const handleTouchEnd = () => setDraggingIndex(null);
+  const handleTouchEnd = () => {
+    if (dragOrderPreview) setActiveExercises(dragOrderPreview);
+    setDraggingIndex(null);
+    setDragOrderPreview(null);
+  };
 
   const touchState = useRef({ startX: 0, startY: 0, isAnimating: false });
 
@@ -664,21 +669,14 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   };
 
   const getExerciseMuscleGroup = (name: string): MuscleGroup => {
-    for (const [k, v] of Object.entries(DEFAULT_EXERCISES)) {
-      if ((v as string[]).includes(name)) return k as MuscleGroup;
-    }
-    for (const [k, v] of Object.entries(tracker.customExercises)) {
-      if (v.includes(name)) return k as MuscleGroup;
-    }
-    return selectedMuscle;
+    return STATIC_EXERCISE_TO_MUSCLE[name] || 
+      (Object.entries(tracker.customExercises).find(([_, exs]) => exs.includes(name))?.[0] as MuscleGroup) ||
+      selectedMuscle;
   };
 
   const musclesWithExercises = React.useMemo(() => {
     const set = new Set<MuscleGroup>();
-    const exerciseToMuscle: Record<string, MuscleGroup> = {};
-    Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
-      exercises.forEach(ex => { exerciseToMuscle[ex] = group as MuscleGroup; });
-    });
+    const exerciseToMuscle = { ...STATIC_EXERCISE_TO_MUSCLE };
     Object.entries(tracker.customExercises).forEach(([group, exercises]) => {
       exercises.forEach(ex => { exerciseToMuscle[ex] = group as MuscleGroup; });
     });
@@ -724,6 +722,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       {openExercise && (
         <div 
           id="exercise-overlay"
+          className="exercise-overlay-anim"
           style={{
             position: 'fixed', top: 0, bottom: 0, left: 0, right: 0,
             background: 'rgba(0,0,0,0.95)', zIndex: 2000,
@@ -737,6 +736,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
         >
           <div 
             id="exercise-modal-content"
+            className="exercise-modal-anim"
             style={{
               position: 'absolute', top: 0, bottom: 0,
               width: '100%', maxWidth: '480px', 
@@ -1035,71 +1035,71 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   tracker={tracker}
                   t={t as any}
                 />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 'max(12px, env(safe-area-inset-bottom))', marginTop: '8px', gap: '8px' }}>
+                  {/* Show frozen timer when paused */}
+                  {hasStartedSession && (
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      padding: '6px 16px',
+                      border: '1.5px dashed rgba(var(--theme-rgb), 0.2)',
+                      borderRadius: '10px',
+                      opacity: 0.7
+                    }}>
+                      <img src="/assets/clock-custom.png" alt="timer" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+                      <span style={{ 
+                        fontFamily: "var(--heading-font)", 
+                        fontSize: '16px', 
+                        fontWeight: '900', 
+                        color: 'var(--text-primary)',
+                        fontVariantNumeric: 'tabular-nums'
+                      }}>
+                        {formatElapsed(baseSecondsRef.current)} ⏸
+                      </span>
+                    </div>
+                  )}
+                 <img
+                   src={hasStartedSession ? "/assets/custom-btn-resume.png" : "/assets/custom-btn-start.png"}
+                   alt={hasStartedSession ? "Resume Workout" : "Start Workout"}
+                   onClick={() => {
+                     if (activeExercises.length > 0) {
+                       if (!hasStartedSession) {
+                         baseSecondsRef.current = 0;
+                         sessionStartTimeRef.current = Date.now();
+                         setElapsedSeconds(0);
+                         tracker.resetSessionTimer();
+                       } else {
+                         sessionStartTimeRef.current = Date.now();
+                       }
+                       setHasStartedSession(true);
+                       setPhase('logging');
+                     }
+                   }}
+                   style={{
+                     height: '48px',
+                     width: 'auto',
+                     objectFit: 'contain',
+                     cursor: activeExercises.length > 0 ? 'pointer' : 'default',
+                     opacity: activeExercises.length === 0 ? 0.6 : 1,
+                     transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                     userSelect: 'none',
+                     WebkitUserSelect: 'none'
+                   }}
+                   onMouseDown={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(0.94)')}
+                   onMouseUp={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
+                   onTouchStart={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(0.94)')}
+                   onTouchEnd={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
+                 />
+                </div>
               </>
             ) : null}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 'max(12px, env(safe-area-inset-bottom))', marginTop: '8px', gap: '8px' }}>
-                {/* Show frozen timer when paused */}
-                {hasStartedSession && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px',
-                    padding: '6px 16px',
-                    border: '1.5px dashed rgba(var(--theme-rgb), 0.2)',
-                    borderRadius: '10px',
-                    opacity: 0.7
-                  }}>
-                    <img src="/assets/clock-custom.png" alt="timer" style={{ width: 20, height: 20, objectFit: 'contain' }} />
-                    <span style={{ 
-                      fontFamily: "var(--heading-font)", 
-                      fontSize: '16px', 
-                      fontWeight: '900', 
-                      color: 'var(--text-primary)',
-                      fontVariantNumeric: 'tabular-nums'
-                    }}>
-                      {formatElapsed(baseSecondsRef.current)} ⏸
-                    </span>
-                  </div>
-                )}
-               <img
-                 src={hasStartedSession ? "/assets/custom-btn-resume.png" : "/assets/custom-btn-start.png"}
-                 alt={hasStartedSession ? "Resume Workout" : "Start Workout"}
-                 onClick={() => {
-                   if (activeExercises.length > 0) {
-                     if (!hasStartedSession) {
-                       baseSecondsRef.current = 0;
-                       sessionStartTimeRef.current = Date.now();
-                       setElapsedSeconds(0);
-                       tracker.resetSessionTimer();
-                     } else {
-                       sessionStartTimeRef.current = Date.now();
-                     }
-                     setHasStartedSession(true);
-                     setPhase('logging');
-                   }
-                 }}
-                 style={{
-                   height: '48px',
-                   width: 'auto',
-                   objectFit: 'contain',
-                   cursor: activeExercises.length > 0 ? 'pointer' : 'default',
-                   opacity: activeExercises.length === 0 ? 0.6 : 1,
-                   transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                   userSelect: 'none',
-                   WebkitUserSelect: 'none'
-                 }}
-                 onMouseDown={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(0.94)')}
-                 onMouseUp={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
-                 onTouchStart={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(0.94)')}
-                 onTouchEnd={e => activeExercises.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
-               />
-             </div>
           </>
         )}
 
         {phase === 'logging' && (
           <SessionLogger
-            activeExercises={activeExercises}
+            activeExercises={dragOrderPreview || activeExercises}
             loggedData={loggedData}
             weightUnit={tracker.settings.weightUnit}
             onOpenExercise={setOpenExercise}

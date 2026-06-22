@@ -3,6 +3,7 @@ package com.antigravity.gymlog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.webkit.JavascriptInterface;
+import android.content.Intent;
 
 public class StorageInterface {
     private Context context;
@@ -41,6 +42,12 @@ public class StorageInterface {
     public void removeItem(String key) {
         prefs.edit().remove(key).apply();
         triggerWidgetUpdate(!"gymlog_active_session".equals(key));
+    }
+
+    @JavascriptInterface
+    public void onRouteReady() {
+        Intent intent = new Intent("com.antigravity.gymlog.ROUTE_READY");
+        context.sendBroadcast(intent);
     }
 
     private void triggerWidgetUpdate(boolean sendSync) {

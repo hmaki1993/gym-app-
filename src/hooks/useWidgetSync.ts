@@ -55,13 +55,22 @@ export function useWidgetSync(
   activeExercises: string[] = []
 ) {
   const lastStateStrRef = useRef<string>('');
+  const lastActiveRef = useRef<boolean>(false);
 
   useEffect(() => {
+    // Only call the heavy native/preferences sync if:
+    // - The session is active (isActive is true)
+    // - OR if it just transitioned from active to inactive (isActive changed to false)
+    // This completely bypasses bridge overhead during exercise picker setup.
+    const shouldSync = isActive || lastActiveRef.current !== isActive;
     const stateStr = JSON.stringify({ isActive, activeExercise, completedSets, muscleGroup, loggedData, historyDates, isFinished, accentColor, activeExercises });
     
     if (stateStr !== lastStateStrRef.current) {
       lastStateStrRef.current = stateStr;
-      syncWidgetState(JSON.parse(stateStr));
+      if (shouldSync) {
+        syncWidgetState(JSON.parse(stateStr));
+      }
     }
+    lastActiveRef.current = isActive;
   }, [isActive, activeExercise, completedSets, muscleGroup, loggedData, historyDates, isFinished, accentColor, activeExercises]);
 }

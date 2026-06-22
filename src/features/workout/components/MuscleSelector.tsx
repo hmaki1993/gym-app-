@@ -12,7 +12,17 @@ interface Props {
   logs?: WorkoutLog[];
 }
 
-const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, musclesWithExercises, logs }) => {
+const areSetsEqual = (a?: Set<string>, b?: Set<string>) => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.size !== b.size) return false;
+  for (const item of a) {
+    if (!b.has(item)) return false;
+  }
+  return true;
+};
+
+const MuscleSelector = React.memo<Props>(({ selectedMuscle, onSelect, lang, musclesWithExercises, logs }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // Dynamically sort muscle groups based on training history
@@ -120,7 +130,7 @@ const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, muscl
   }, [logs]);
 
   // Scroll selected muscle to the very beginning (left edge)
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!scrollRef.current) return;
     const activeBtn = scrollRef.current.querySelector('[data-active="true"]') as HTMLElement;
     if (activeBtn) {
@@ -129,7 +139,7 @@ const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, muscl
   }, [selectedMuscle]);
 
   // On first mount, instantly jump (no animation) to the selected muscle
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!scrollRef.current) return;
     const activeBtn = scrollRef.current.querySelector('[data-active="true"]') as HTMLElement;
     if (activeBtn) {
@@ -158,7 +168,15 @@ const MuscleSelector: React.FC<Props> = ({ selectedMuscle, onSelect, lang, muscl
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.selectedMuscle === nextProps.selectedMuscle &&
+    prevProps.lang === nextProps.lang &&
+    prevProps.onSelect === nextProps.onSelect &&
+    areSetsEqual(prevProps.musclesWithExercises, nextProps.musclesWithExercises) &&
+    prevProps.logs === nextProps.logs
+  );
+});
 
 export default MuscleSelector;
 export { MuscleSelector };

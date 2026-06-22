@@ -7,6 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.widget.RemoteViews;
+import android.net.Uri;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.FileOutputStream;
+import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -273,7 +279,7 @@ public class GymWidgetProvider extends AppWidgetProvider {
             }
 
             if (heatmapBitmap != null) {
-                views.setImageViewBitmap(R.id.widget_heatmap, heatmapBitmap);
+                setHeatmapUri(context, views, heatmapBitmap);
                 views.setViewVisibility(R.id.widget_heatmap, android.view.View.VISIBLE);
                 views.setViewVisibility(R.id.widget_active_layout, android.view.View.GONE);
                 views.setViewVisibility(R.id.widget_inactive_layout, android.view.View.GONE);
@@ -767,10 +773,7 @@ public class GymWidgetProvider extends AppWidgetProvider {
             textPaint.setTextAlign(Paint.Align.LEFT);
             canvas.drawText(String.valueOf(i), x + 16f, y + 30f, textPaint);
         }
-        // Scale down the bitmap to fit within the 1MB IPC limit for RemoteViews
-        // A factor of 2 reduction reduces size by 4x.
-        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width / 2, height / 2, true);
-        return scaledBitmap;
+        return bitmap;
     }
 
     private Bitmap loadAssetBitmap(Context context, String path) {
@@ -832,6 +835,60 @@ public class GymWidgetProvider extends AppWidgetProvider {
             case 9: return "⑨";
             case 10: return "⑩";
             default: return "[" + num + "]";
+        }
+    }
+
+    private void setHeatmapUri(Context context, RemoteViews views, Bitmap bitmap) {
+        try {
+            File cacheDir = context.getCacheDir();
+            // Delete old heatmap files
+            File[] files = cacheDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.getName().startsWith("heatmap_") && f.getName().endsWith(".png")) {
+                        f.delete();
+                    }
+                }
+            }
+
+            // Save new bitmap
+            String fileName = "heatmap_" + System.currentTimeMillis() + ".png";
+            File file = new File(cacheDir, fileName);
+            FileOutputStream fos = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.close();
+
+            // Get URI
+            Uri uri = FileProvider.getUriForFile(
+                context, 
+                context.getPackageName() + ".fileprovider", 
+                file
+            );
+
+            // Grant permissions to launcher
+            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+            homeIntent.addCategory(Intent.CATEGORY_HOME);
+            ResolveInfo resolveInfo = context.getPackageManager().resolveActivity(
+                homeIntent, 
+                PackageManager.MATCH_DEFAULT_ONLY
+            );
+            String launcherPackage = (resolveInfo != null && resolveInfo.activityInfo != null) 
+                ? resolveInfo.activityInfo.packageName 
+                : null;
+
+            if (launcherPackage != null) {
+                context.grantUriPermission(launcherPackage, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+            try {
+                context.grantUriPermission("com.android.systemui", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Exception e) {}
+
+            // Set Image URI
+            views.setImageViewUri(R.id.widget_heatmap, uri);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Fallback to setting bitmap directly if file saving fails
+            views.setImageViewBitmap(R.id.widget_heatmap, bitmap);
         }
     }
 }
