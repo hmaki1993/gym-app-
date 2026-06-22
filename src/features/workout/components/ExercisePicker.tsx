@@ -100,6 +100,112 @@ const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: numbe
   </svg>
 );
 
+// ── Custom Premium Scrollbar ──
+const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) => {
+  const [progress, setProgress] = React.useState(0);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [show, setShow] = React.useState(false);
+  const [thumbHeight, setThumbHeight] = React.useState(40);
+
+  const checkShow = React.useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const canScroll = el.scrollHeight > el.clientHeight;
+    setShow(canScroll);
+    if (canScroll) {
+      // Dynamic thumb height proportional to viewport / content, min 30px
+      const h = Math.max(30, (el.clientHeight / el.scrollHeight) * el.clientHeight);
+      setThumbHeight(h);
+    }
+  }, [scrollRef]);
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    
+    const handleScroll = () => {
+      if (isDragging) return;
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      if (scrollHeight <= clientHeight) {
+        setProgress(0);
+        return;
+      }
+      setProgress(scrollTop / (scrollHeight - clientHeight));
+    };
+
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    checkShow();
+    handleScroll();
+    
+    const ro = new ResizeObserver(checkShow);
+    ro.observe(el);
+    
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      ro.disconnect();
+    };
+  }, [scrollRef, isDragging, checkShow]);
+
+  const updateScroll = (clientY: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const { scrollHeight, clientHeight } = el;
+    if (scrollHeight <= clientHeight) return;
+
+    let p = (clientY - rect.top) / rect.height;
+    p = Math.max(0, Math.min(1, p));
+    setProgress(p);
+    el.scrollTop = p * (scrollHeight - clientHeight);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    updateScroll(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    // Removed e.preventDefault() because JSX touch events are passive by default
+    updateScroll(e.touches[0].clientY);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  if (!show) return null;
+
+  return (
+    <div 
+      style={{
+        position: 'absolute', right: 0, top: 0, bottom: 0,
+        width: 32, zIndex: 50, display: 'flex', justifyContent: 'center',
+        touchAction: 'none' // This prevents native scrolling without needing preventDefault
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+    >
+      <div 
+        style={{
+          position: 'absolute',
+          top: `calc(${progress * 100}% - ${progress * thumbHeight}px)`, 
+          width: isDragging ? 8 : 4,
+          height: thumbHeight,
+          backgroundColor: isDragging ? 'var(--accent-color)' : 'rgba(230, 126, 34, 0.45)',
+          borderRadius: 10,
+          transition: 'width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, height 0.2s',
+          boxShadow: isDragging ? '0 0 12px rgba(230, 126, 34, 0.5)' : 'none',
+        }}
+      />
+    </div>
+  );
+};
+
+
 // ── Memoized Exercise Card ──
 
 interface ExerciseItemCardProps {
@@ -707,10 +813,11 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     return getExerciseGifUrl(selectedVideoExercise, tracker.state.exerciseAliases);
   }, [selectedVideoExercise, tracker.state.exerciseAliases]);
 
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchResultsRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef(new Map<string, HTMLElement>());
+  const overlayRef = React.useRef<HTMLDivElement>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const searchResultsRef = React.useRef<HTMLDivElement>(null);
+  const mainListRef = React.useRef<HTMLDivElement>(null);
+  const itemRefs = React.useRef(new Map<string, HTMLElement>());
 
   const { fullList, baseList, deletedExercises, hiddenExercises, customExercises } = React.useMemo(() => {
     const deleted = (tracker.state as any).deletedExercises?.[muscleGroup as MuscleGroup] || [];
@@ -1168,7 +1275,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               </div>
             )}
           </div>
-          <div ref={searchResultsRef} className="premium-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
+            <div ref={searchResultsRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {searchFiltered.map(name => {
               const isActive = activeExercises.includes(name);
               const lastSession = tracker.getLastSession(name);
@@ -1230,6 +1338,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                 </div>
               );
             })}
+            </div>
+            <FastScroll scrollRef={searchResultsRef} />
           </div>
         </div>,
         document.body
@@ -1264,7 +1374,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       </div>
 
       {/* Exercise list */}
-      <div className="premium-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
+        <div ref={mainListRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 16 }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
         {recentNames.length > 0 && (
           <>
             <div style={{ padding: '10px 12px 6px', display: 'flex', alignItems: 'center', gap: 8, background: 'transparent' }}>
@@ -1329,6 +1440,9 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             ))}
           </div>
         )}
+        <div style={{ height: 'max(100px, env(safe-area-inset-bottom))', flexShrink: 0 }} />
+        </div>
+        <FastScroll scrollRef={mainListRef} />
       </div>
 
       {/* Delete confirm modal */}
