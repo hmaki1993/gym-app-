@@ -9,93 +9,23 @@ import { getExerciseGifUrl } from '../../../data/premiumGifs';
 import type { MuscleGroup } from '../../../types';
 
 const FastGif = React.memo(({ src, alt, play = false, ready = true }: { src: string; alt: string; play?: boolean; ready?: boolean }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      });
-    }, {
-      rootMargin: '120px',
-      threshold: 0.01
-    });
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []); // Run observer once on mount
-
-  useEffect(() => {
-    setLoaded(false);
-  }, [src]);
-
-  useEffect(() => {
-    if (!ready || !inView) return;
-    const img = imgRef.current;
-    const canvas = canvasRef.current;
-    if (!play && img && canvas) {
-      let active = true;
-      const draw = () => {
-        if (!active || !canvas || !img.complete || img.naturalWidth === 0) return;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-           canvas.width = img.naturalWidth;
-           canvas.height = img.naturalHeight;
-           ctx.drawImage(img, 0, 0);
-           setLoaded(true);
-        }
-      };
-
-      if (img.complete && img.naturalWidth > 0) {
-        draw();
-      } else {
-        img.addEventListener('load', draw);
-      }
-
-      return () => {
-        active = false;
-        img.removeEventListener('load', draw);
-      };
-    }
-  }, [src, play, ready, inView]);
-
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px', position: 'relative' }}>
-      {inView && (
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px', position: 'relative' }}>
+      {ready ? (
         <img 
-          ref={imgRef}
           src={src} 
           alt={alt} 
           loading="lazy" 
+          decoding="async"
           style={{ 
-            width: play ? '100%' : 1, 
-            height: play ? '100%' : 1, 
+            width: '100%', 
+            height: '100%', 
             objectFit: 'contain', 
-            visibility: play ? 'visible' : 'hidden',
-            position: play ? 'relative' : 'absolute',
-            opacity: play ? 1 : 0
           }} 
         />
-      )}
-      {!play && ready ? (
-        <canvas 
-          ref={canvasRef} 
-          style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease-out' }} 
-        />
-      ) : null}
-      {!play && (!ready || !loaded) ? (
+      ) : (
         <div style={{ position: 'absolute', inset: 6, background: 'rgba(0,0,0,0.03)', borderRadius: 8 }} />
-      ) : null}
+      )}
     </div>
   );
 });

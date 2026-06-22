@@ -157,27 +157,41 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ tracker, isFloating, o
       : [];
   }, [tracker.logs, selectedDate, currentYear, currentMonth]);
 
-  // Consolidate multiple logs for the same day into one (fixes old split-session bug)
   const consolidatedLogs = (() => {
-    if (filteredLogs.length <= 1) return filteredLogs;
-    // Merge all logs for this day into one unified log
-    const base = { ...filteredLogs[0] };
-    const mergedExercises = [...base.exercises];
-    for (let i = 1; i < filteredLogs.length; i++) {
-      filteredLogs[i].exercises.forEach(ex => {
-        const existingIndex = mergedExercises.findIndex(e => e.name === ex.name);
-        if (existingIndex !== -1) {
-          const existing = mergedExercises[existingIndex];
-          mergedExercises[existingIndex] = { ...existing, sets: [...existing.sets, ...ex.sets] };
-        } else {
-          mergedExercises.push(ex);
-        }
-      });
-    }
-    base.exercises = mergedExercises;
-    base.durationSeconds = filteredLogs.reduce((sum, l) => sum + (l.durationSeconds || l.durationMinutes * 60), 0);
-    base.durationMinutes = Math.round(base.durationSeconds / 60);
-    return [base];
+    if (filteredLogs.length === 0) return [];
+    
+    // Group logs by date (YYYY-MM-DD)
+    const logsByDate: Record<string, typeof filteredLogs> = {};
+    filteredLogs.forEach(log => {
+      const dateStr = log.date.split('T')[0]; // Extract just the date part
+      if (!logsByDate[dateStr]) logsByDate[dateStr] = [];
+      logsByDate[dateStr].push(log);
+    });
+
+    // Merge logs within each day
+    return Object.values(logsByDate).map(dayLogs => {
+      if (dayLogs.length === 1) return dayLogs[0];
+      
+      const base = { ...dayLogs[0] };
+      const mergedExercises = [...base.exercises];
+      
+      for (let i = 1; i < dayLogs.length; i++) {
+        dayLogs[i].exercises.forEach(ex => {
+          const existingIndex = mergedExercises.findIndex(e => e.name === ex.name);
+          if (existingIndex !== -1) {
+            const existing = mergedExercises[existingIndex];
+            mergedExercises[existingIndex] = { ...existing, sets: [...existing.sets, ...ex.sets] };
+          } else {
+            mergedExercises.push(ex);
+          }
+        });
+      }
+      
+      base.exercises = mergedExercises;
+      base.durationSeconds = dayLogs.reduce((sum, l) => sum + (l.durationSeconds || l.durationMinutes * 60), 0);
+      base.durationMinutes = Math.round(base.durationSeconds / 60);
+      return base;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   })();
 
   const changeMonth = (offset: number) => {
