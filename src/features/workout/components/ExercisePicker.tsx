@@ -180,7 +180,7 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
   return (
     <div 
       style={{
-        position: 'absolute', right: 0, top: 0, bottom: 0,
+        position: 'absolute', right: 0, top: 12, bottom: 12,
         width: 32, zIndex: 50, display: 'flex', justifyContent: 'center',
         touchAction: 'none' // This prevents native scrolling without needing preventDefault
       }}
@@ -1276,7 +1276,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             )}
           </div>
           <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
-            <div ref={searchResultsRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div ref={searchResultsRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {searchFiltered.map(name => {
               const isActive = activeExercises.includes(name);
               const lastSession = tracker.getLastSession(name);
@@ -1375,14 +1375,14 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
       {/* Exercise list */}
       <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
-        <div ref={mainListRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 16 }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
+        <div ref={mainListRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, padding: '0 20px' }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
         {recentNames.length > 0 && (
           <>
             <div style={{ padding: '10px 12px 6px', display: 'flex', alignItems: 'center', gap: 8, background: 'transparent' }}>
               <RotateCcw size={14} color="#E67E22" strokeWidth={3} />
               <span style={{ fontSize: 11, fontWeight: 900, color: '#E67E22', letterSpacing: 1, textTransform: 'uppercase' }}>{isRtl ? 'تمارينك السابقة' : 'My Recent Exercises'}</span>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {recentNames.map((name, idxInList) => {
                 const isFirst = idxInList === 0;
                 return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name));
@@ -1397,7 +1397,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
           </div>
         )}
         {otherNames.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {(renderFull ? otherNames : otherNames.slice(0, 15)).map((name, idxInList) => {
               const isFirst = idxInList === 0;
               return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name));
@@ -1440,7 +1440,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             ))}
           </div>
         )}
-        <div style={{ height: 'max(100px, env(safe-area-inset-bottom))', flexShrink: 0 }} />
+        <div style={{ height: 'max(20px, env(safe-area-inset-bottom))', flexShrink: 0 }} />
         </div>
         <FastScroll scrollRef={mainListRef} />
       </div>
