@@ -8,7 +8,7 @@ import { EXERCISE_YOUTUBE_VIDEOS } from '../../../data/exerciseVideos';
 import { getExerciseGifUrl } from '../../../data/premiumGifs';
 import type { MuscleGroup } from '../../../types';
 
-const FastGif = React.memo(({ src, alt, play = false, ready = true }: { src: string; alt: string; play?: boolean; ready?: boolean }) => {
+const FastGif = React.memo(({ src, alt, ready = true }: { src: string; alt: string; play?: boolean; ready?: boolean }) => {
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px', position: 'relative' }}>
       {ready ? (
