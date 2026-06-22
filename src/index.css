@@ -188,8 +188,7 @@
   background-color: #E67E22;
   border-width: 3px; /* Slightly thicker when interacting */
 }
-  display: none;
-}
+
 
 html {
   overscroll-behavior: none !important;
