@@ -228,7 +228,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const [dirtyExercises, setDirtyExercises] = useState<Record<string, boolean>>({});
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [isReady, setIsReady] = useState(initialState.isReady);
+  const isReady = initialState.isReady;
 
   const [isSaved, setIsSaved] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
