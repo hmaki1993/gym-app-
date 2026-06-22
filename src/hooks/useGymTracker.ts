@@ -370,17 +370,26 @@ export function useGymTracker() {
   }, []);
 
   const restoreExercise = useCallback((muscle: MuscleGroup, name: string) => {
-    setState(prev => ({
-      ...prev,
-      hiddenExercises: {
-        ...prev.hiddenExercises,
-        [muscle]: (prev.hiddenExercises[muscle] || []).filter(e => e !== name),
-      },
-      deletedExercises: {
-        ...prev.deletedExercises || {},
-        [muscle]: (prev.deletedExercises?.[muscle] || []).filter((e: string) => e !== name)
-      }
-    }));
+    setState(prev => {
+      const isDefault = (DEFAULT_EXERCISES[muscle] || []).includes(name);
+      const customEx = prev.customExercises[muscle] || [];
+      const needsAddingToCustom = !isDefault && !customEx.includes(name);
+
+      return {
+        ...prev,
+        customExercises: needsAddingToCustom 
+          ? { ...prev.customExercises, [muscle]: [...customEx, name] }
+          : prev.customExercises,
+        hiddenExercises: {
+          ...prev.hiddenExercises,
+          [muscle]: (prev.hiddenExercises[muscle] || []).filter(e => e !== name),
+        },
+        deletedExercises: {
+          ...prev.deletedExercises || {},
+          [muscle]: (prev.deletedExercises?.[muscle] || []).filter((e: string) => e !== name)
+        }
+      };
+    });
   }, []);
 
   const permanentlyDeleteExercise = useCallback((muscle: MuscleGroup, name: string) => {
