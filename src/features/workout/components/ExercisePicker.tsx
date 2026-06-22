@@ -60,15 +60,14 @@ const FastGif = React.memo(({ src, alt, play = false, ready = true }: { src: str
         ref={imgRef}
         src={src} 
         alt={alt} 
-        loading="lazy" 
         decoding="async"
         style={{ 
           width: play ? '100%' : 1, 
           height: play ? '100%' : 1, 
           objectFit: 'contain', 
-          visibility: play ? 'visible' : 'hidden',
+          opacity: play ? 1 : 0.001,
           position: play ? 'relative' : 'absolute',
-          opacity: play ? 1 : 0
+          pointerEvents: 'none'
         }} 
       />
       {!play && ready ? (
@@ -167,9 +166,6 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
     if (!el) return;
     
     const deltaY = e.touches[0].clientY - dragStartInfo.current.startY;
-    if (deltaY > 0) setScrollDirection('down');
-    else if (deltaY < 0) setScrollDirection('up');
-
     const { scrollHeight, clientHeight } = el;
     if (scrollHeight <= clientHeight) return;
 
@@ -182,6 +178,10 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
     let newScrollTop = dragStartInfo.current.startScrollTop + (deltaY * scrollPerPixel);
     
     newScrollTop = Math.max(0, Math.min(maxScroll, newScrollTop));
+
+    if (newScrollTop > lastScrollTop.current) setScrollDirection('down');
+    else if (newScrollTop < lastScrollTop.current) setScrollDirection('up');
+
     el.scrollTop = newScrollTop;
     setProgress(newScrollTop / maxScroll);
     lastScrollTop.current = newScrollTop;
@@ -211,11 +211,14 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
         style={{
           position: 'absolute',
           top: `calc(${progress * 100}% - ${progress * thumbHeight}px)`, 
-          width: isDragging ? 36 : 32,
+          width: 32,
           height: thumbHeight,
           objectFit: 'contain',
-          transition: 'width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          filter: isDragging ? 'drop-shadow(0 0 8px rgba(230, 126, 34, 0.8))' : 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+          transform: isDragging ? 'scale(1.2)' : 'scale(1)',
+          transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s',
+          filter: scrollDirection === 'down'
+            ? `invert(62%) sepia(85%) saturate(3000%) hue-rotate(350deg) brightness(1.0) contrast(1.1) ${isDragging ? 'drop-shadow(0 0 8px rgba(230, 126, 34, 0.8))' : 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'}`
+            : `invert(54%) sepia(93%) saturate(1000%) hue-rotate(85deg) brightness(1.1) contrast(1.1) ${isDragging ? 'drop-shadow(0 0 8px rgba(46, 204, 113, 0.8))' : 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'}`,
         }}
         alt="scroll"
       />
