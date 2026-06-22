@@ -146,29 +146,40 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
     };
   }, [scrollRef, isDragging, checkShow]);
 
-  const updateScroll = (clientY: number) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const { scrollHeight, clientHeight } = el;
-    if (scrollHeight <= clientHeight) return;
-
-    let p = (clientY - rect.top) / rect.height;
-    p = Math.max(0, Math.min(1, p));
-    setProgress(p);
-    el.scrollTop = p * (scrollHeight - clientHeight);
-  };
+  const dragStartInfo = React.useRef({ startY: 0, startScrollTop: 0 });
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.stopPropagation();
     setIsDragging(true);
-    updateScroll(e.touches[0].clientY);
+    const el = scrollRef.current;
+    if (el) {
+      dragStartInfo.current = {
+        startY: e.touches[0].clientY,
+        startScrollTop: el.scrollTop,
+      };
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     e.stopPropagation();
-    // Removed e.preventDefault() because JSX touch events are passive by default
-    updateScroll(e.touches[0].clientY);
+    const el = scrollRef.current;
+    if (!el) return;
+    
+    const deltaY = e.touches[0].clientY - dragStartInfo.current.startY;
+    const { scrollHeight, clientHeight } = el;
+    if (scrollHeight <= clientHeight) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const maxScroll = scrollHeight - clientHeight;
+    const maxThumbMove = rect.height - thumbHeight;
+    
+    // How much the list should scroll for every pixel the finger moves:
+    const scrollPerPixel = maxScroll / maxThumbMove;
+    let newScrollTop = dragStartInfo.current.startScrollTop + (deltaY * scrollPerPixel);
+    
+    newScrollTop = Math.max(0, Math.min(maxScroll, newScrollTop));
+    el.scrollTop = newScrollTop;
+    setProgress(newScrollTop / maxScroll);
   };
 
   const handleTouchEnd = () => {
@@ -182,7 +193,8 @@ const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement |
       style={{
         position: 'absolute', right: 0, top: 12, bottom: 12,
         width: 32, zIndex: 50, display: 'flex', justifyContent: 'center',
-        touchAction: 'none' // This prevents native scrolling without needing preventDefault
+        touchAction: 'none', // This prevents native scrolling without needing preventDefault
+        transform: 'translateX(6px)' // Visually centers it exactly in the middle of the 20px padding
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
