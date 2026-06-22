@@ -1091,7 +1091,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               maxHeight: 180, overflowY: 'auto', 
               background: 'rgba(var(--theme-rgb), 0.04)', borderRadius: 20, 
               padding: '14px 16px', border: '1px solid rgba(var(--theme-rgb), 0.06)'
-            }} className="hide-scrollbar">
+            }} className="premium-scrollbar">
               <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.5px' }}>
                 {t('howToPerform')}
               </div>
@@ -1168,7 +1168,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               </div>
             )}
           </div>
-          <div ref={searchResultsRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div ref={searchResultsRef} className="premium-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {searchFiltered.map(name => {
               const isActive = activeExercises.includes(name);
               const lastSession = tracker.getLastSession(name);
@@ -1264,7 +1264,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       </div>
 
       {/* Exercise list */}
-      <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
+      <div className="premium-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
         {recentNames.length > 0 && (
           <>
             <div style={{ padding: '10px 12px 6px', display: 'flex', alignItems: 'center', gap: 8, background: 'transparent' }}>
@@ -1394,7 +1394,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             <p style={{ margin: '0 0 24px 0', fontSize: 15, color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 600, lineHeight: 1.4 }}>
               Select a matching GIF for <br/><span style={{ color: 'var(--text-primary)', fontWeight: 800 }}>"{aliasSelectorOpen}"</span>
             </p>
-            <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'block', paddingBottom: 10, paddingRight: 4, paddingLeft: 4 }}>
+            <div className="premium-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'block', paddingBottom: 10, paddingRight: 4, paddingLeft: 4 }}>
               {DEFAULT_EXERCISES[muscleGroup as MuscleGroup]?.map(stdName => (
                 <div 
                   key={stdName} 

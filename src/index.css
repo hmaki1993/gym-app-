@@ -166,6 +166,31 @@
   display: none;
 }
 
+/* Premium draggable scrollbar for long lists */
+.premium-scrollbar::-webkit-scrollbar {
+  width: 14px; /* Wide touch target */
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color);
+  background-clip: content-box;
+  border: 4px solid transparent; /* Makes the visible part 6px while touch area is 14px */
+  border-radius: 9999px;
+  min-height: 40px; /* Ensure it's not too small to grab */
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb:hover,
+.premium-scrollbar::-webkit-scrollbar-thumb:active {
+  background-color: #E67E22;
+  border-width: 3px; /* Slightly thicker when interacting */
+}
+  display: none;
+}
+
 html {
   overscroll-behavior: none !important;
   overscroll-behavior-x: none !important;
