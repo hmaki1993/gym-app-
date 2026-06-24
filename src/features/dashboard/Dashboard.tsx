@@ -178,7 +178,7 @@ Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
-          onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; handleStartPress(e); }}
+          onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
           style={{
             cursor: 'pointer',
             transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -312,7 +312,7 @@ Object.entries(DEFAULT_EXERCISES).forEach(([group, exercises]) => {
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
             onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.96)'}
-            onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; handleStartPress(e); }}
+            onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
             style={{
               padding: '10px 20px', 
               background: 'transparent',

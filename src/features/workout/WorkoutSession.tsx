@@ -231,9 +231,42 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   const isReady = initialState.isReady;
 
   const [isSaved, setIsSaved] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
+
+
+
+  const handleClose = () => {
+    if (rootRef.current) {
+      gsap.to(rootRef.current, {
+        yPercent: 100,
+        opacity: 0.9,
+        duration: 0.28,
+        ease: 'power3.in',
+        force3D: true,
+        onComplete: onClose
+      });
+    } else {
+      onClose();
+    }
+  };
+
+  const handleSaved = () => {
+    if (rootRef.current) {
+      gsap.to(rootRef.current, {
+        yPercent: 100,
+        opacity: 0.9,
+        duration: 0.28,
+        ease: 'power3.in',
+        force3D: true,
+        onComplete: onSaved
+      });
+    } else {
+      onSaved();
+    }
+  };
   const [elapsedSeconds, setElapsedSeconds] = useState(initialState.elapsedSeconds);
   const sessionStartTimeRef = useRef<number>(initialState.sessionStartTime);
   const baseSecondsRef = useRef<number>(initialState.elapsedSeconds);
@@ -362,18 +395,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
     setOpenExercise(null);
   };
 
-  const isFirstRender = useRef(true);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    if (containerRef.current && containerRef.current.children.length > 0) {
-      gsap.fromTo(containerRef.current.children,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.06, duration: 0.4, ease: 'power3.out' }
-      );
-    }
     if (phase === 'logging' && timerRef.current) {
       gsap.fromTo(timerRef.current,
         { y: -30, opacity: 0, scale: 0.9 },
@@ -381,6 +403,8 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       );
     }
   }, [phase]);
+
+
 
   // Removed redundant openExercise animation to fix swipe stutter
 
@@ -485,7 +509,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       });
 
       setDirtyExercises({});
-      onSaved(); 
+      handleSaved(); 
       return; 
     }
 
@@ -519,7 +543,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
 
     tracker.saveWorkout(log as any, elapsedSeconds);
     setDirtyExercises({});
-    onSaved();
+    handleSaved();
   };
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -688,7 +712,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
   }, [activeExercises, tracker.customExercises]);
 
   return (
-    <div style={{ 
+    <div ref={rootRef} style={{ 
+
+
       display: 'flex', 
       flexDirection: 'column', 
       position: 'fixed',
@@ -704,10 +730,11 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
       touchAction: 'auto', 
       overscrollBehavior: 'none'
     }}>
-      {isFloating && onClose && phase === 'logging' && (
+      {isFloating && phase === 'logging' && (
+
         <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2100 }}>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             style={{ 
               width: '42px', height: '42px', borderRadius: '50%',
               background: 'none', border: 'none', padding: 0,
@@ -860,7 +887,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                   (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
                 }
               }
-              onClose();
+              handleClose();
             }} 
             style={{ 
               position: 'absolute',
@@ -996,7 +1023,7 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
                       (window as any).AndroidStorage.setItem('gymlog_active_session', raw);
                     }
                   }
-                  onClose();
+                  handleClose();
                 }} 
                 style={{ 
                   width: '40px', height: '40px', borderRadius: '50%', 
@@ -1020,7 +1047,9 @@ export function WorkoutSession({ tracker, onClose, onSaved }: Props) {
               <>
                 <MuscleSelector 
                   selectedMuscle={selectedMuscle} 
-                  onSelect={(m) => setSelectedMuscle(m as MuscleGroup)} 
+                  onSelect={(m) => {
+                    setSelectedMuscle(m as MuscleGroup);
+                  }} 
                   lang={lang} 
                   musclesWithExercises={musclesWithExercises}
                   logs={tracker.logs}

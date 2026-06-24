@@ -8,77 +8,52 @@ import { EXERCISE_YOUTUBE_VIDEOS } from '../../../data/exerciseVideos';
 import { getExerciseGifUrl } from '../../../data/premiumGifs';
 import type { MuscleGroup } from '../../../types';
 
-const FastGif = React.memo(({ src, alt, play = false, ready = true }: { src: string; alt: string; play?: boolean; ready?: boolean }) => {
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const imgRef = React.useRef<HTMLImageElement>(null);
-  const [loaded, setLoaded] = React.useState(false);
+const FastGif = React.memo(({ src, alt, play = false, ready = true, priority = false }: { src: string; alt: string; play?: boolean; ready?: boolean; priority?: boolean }) => {
+  const [thumbError, setThumbError] = React.useState(false);
 
   React.useEffect(() => {
-    setLoaded(false);
+    setThumbError(false);
   }, [src]);
 
-  React.useEffect(() => {
-    const img = imgRef.current;
-    const canvas = canvasRef.current;
-    if (!img || !canvas || play || !ready) return;
-
-    let active = true;
-    let animFrameId: number;
-
-    const tryDraw = () => {
-      if (!active || !canvas) return;
-      if (img.naturalWidth > 0) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          ctx.drawImage(img, 0, 0);
-          setLoaded(true);
-        }
-      } else if (!img.complete) {
-        animFrameId = requestAnimationFrame(tryDraw);
-      }
-    };
-
-    if (img.complete && img.naturalWidth > 0) {
-      tryDraw();
-    } else {
-      animFrameId = requestAnimationFrame(tryDraw);
-      img.addEventListener('load', tryDraw);
-    }
-
-    return () => {
-      active = false;
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      img.removeEventListener('load', tryDraw);
-    };
-  }, [src, play, ready]);
+  const cleanUrl = src.replace(/^https?:\/\//, '');
+  const thumbnailUrl = `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&n=1&w=150`;
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', padding: '6px', position: 'relative' }}>
-      <img 
-        ref={imgRef}
-        src={src} 
-        alt={alt} 
-        decoding="async"
-        style={{ 
-          width: play ? '100%' : 1, 
-          height: play ? '100%' : 1, 
-          objectFit: 'contain', 
-          opacity: play ? 1 : 0.001,
-          position: play ? 'relative' : 'absolute',
-          pointerEvents: 'none'
-        }} 
-      />
-      {!play && ready ? (
-        <canvas 
-          ref={canvasRef} 
-          style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: loaded ? 1 : 0, transition: 'opacity 0.25s ease-out' }} 
-        />
-      ) : null}
-      {!play && (!ready || !loaded) ? (
-        <div style={{ position: 'absolute', inset: 6, background: 'rgba(0,0,0,0.03)', borderRadius: 8 }} />
-      ) : null}
+      {ready && (
+        <>
+          <img 
+            src={thumbError ? src : thumbnailUrl} 
+            alt={alt} 
+            decoding="async"
+            loading={priority ? "eager" : "lazy"}
+            onError={() => setThumbError(true)}
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'contain', 
+              position: 'absolute',
+              opacity: play && !thumbError ? 0 : 1,
+              transition: 'opacity 0.2s ease',
+              zIndex: 1
+            }} 
+          />
+          {play && (
+            <img 
+              src={src} 
+              alt={alt} 
+              decoding="async"
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'contain', 
+                position: 'absolute',
+                zIndex: 2
+              }} 
+            />
+          )}
+        </>
+      )}
     </div>
   );
 });
@@ -100,134 +75,191 @@ const CustomPlus = ({ size = 16, color = 'var(--accent-color)' }: { size?: numbe
 );
 
 // ── Custom Premium Scrollbar ──
-const FastScroll = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) => {
+interface FastScrollProps {
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const FastScroll: React.FC<FastScrollProps> = ({ scrollRef }) => {
   const [progress, setProgress] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
-  const [show, setShow] = React.useState(false);
-  const [scrollDirection, setScrollDirection] = React.useState<'up' | 'down'>('down');
-  const lastScrollTop = React.useRef(0);
-  const thumbHeight = 32; // Fixed height for the icon
+  const [visible, setVisible] = React.useState(false);
+  const [thumbHeight, setThumbHeight] = React.useState(60);
 
-  const checkShow = React.useCallback(() => {
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const dragStartY = React.useRef(0);
+  const dragStartScrollTop = React.useRef(0);
+
+  const updateMetrics = React.useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     const canScroll = el.scrollHeight > el.clientHeight;
-    setShow(canScroll);
+    setVisible(canScroll);
+    if (canScroll) {
+      const h = Math.max(40, Math.min(120, (el.clientHeight / el.scrollHeight) * el.clientHeight));
+      setThumbHeight(h);
+    }
   }, [scrollRef]);
 
   React.useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    
-    const handleScroll = () => {
-      if (isDragging) return;
-      const { scrollTop, scrollHeight, clientHeight } = el;
-      if (scrollTop > lastScrollTop.current) setScrollDirection('down');
-      else if (scrollTop < lastScrollTop.current) setScrollDirection('up');
-      lastScrollTop.current = scrollTop;
 
-      if (scrollHeight <= clientHeight) {
+    const handleScroll = () => {
+      if (dragStartY.current !== 0 && isDragging) return;
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const maxScroll = scrollHeight - clientHeight;
+      if (maxScroll <= 0) {
         setProgress(0);
-        return;
+      } else {
+        setProgress(scrollTop / maxScroll);
       }
-      setProgress(scrollTop / (scrollHeight - clientHeight));
     };
 
     el.addEventListener('scroll', handleScroll, { passive: true });
-    checkShow();
+    updateMetrics();
     handleScroll();
-    
-    const ro = new ResizeObserver(checkShow);
+
+    const ro = new ResizeObserver(updateMetrics);
     ro.observe(el);
-    
+
     return () => {
       el.removeEventListener('scroll', handleScroll);
       ro.disconnect();
     };
-  }, [scrollRef, isDragging, checkShow]);
+  }, [scrollRef, isDragging, updateMetrics]);
 
-  const dragStartInfo = React.useRef({ startY: 0, startScrollTop: 0 });
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    e.stopPropagation();
-    setIsDragging(true);
+  const handleStart = (clientY: number) => {
     const el = scrollRef.current;
-    if (el) {
-      dragStartInfo.current = {
-        startY: e.touches[0].clientY,
-        startScrollTop: el.scrollTop,
-      };
-    }
+    const track = trackRef.current;
+    if (!el || !track) return;
+
+    setIsDragging(true);
+    dragStartY.current = clientY;
+    dragStartScrollTop.current = el.scrollTop;
+
+    const trackRect = track.getBoundingClientRect();
+    const relativeY = clientY - trackRect.top;
+    const clickRatio = (relativeY - thumbHeight / 2) / (trackRect.height - thumbHeight);
+    const targetRatio = Math.max(0, Math.min(1, clickRatio));
+
+    el.scrollTop = targetRatio * (el.scrollHeight - el.clientHeight);
+    setProgress(targetRatio);
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    e.stopPropagation();
+  const handleMove = (clientY: number) => {
     const el = scrollRef.current;
-    if (!el) return;
-    
-    const deltaY = e.touches[0].clientY - dragStartInfo.current.startY;
-    const { scrollHeight, clientHeight } = el;
-    if (scrollHeight <= clientHeight) return;
+    const track = trackRef.current;
+    if (!el || !track || !dragStartY.current) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
-    const maxScroll = scrollHeight - clientHeight;
-    const maxThumbMove = rect.height - thumbHeight;
-    
-    // How much the list should scroll for every pixel the finger moves:
-    const scrollPerPixel = maxScroll / maxThumbMove;
-    let newScrollTop = dragStartInfo.current.startScrollTop + (deltaY * scrollPerPixel);
-    
+    const trackRect = track.getBoundingClientRect();
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    const deltaY = clientY - dragStartY.current;
+    const trackAvailableHeight = trackRect.height - thumbHeight;
+
+    if (trackAvailableHeight <= 0) return;
+
+    const scrollPerPixel = maxScroll / trackAvailableHeight;
+    let newScrollTop = dragStartScrollTop.current + deltaY * scrollPerPixel;
     newScrollTop = Math.max(0, Math.min(maxScroll, newScrollTop));
-
-    if (newScrollTop > lastScrollTop.current) setScrollDirection('down');
-    else if (newScrollTop < lastScrollTop.current) setScrollDirection('up');
 
     el.scrollTop = newScrollTop;
     setProgress(newScrollTop / maxScroll);
-    lastScrollTop.current = newScrollTop;
   };
 
-  const handleTouchEnd = () => {
+  const handleEnd = () => {
     setIsDragging(false);
+    dragStartY.current = 0;
   };
 
-  if (!show) return null;
+  if (!visible) return null;
+
+  const topOffset = progress * (100 - (thumbHeight / (scrollRef.current?.clientHeight || 1)) * 100);
 
   return (
-    <div 
+    <div
+      ref={trackRef}
       style={{
-        position: 'absolute', right: 0, top: 12, bottom: 12,
-        width: 32, zIndex: 50, display: 'flex', justifyContent: 'center',
-        touchAction: 'none', // This prevents native scrolling without needing preventDefault
-        transform: 'translateX(6px)' // Visually centers it exactly in the middle of the 20px padding
+        position: 'absolute',
+        right: 0,
+        top: 8,
+        bottom: 8,
+        width: 44, // Generous 44px hit target for effortless mobile touch!
+        zIndex: 100,
+        touchAction: 'none',
       }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      onTouchStart={(e) => {
+        e.stopPropagation();
+        handleStart(e.touches[0].clientY);
+      }}
+      onTouchMove={(e) => {
+        e.stopPropagation();
+        handleMove(e.touches[0].clientY);
+      }}
+      onTouchEnd={(e) => {
+        e.stopPropagation();
+        handleEnd();
+      }}
+      onTouchCancel={(e) => {
+        e.stopPropagation();
+        handleEnd();
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        handleStart(e.clientY);
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          handleMove(moveEvent.clientY);
+        };
+        const onMouseUp = () => {
+          handleEnd();
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+        };
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      }}
     >
-      <img 
-        src={scrollDirection === 'down' ? '/assets/move2.png' : '/assets/move1.png'}
+      {/* Scrollbar Track background line - centered at 14px from right of screen */}
+      <div
         style={{
           position: 'absolute',
-          top: `calc(${progress * 100}% - ${progress * thumbHeight}px)`, 
-          width: 32,
-          height: thumbHeight,
-          objectFit: 'contain',
-          transform: isDragging ? 'scale(1.2)' : 'scale(1)',
-          transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s',
-          filter: scrollDirection === 'down'
-            ? `invert(62%) sepia(85%) saturate(3000%) hue-rotate(350deg) brightness(1.0) contrast(1.1) ${isDragging ? 'drop-shadow(0 0 8px rgba(230, 126, 34, 0.8))' : 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'}`
-            : `invert(54%) sepia(93%) saturate(1000%) hue-rotate(85deg) brightness(1.1) contrast(1.1) ${isDragging ? 'drop-shadow(0 0 8px rgba(46, 204, 113, 0.8))' : 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'}`,
+          top: 0,
+          bottom: 0,
+          right: 20, // 20px from right of 44px container = 20px from right of screen (centered inside 28px list gutter)
+          width: 4,
+          background: isDragging 
+            ? 'rgba(var(--theme-rgb), 0.12)' 
+            : 'rgba(var(--theme-rgb), 0.05)',
+          borderRadius: 2,
+          transition: 'background-color 0.2s',
         }}
-        alt="scroll"
+      />
+      {/* Scrollbar Draggable Thumb - centered at 14px from right of screen */}
+      <div
+        style={{
+          position: 'absolute',
+          top: `${topOffset}%`,
+          right: isDragging ? 18 : 19.5, // Center align the thumb (18px + 8px/2 = 22px; 19.5px + 5px/2 = 22px) -> which is 22px from right of 44px container = 22px from right of screen. Oh wait, if the track is at 20px right with width 4, its center is 20 + 4/2 = 22px. Perfect!
+          width: isDragging ? 8 : 5,
+          height: thumbHeight,
+          background: isDragging 
+            ? 'linear-gradient(to bottom, #E67E22, #D35400)' 
+            : 'linear-gradient(to bottom, rgba(230, 126, 34, 0.75), rgba(211, 84, 0, 0.75))',
+          borderRadius: 4,
+          boxShadow: isDragging 
+            ? '0 0 10px rgba(230, 126, 34, 0.6)' 
+            : '0 1px 3px rgba(0,0,0,0.15)',
+          transition: 'width 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), right 0.15s, background-color 0.15s, box-shadow 0.15s',
+        }}
       />
     </div>
   );
 };
 
-
 // ── Memoized Exercise Card ──
+
+
 
 interface ExerciseItemCardProps {
   name: string;
@@ -250,6 +282,7 @@ interface ExerciseItemCardProps {
   onDragEnd: () => void;
   onDragCancel: () => void;
   itemRefs: React.MutableRefObject<Map<string, HTMLElement>>;
+  priority?: boolean;
 }
 
 const formatDisplayName = (text: string) => {
@@ -275,28 +308,25 @@ const formatDisplayName = (text: string) => {
   return result;
 };
 
+
+
+
 const ExerciseItemCard = React.memo(({ 
   name, isFirst, index, 
   isActive, isExpanded, isDragging, isLight, gifUrl,
   isCustom, customTranslation, ready,
   onToggle, onExpand, onRename, onAliasSelect, onHide,
-  onDragStart, onDragEnd, onDragCancel, itemRefs
+  onDragStart, onDragEnd, onDragCancel, itemRefs,
+  priority = false
 }: ExerciseItemCardProps) => {
 
   const [localActive, setLocalActive] = React.useState(isActive);
+  const [touchPressing, setTouchPressing] = React.useState(false);
   React.useEffect(() => {
     setLocalActive(isActive);
   }, [isActive]);
 
-  const [shouldPlay, setShouldPlay] = React.useState(isExpanded);
-  React.useEffect(() => {
-    if (isExpanded) {
-      setShouldPlay(true);
-    } else {
-      const timer = setTimeout(() => setShouldPlay(false), 220);
-      return () => clearTimeout(timer);
-    }
-  }, [isExpanded]);
+
 
   const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
   const touchMovedRef = React.useRef(false);
@@ -326,10 +356,17 @@ const ExerciseItemCard = React.memo(({
     }
   }, [isExpanded]);
 
+  // Fired instantly on touchStart to know if we toggled already
+  const toggledOnStartRef = React.useRef(false);
+
   const handleTouchStart = React.useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
     touchMovedRef.current = false;
+    toggledOnStartRef.current = false;
+
+    // ⚡ INSTANT visual feedback only (no parent state update yet)
+    setTouchPressing(true);
   }, []);
 
   const handleTouchMove = React.useCallback((e: React.TouchEvent) => {
@@ -337,19 +374,27 @@ const ExerciseItemCard = React.memo(({
     const touch = e.touches[0];
     const dx = Math.abs(touch.clientX - touchStartRef.current.x);
     const dy = Math.abs(touch.clientY - touchStartRef.current.y);
-    if (dx > 6 || dy > 6) {
+    if (dx > 8 || dy > 8) {
       touchMovedRef.current = true;
+      if (touchPressing) {
+        setTouchPressing(false); // remove visual feedback because we are scrolling
+      }
     }
-  }, []);
+  }, [touchPressing]);
 
-  const handleTouchEnd = React.useCallback((e: React.TouchEvent) => {
+  const handleTouchEnd = React.useCallback(() => {
+    setTouchPressing(false);
     if (!touchStartRef.current) return;
-    touchStartRef.current = null;
+    
+    // If user tapped without scrolling, commit the selection
     if (!touchMovedRef.current) {
-      e.preventDefault();
+      // Prevent browser synthetic click from firing later
+      toggledOnStartRef.current = true;
       setLocalActive(prev => !prev);
       onToggle(name);
     }
+    
+    touchStartRef.current = null;
   }, [name, onToggle]);
 
   const handleExpandTouchStart = React.useCallback((e: React.TouchEvent) => {
@@ -379,16 +424,27 @@ const ExerciseItemCard = React.memo(({
     }
   }, [name, onExpand]);
 
-  const handleClick = React.useCallback(() => {
-    setLocalActive(!isActive);
+  const handleClick = React.useCallback((e: React.MouseEvent) => {
+    // Block synthetic click fired by browser after touchStart — already toggled on touch
+    if (toggledOnStartRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggledOnStartRef.current = false; // reset so next real click works
+      return;
+    }
+    // Real mouse click (desktop/web)
+    setLocalActive(prev => !prev);
     onToggle(name);
-  }, [isActive, name, onToggle]);
+  }, [name, onToggle]);
+
+  // Show active OR pressing state instantly on touch
+  const visuallyActive = localActive || touchPressing;
 
   const cardBg = isLight
-    ? (localActive ? 'linear-gradient(135deg, rgba(230, 126, 34, 0.15) 0%, rgba(245, 245, 250, 1) 100%)' : 'rgba(255, 255, 255, 1)')
-    : (localActive ? 'linear-gradient(135deg, rgba(230, 126, 34, 0.18) 0%, rgba(32, 32, 40, 1) 100%)' : 'rgba(30, 30, 38, 1)');
+    ? (visuallyActive ? 'linear-gradient(135deg, rgba(230, 126, 34, 0.15) 0%, rgba(245, 245, 250, 1) 100%)' : 'rgba(255, 255, 255, 1)')
+    : (visuallyActive ? 'linear-gradient(135deg, rgba(230, 126, 34, 0.18) 0%, rgba(32, 32, 40, 1) 100%)' : 'rgba(30, 30, 38, 1)');
 
-  const cardBorder = localActive
+  const cardBorder = visuallyActive
     ? '2px solid #E67E22'
     : (isLight ? '2px solid rgba(0, 0, 0, 0.05)' : '2px solid rgba(255, 255, 255, 0.04)');
 
@@ -404,8 +460,9 @@ const ExerciseItemCard = React.memo(({
     position: 'absolute',
     left: 0,
     bottom: 0,
+    top: isExpanded ? undefined : 0,
     width: isExpanded ? 145 : 85,
-    height: isExpanded ? 145 : 85,
+    height: isExpanded ? 145 : undefined,
     background: gifUrl ? '#ffffff' : 'transparent', 
     display: 'flex', 
     alignItems: 'center', 
@@ -418,7 +475,7 @@ const ExerciseItemCard = React.memo(({
     zIndex: 5
   };
 
-  const hasSubtitle = !!(EXERCISE_TRANSLATIONS[name] || customTranslation);
+  const hasSubtitle = !!((EXERCISE_TRANSLATIONS[name] && EXERCISE_TRANSLATIONS[name] !== name) || (customTranslation && customTranslation !== name));
 
   const renderControls = () => (
     <div onClick={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} 
@@ -552,7 +609,7 @@ const ExerciseItemCard = React.memo(({
         {/* Absolute GIF Container */}
         <div style={gifContainerStyle}>
           {gifUrl ? (
-            <FastGif src={gifUrl} alt={name} play={shouldPlay} ready={ready} />
+            <FastGif src={gifUrl} alt={name} play={isExpanded} ready={ready} priority={priority} />
           ) : isCustom ? (
             <div 
               onClick={(e) => { e.stopPropagation(); onAliasSelect(name); }}
@@ -616,7 +673,7 @@ const ExerciseItemCard = React.memo(({
               }}>
                 {formatDisplayName(name)}
               </div>
-              {(EXERCISE_TRANSLATIONS[name] || customTranslation) && (
+              {((EXERCISE_TRANSLATIONS[name] && EXERCISE_TRANSLATIONS[name] !== name) || (customTranslation && customTranslation !== name)) && (
                 <div style={{
                   fontSize: '14px',
                   fontWeight: 800,
@@ -648,10 +705,10 @@ const ExerciseItemCard = React.memo(({
                 flex: 1, minWidth: 0, alignSelf: 'stretch',
                 gap: 10
               }}>
-                {gifUrl && isCustom && (
+                {isCustom && (
                   <button onClick={e => { e.stopPropagation(); onAliasSelect(name); }} onTouchStart={e => e.stopPropagation()} 
                     style={{ width: 'fit-content', background: 'rgba(var(--theme-rgb), 0.08)', border: '1.5px dashed rgba(var(--theme-rgb), 0.5)', borderRadius: 24, padding: '8px 20px', color: 'rgb(var(--theme-rgb))', cursor: 'pointer', fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: "var(--heading-font)", letterSpacing: '1.2px', textTransform: 'uppercase', boxShadow: 'none', transition: 'transform 0.1s ease' }}>
-                    <ImageIcon size={13} strokeWidth={2.5} /> Edit GIF
+                    <ImageIcon size={13} strokeWidth={2.5} /> {gifUrl ? 'Edit GIF' : 'Link GIF'}
                   </button>
                 )}
                 <button onClick={e => { e.stopPropagation(); onRename(name); }} onTouchStart={e => e.stopPropagation()} 
@@ -671,7 +728,7 @@ const ExerciseItemCard = React.memo(({
             flexDirection: 'row', 
             alignItems: 'center', 
             width: '100%',
-            height: 85,
+            minHeight: 85,
             paddingLeft: 85,
             boxSizing: 'border-box',
             position: 'relative'
@@ -698,7 +755,7 @@ const ExerciseItemCard = React.memo(({
                   }}>
                     {formatDisplayName(name)}
                   </div>
-                  {(EXERCISE_TRANSLATIONS[name] || customTranslation) && (
+                  {((EXERCISE_TRANSLATIONS[name] && EXERCISE_TRANSLATIONS[name] !== name) || (customTranslation && customTranslation !== name)) && (
                     <div style={{ 
                       fontSize: 11.5, 
                       color: localActive ? '#E67E22' : 'rgba(var(--theme-rgb), 0.45)', 
@@ -722,6 +779,16 @@ const ExerciseItemCard = React.memo(({
   );
 });
 
+const DEFAULT_EXERCISE_TO_MUSCLE_MAP: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  Object.entries(DEFAULT_EXERCISES).forEach(([mg, exs]) => {
+    (exs as string[]).forEach(ex => {
+      map[ex] = mg;
+    });
+  });
+  return map;
+})();
+
 interface Props {
   search: string;
   onSearchChange: (val: string) => void;
@@ -733,7 +800,8 @@ interface Props {
   onRename?: (oldName: string, newName: string) => void;
 }
 
-const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, activeExercises, onToggle, onRename, tracker, t }) => {
+const ExercisePickerInner = React.memo<Props>(({ search, onSearchChange, muscleGroup, activeExercises, onToggle, onRename, tracker, t }) => {
+  const deferredMuscleGroup = muscleGroup;
   const lang = tracker.settings.language;
   const isRtl = lang === 'ar';
   const customTranslations = (tracker.state as any).customTranslations || {};
@@ -749,6 +817,15 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [localExerciseOrder, setLocalExerciseOrder] = useState<string[] | null>(null);
+  const [prevMuscleGroup, setPrevMuscleGroup] = useState(deferredMuscleGroup);
+  const [prevSearch, setPrevSearch] = useState(search);
+
+  if (deferredMuscleGroup !== prevMuscleGroup || search !== prevSearch) {
+    setPrevMuscleGroup(deferredMuscleGroup);
+    setPrevSearch(search);
+    setLocalExerciseOrder(null);
+  }
+
   const localOrderRef = useRef<string[] | null>(null);
   useEffect(() => {
     localOrderRef.current = localExerciseOrder;
@@ -757,13 +834,8 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const [modalReady, setModalReady] = useState(false);
   const modalReadyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [pickerReady, setPickerReady] = useState(true);
-  const [renderFull, setRenderFull] = useState(true);
-
-  useEffect(() => {
-    setPickerReady(true);
-    setRenderFull(true);
-  }, [muscleGroup, search]);
+  const pickerReady = true;
+  const renderFull = true;
 
   // Cache of already-preloaded GIF URLs so we never double-fetch
   const preloadedGifs = useRef<Set<string>>(new Set());
@@ -785,12 +857,12 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   };
 
   // Reset gif/modal state whenever exercise changes
-  // Wait for modal animation (300ms) before allowing GIF to start fetching
   useEffect(() => {
-    setModalReady(false);
     if (modalReadyTimer.current) clearTimeout(modalReadyTimer.current);
     if (selectedVideoExercise) {
-      modalReadyTimer.current = setTimeout(() => setModalReady(true), 310);
+      setModalReady(true);
+    } else {
+      setModalReady(false);
     }
     return () => { if (modalReadyTimer.current) clearTimeout(modalReadyTimer.current); };
   }, [selectedVideoExercise]);
@@ -841,21 +913,21 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
   const itemRefs = React.useRef(new Map<string, HTMLElement>());
 
   const { fullList, baseList, deletedExercises, hiddenExercises, customExercises } = React.useMemo(() => {
-    const deleted = (tracker.state as any).deletedExercises?.[muscleGroup as MuscleGroup] || [];
-    const hidden = tracker.hiddenExercises?.[muscleGroup as MuscleGroup] || [];
-    const custom = tracker.customExercises[muscleGroup as MuscleGroup] || [];
-    const base = (DEFAULT_EXERCISES[muscleGroup as MuscleGroup] || []).filter((e: string) => !hidden.includes(e) && !deleted.includes(e));
+    const deleted = (tracker.state as any).deletedExercises?.[deferredMuscleGroup as MuscleGroup] || [];
+    const hidden = tracker.hiddenExercises?.[deferredMuscleGroup as MuscleGroup] || [];
+    const custom = tracker.customExercises[deferredMuscleGroup as MuscleGroup] || [];
+    const base = (DEFAULT_EXERCISES[deferredMuscleGroup as MuscleGroup] || []).filter((e: string) => !hidden.includes(e) && !deleted.includes(e));
     const full = Array.from(new Set([...base, ...custom.filter((e: string) => !hidden.includes(e))]));
     return { fullList: full, baseList: base, deletedExercises: deleted, hiddenExercises: hidden, customExercises: custom };
-  }, [tracker.state.deletedExercises, tracker.hiddenExercises, tracker.customExercises, muscleGroup]);
+  }, [tracker.state.deletedExercises, tracker.hiddenExercises, tracker.customExercises, deferredMuscleGroup]);
 
   // Search logic: should also find hidden default exercises
   const searchFullList = React.useMemo(() => {
-    return Array.from(new Set([...(DEFAULT_EXERCISES[muscleGroup as MuscleGroup] || []), ...customExercises]));
-  }, [muscleGroup, customExercises]);
+    return Array.from(new Set([...(DEFAULT_EXERCISES[deferredMuscleGroup as MuscleGroup] || []), ...customExercises]));
+  }, [deferredMuscleGroup, customExercises]);
 
   const filteredExercises = React.useMemo(() => {
-    const exerciseOrder = tracker.exerciseOrder?.[muscleGroup as MuscleGroup];
+    const exerciseOrder = tracker.exerciseOrder?.[deferredMuscleGroup as MuscleGroup];
     return [...fullList]
       .sort((a, z) => {
         const ai = exerciseOrder?.indexOf(a) ?? -1, bi = exerciseOrder?.indexOf(z) ?? -1;
@@ -863,7 +935,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         return ai - bi;
       })
       .filter(e => e.toLowerCase().includes(search.toLowerCase()));
-  }, [fullList, tracker.exerciseOrder, muscleGroup, search]);
+  }, [fullList, tracker.exerciseOrder, deferredMuscleGroup, search]);
 
   // Search results in the overlay should show EVERYTHING matching
   const searchFiltered = React.useMemo(() => {
@@ -872,23 +944,36 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       .sort((a, b) => a.length - b.length);
   }, [searchFullList, search]);
 
-  // Archived exercises
-  const archivedExercises = React.useMemo(() => {
-    const exerciseMap: Record<string, string> = {};
-    Object.entries(DEFAULT_EXERCISES).forEach(([mg, exs]) => (exs as string[]).forEach(ex => { exerciseMap[ex] = mg; }));
-    Object.entries(tracker.customExercises).forEach(([mg, exs]) => exs.forEach(ex => { exerciseMap[ex] = mg; }));
-    const archived = new Set<string>([...hiddenExercises]);
-    tracker.logs.forEach(log => {
-      log.exercises.forEach((ex: any) => {
-        const mg = ex.muscleGroup || exerciseMap[ex.name] || log.muscleGroup;
-        if (mg === muscleGroup) archived.add(ex.name);
-      });
+  // Memoize custom exercise mapping to avoid rebuilding it on every log check
+  const customExerciseMap = React.useMemo(() => {
+    const map: Record<string, string> = { ...DEFAULT_EXERCISE_TO_MUSCLE_MAP };
+    Object.entries(tracker.customExercises).forEach(([mg, exs]) => {
+      exs.forEach(ex => { map[ex] = mg; });
     });
+    return map;
+  }, [tracker.customExercises]);
+
+  // Archived exercises (highly optimized loops)
+  const archivedExercises = React.useMemo(() => {
+    const archived = new Set<string>([...hiddenExercises]);
+    const len = tracker.logs.length;
+    for (let i = 0; i < len; i++) {
+      const log = tracker.logs[i];
+      const exs = log.exercises;
+      const exLen = exs.length;
+      for (let j = 0; j < exLen; j++) {
+        const ex = exs[j];
+        const mg = ex.muscleGroup || customExerciseMap[ex.name] || log.muscleGroup;
+        if (mg === deferredMuscleGroup) {
+          archived.add(ex.name);
+        }
+      }
+    }
     const visible = new Set([...baseList, ...customExercises.filter((e: string) => !hiddenExercises.includes(e))]);
     deletedExercises.forEach((e: string) => { if (!hiddenExercises.includes(e)) archived.delete(e); });
     visible.forEach((e: string) => archived.delete(e));
     return Array.from(archived).sort();
-  }, [muscleGroup, tracker.logs, hiddenExercises, deletedExercises, customExercises]);
+  }, [deferredMuscleGroup, tracker.logs, hiddenExercises, deletedExercises, customExercises, baseList, customExerciseMap]);
 
   // Custom exercise detection for search overlay
   const searchTrimmed = search.trim();
@@ -987,7 +1072,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
     if (dragTimer.current) { clearTimeout(dragTimer.current); dragTimer.current = null; }
   }, []);
 
-  const renderExerciseItem = (name: string, isFirst: boolean, index: number) => {
+  const renderExerciseItem = (name: string, isFirst: boolean, index: number, priority = false) => {
     return (
       <ExerciseItemCard
         key={name}
@@ -1011,6 +1096,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         onDragEnd={stableOnDragEnd}
         onDragCancel={stableOnDragCancel}
         itemRefs={itemRefs}
+        priority={priority}
       />
     );
   };
@@ -1094,7 +1180,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               <h2 style={{ fontSize: 24, fontWeight: 950, color: 'var(--text-primary)', fontFamily: "var(--heading-font)", margin: 0, letterSpacing: -0.5 }}>
                 {selectedVideoExercise}
               </h2>
-              {(EXERCISE_TRANSLATIONS[selectedVideoExercise] || customTranslations[selectedVideoExercise]) && (
+              {((EXERCISE_TRANSLATIONS[selectedVideoExercise] && EXERCISE_TRANSLATIONS[selectedVideoExercise] !== selectedVideoExercise) || (customTranslations[selectedVideoExercise] && customTranslations[selectedVideoExercise] !== selectedVideoExercise)) && (
                 <div style={{ fontSize: 16, color: '#D35400', fontWeight: 900, marginTop: 4 }}>
                   {EXERCISE_TRANSLATIONS[selectedVideoExercise] || customTranslations[selectedVideoExercise]}
                 </div>
@@ -1219,7 +1305,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
               maxHeight: 180, overflowY: 'auto', 
               background: 'rgba(var(--theme-rgb), 0.04)', borderRadius: 20, 
               padding: '14px 16px', border: '1px solid rgba(var(--theme-rgb), 0.06)'
-            }} className="premium-scrollbar">
+            }} className="hide-scrollbar">
               <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.5px' }}>
                 {t('howToPerform')}
               </div>
@@ -1297,13 +1383,34 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             )}
           </div>
           <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
-            <div ref={searchResultsRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 20px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div ref={searchResultsRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 28px 0 16px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+
             {searchFiltered.map(name => {
               const isActive = activeExercises.includes(name);
               const lastSession = tracker.getLastSession(name);
+              const gifUrl = getExerciseGifUrl(name, tracker.state.exerciseAliases);
               return (
-                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: isActive ? 'rgba(230, 126, 34, 0.28)' : 'rgba(var(--theme-rgb), 0.12)', border: isActive ? '1px solid rgba(230, 126, 34, 0.4)' : '1px solid rgba(var(--theme-rgb), 0.16)', borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
-                  <div style={{ flex: 1 }}>
+                <div key={name} className="search-result-item" onClick={() => { toggleWithAnim(name); if (!isActive) closeSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: isActive ? 'rgba(230, 126, 34, 0.28)' : 'rgba(var(--theme-rgb), 0.12)', border: isActive ? '1px solid rgba(230, 126, 34, 0.4)' : '1px solid rgba(var(--theme-rgb), 0.16)', borderLeft: isActive ? '3px solid #E67E22' : '3px solid transparent', borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none', WebkitTapHighlightColor: 'transparent' }}>
+                  <div style={{
+                    width: 55,
+                    height: 55,
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    background: '#ffffff',
+                    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative'
+                  }}>
+                    {gifUrl ? (
+                      <FastGif src={gifUrl} alt={name} play={false} ready={true} priority={false} />
+                    ) : (
+                      <Play size={20} color="rgba(var(--theme-rgb), 0.06)" fill="rgba(var(--theme-rgb), 0.06)" strokeWidth={0} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontSize: 16, fontWeight: 800, color: isActive ? '#D35400' : 'var(--text-primary)', fontFamily: "var(--heading-font)" }}>{name}</div>
                       <button
@@ -1333,7 +1440,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
                         <Play size={8} fill="#E67E22" strokeWidth={0} />
                       </button>
                     </div>
-                    {EXERCISE_TRANSLATIONS[name] && <div style={{ fontSize: 13, color: '#D35400', opacity: 0.9, marginTop: 2, fontWeight: 900, fontFamily: "var(--heading-font)" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
+                    {EXERCISE_TRANSLATIONS[name] && EXERCISE_TRANSLATIONS[name] !== name && <div style={{ fontSize: 13, color: '#D35400', opacity: 0.9, marginTop: 2, fontWeight: 900, fontFamily: "var(--heading-font)" }}>{EXERCISE_TRANSLATIONS[name]}</div>}
                     {lastSession && (() => {
                       const displayUnit = tracker.getDisplayUnit(name, muscleGroup as MuscleGroup);
                       const convertedWeight = tracker.convertWeight(lastSession.bestSet?.weight || 0, lastSession.bestSet?.unit || 'kg', displayUnit);
@@ -1381,7 +1488,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       )}
 
       {/* Header row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 28px 0 2px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent-color)',  }} />
           <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '1.5px', textTransform: 'uppercase', opacity: 0.9 }}>{t('exercises') || 'Exercises'}</div>
@@ -1396,32 +1503,35 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
 
       {/* Exercise list */}
       <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
-        <div ref={mainListRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, padding: '0 20px' }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
+        <div ref={mainListRef} className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, padding: '0 28px 0 2px' }} onTouchMove={handleTouchMove} onTouchEnd={stableOnDragEnd}>
+
         {recentNames.length > 0 && (
           <>
-            <div style={{ padding: '10px 12px 6px', display: 'flex', alignItems: 'center', gap: 8, background: 'transparent' }}>
+            <div style={{ padding: '10px 4px 6px', display: 'flex', alignItems: 'center', gap: 8, background: 'transparent' }}>
               <RotateCcw size={14} color="#E67E22" strokeWidth={3} />
               <span style={{ fontSize: 11, fontWeight: 900, color: '#E67E22', letterSpacing: 1, textTransform: 'uppercase' }}>{isRtl ? 'تمارينك السابقة' : 'My Recent Exercises'}</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {recentNames.map((name, idxInList) => {
+              {(renderFull ? recentNames : recentNames.slice(0, 6)).map((name, idxInList) => {
                 const isFirst = idxInList === 0;
-                return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name));
+                const isPriority = idxInList < 6;
+                return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name), isPriority);
               })}
             </div>
           </>
         )}
         {otherNames.length > 0 && recentNames.length > 0 && (
-          <div style={{ padding: '12px 12px 6px', display: 'flex', alignItems: 'center', gap: 8, opacity: 0.5 }}>
+          <div style={{ padding: '12px 4px 6px', display: 'flex', alignItems: 'center', gap: 8, opacity: 0.5 }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-secondary)' }} />
             <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-primary)', opacity: 0.85, letterSpacing: 1, textTransform: 'uppercase' }}>{isRtl ? 'بقية التمارين' : 'All Other Exercises'}</span>
           </div>
         )}
         {otherNames.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {(renderFull ? otherNames : otherNames.slice(0, 15)).map((name, idxInList) => {
+            {(renderFull ? otherNames : otherNames.slice(0, 4)).map((name, idxInList) => {
               const isFirst = idxInList === 0;
-              return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name));
+              const isPriority = (recentNames.length + idxInList) < 6;
+              return renderExerciseItem(name, isFirst, (localExerciseOrder || filteredExercises).indexOf(name), isPriority);
             })}
           </div>
         )}
@@ -1429,7 +1539,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
         {/* Archive */}
         {archivedExercises.length > 0 && (
           <div style={{ marginTop: 24, paddingBottom: 100 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: 0.5 }}>
                 <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-secondary)' }} />
                 <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-secondary)', letterSpacing: 2, textTransform: 'uppercase' }}>{isRtl ? 'الأرشيف' : 'ARCHIVE'}</div>
@@ -1461,7 +1571,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             ))}
           </div>
         )}
-        <div style={{ height: 'max(20px, env(safe-area-inset-bottom))', flexShrink: 0 }} />
+          <div style={{ height: 'max(20px, env(safe-area-inset-bottom))', flexShrink: 0 }} />
         </div>
         <FastScroll scrollRef={mainListRef} />
       </div>
@@ -1529,7 +1639,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
             <p style={{ margin: '0 0 24px 0', fontSize: 15, color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 600, lineHeight: 1.4 }}>
               Select a matching GIF for <br/><span style={{ color: 'var(--text-primary)', fontWeight: 800 }}>"{aliasSelectorOpen}"</span>
             </p>
-            <div className="premium-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'block', paddingBottom: 10, paddingRight: 4, paddingLeft: 4 }}>
+            <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'block', paddingBottom: 10, paddingRight: 4, paddingLeft: 4 }}>
               {DEFAULT_EXERCISES[muscleGroup as MuscleGroup]?.map(stdName => (
                 <div 
                   key={stdName} 
@@ -1579,7 +1689,7 @@ const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, 
       )}
     </div>
   );
-};
+});
 
 // Premium Rename Bottom Sheet
 const RenameSheet: React.FC<{ name: string; isLight: boolean; onSave: (n: string) => void; onClose: () => void }> = ({ name, isLight, onSave, onClose }) => {
@@ -1670,6 +1780,23 @@ const RenameSheet: React.FC<{ name: string; isLight: boolean; onSave: (n: string
       </div>
     </div>,
     document.body
+  );
+};
+
+
+
+const ExercisePicker: React.FC<Props> = ({ search, onSearchChange, muscleGroup, activeExercises, onToggle, onRename, tracker, t }) => {
+  return (
+    <ExercisePickerInner
+      search={search}
+      onSearchChange={onSearchChange}
+      muscleGroup={muscleGroup}
+      activeExercises={activeExercises}
+      onToggle={onToggle}
+      onRename={onRename}
+      tracker={tracker}
+      t={t}
+    />
   );
 };
 

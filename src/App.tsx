@@ -428,7 +428,8 @@ export default function App() {
         minWidth: '100%', height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        padding: showWorkout ? '0' : 'calc(env(safe-area-inset-top) + 15px) 0 0',
+        padding: 'calc(env(safe-area-inset-top) + 15px) 0 0',
+
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
@@ -438,8 +439,7 @@ export default function App() {
         opacity: 1
       }}>
 
-      {!showWorkout && (
-        <>
+
           <InactiveWidgetSync tracker={tracker} />
           <Header tab={tab} t={t} tracker={tracker} />
 
@@ -479,8 +479,7 @@ export default function App() {
             activeTab={tab}
             onTabChange={switchTab}
           />
-        </>
-      )}
+
 
       {/* Workout Session Full Page */}
       {showWorkout && (
